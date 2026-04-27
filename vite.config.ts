@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import dts from 'vite-plugin-dts'
 import { resolve } from 'path'
 
 // https://vite.dev/config/
@@ -18,37 +19,49 @@ export default defineConfig(({ mode }) => {
   ];
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      ...(isLib
+        ? [
+            dts({
+              tsconfigPath: 'tsconfig.lib.json',
+              rollupTypes: true,
+              insertTypesEntry: true,
+            }),
+          ]
+        : []),
+    ],
     optimizeDeps: {
-      // Exclude CodeMirror from optimization to prevent multiple instances
       exclude: codemirrorPackages,
-      // Force re-optimization
-      force: true,
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src')
+        '@': resolve(__dirname, 'src'),
       },
       dedupe: codemirrorPackages,
-      // Preserve symlinks to ensure same instance
       preserveSymlinks: false,
     },
-    build: isLib ? {
-      lib: {
-        entry: resolve(__dirname, 'src/components/index.ts'),
-        name: 'NeutrinoEditor',
-        fileName: 'index',
-        formats: ['es']
-      },
-      rolldownOptions: {
-        external: ['react', 'react-dom', ...codemirrorPackages],
-        output: {
-          globals: {
-            react: 'React',
-            'react-dom': 'ReactDOM'
-          }
+    build: isLib
+      ? {
+          lib: {
+            entry: resolve(__dirname, 'src/components/index.ts'),
+            name: 'NeutrinoEditor',
+            fileName: 'index',
+            formats: ['es'],
+          },
+          cssCodeSplit: false,
+          rollupOptions: {
+            external: ['react', 'react-dom', 'react/jsx-runtime', ...codemirrorPackages],
+            output: {
+              globals: {
+                react: 'React',
+                'react-dom': 'ReactDOM',
+              },
+              assetFileNames: (assetInfo) =>
+                assetInfo.name === 'style.css' ? 'style.css' : 'assets/[name][extname]',
+            },
+          },
         }
-      }
-    } : undefined,
+      : undefined,
   }
 })

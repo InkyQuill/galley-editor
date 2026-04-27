@@ -52,7 +52,7 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
       decorations: DecorationSet;
 
       constructor(view: EditorView) {
-        this.decorations = this.buildDecorations(view);
+        this.decorations = this._buildDecorations(view);
       }
 
       update(update: ViewUpdate) {
@@ -61,11 +61,11 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
           update.viewportChanged ||
           update.selectionSet
         ) {
-          this.decorations = this.buildDecorations(update.view);
+          this.decorations = this._buildDecorations(update.view);
         }
       }
 
-      private buildDecorations(view: EditorView): DecorationSet {
+      _buildDecorations(view: EditorView): DecorationSet {
         const { state } = view;
         const doc = state.doc;
         const cursorLine = doc.lineAt(state.selection.main.anchor);

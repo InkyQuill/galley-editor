@@ -1,25 +1,58 @@
 {
-  "name": "@inkyquill/neutrino-editor",
-  "private": true,
-  "version": "1.0.0",
+  "name": "@inky/neutrino-editor",
+  "version": "0.2.0",
+  "description": "A React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6 with Obsidian-style live preview.",
   "type": "module",
+  "license": "MIT",
+  "author": "Pavel Obruchnikov <me@inkyquill.net>",
+  "homepage": "https://git.inkyquill.net/inky/neutrino-editor#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://git.inkyquill.net/inky/neutrino-editor.git"
+  },
+  "bugs": {
+    "url": "https://git.inkyquill.net/inky/neutrino-editor/-/issues"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "react",
+    "codemirror",
+    "wysiwyg",
+    "live-preview"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "./dist/style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://git.inkyquill.net/api/v4/projects/94/packages/npm/",
+    "access": "restricted"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:lib": "vite build --mode lib",
+    "build:lib": "vite build --mode lib && npm run postbuild:lib",
+    "postbuild:lib": "cp src/neutrino-base.css dist/style.css",
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
@@ -28,19 +61,26 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "@codemirror/commands": ">=6.10.0",
+    "@codemirror/lang-markdown": ">=6.5.0",
+    "@codemirror/language": ">=6.12.0",
+    "@codemirror/state": ">=6.6.0",
+    "@codemirror/view": ">=6.41.0",
+    "@lezer/highlight": ">=1.2.0",
+    "@lezer/markdown": ">=1.6.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.0",
+    "@eslint/js": "^9.39.4",
     "@lezer/highlight": "^1.2.0",
     "@lezer/markdown": "^1.6.3",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.4",
     "@storybook/addon-docs": "^10.3.4",
     "@storybook/addon-links": "^10.3.4",
     "@storybook/react": "^10.3.4",
@@ -58,6 +98,8 @@
     "globals": "^16.5.0",
     "jsdom": "^29.0.1",
     "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "storybook": "^10.3.4",
     "tailwindcss": "^4.2.2",
     "typescript": "~6.0",
