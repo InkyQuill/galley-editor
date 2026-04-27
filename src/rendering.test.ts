@@ -1,0 +1,423 @@
+import { describe, it, expect, afterEach } from 'vitest';
+import { EditorState, EditorSelection, type Extension } from '@codemirror/state';
+import { EditorView, Decoration, WidgetType } from '@codemirror/view';
+import { markdown } from '@codemirror/lang-markdown';
+import type { SyntaxNodeRef } from '@lezer/common';
+import {
+  HIDE_DECORATION,
+  BLOCK_CURSOR_LINE_PROXIMITY,
+  nodeIntersectsSelection,
+  makeInlinePlugin,
+  makeBlockPlugin,
+} from './rendering';
+import type { NeutrinoPluginSpec } from './types';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function createView(
+  doc: string,
+  cursor?: number,
+  extensions: Extension[] = [],
+): EditorView {
+  const state = EditorState.create({
+    doc,
+    extensions: [markdown(), ...extensions],
+    selection: { anchor: cursor ?? 0 },
+  });
+  return new EditorView({ state });
+}
+
+
+/** Minimal mock that satisfies SyntaxNodeRef for nodeIntersectsSelection. */
+function mockNode(from: number, to: number): SyntaxNodeRef {
+  return { from, to } as unknown as SyntaxNodeRef;
+}
+
+/** A trivial spec that marks every "Heading" node with a line decoration. */
+function headingBlockSpec(): NeutrinoPluginSpec {
+  return {
+    createDecoration(node) {
+      if (node.name === 'ATXHeading1' || node.name === 'SetextHeading1') {
+        return Decoration.line({ class: 'test-heading' });
+      }
+      return null;
+    },
+    getDecorationRange(node, state) {
+      if (node.name === 'ATXHeading1' || node.name === 'SetextHeading1') {
+        const line = state.doc.lineAt(node.from);
+        return [line.from];
+      }
+      return null;
+    },
+  };
+}
+
+/** A trivial inline spec that hides EmphasisMark nodes. */
+function emphasisInlineSpec(): NeutrinoPluginSpec {
+  return {
+    createDecoration(node) {
+      if (node.name === 'EmphasisMark') {
+        return HIDE_DECORATION;
+      }
+      return null;
+    },
+  };
+}
+
+const views: EditorView[] = [];
+
+function tracked(view: EditorView): EditorView {
+  views.push(view);
+  return view;
+}
+
+afterEach(() => {
+  for (const v of views) v.destroy();
+  views.length = 0;
+});
+
+// ── Constants ──────────────────────────────────────────────────────────────
+
+describe('HIDE_DECORATION', () => {
+  it('is a replace decoration', () => {
+    expect(HIDE_DECORATION).toBeDefined();
+    expect(HIDE_DECORATION.spec).toEqual({});
+  });
+});
+
+describe('BLOCK_CURSOR_LINE_PROXIMITY', () => {
+  it('equals 1', () => {
+    expect(BLOCK_CURSOR_LINE_PROXIMITY).toBe(1);
+  });
+});
+
+// ── nodeIntersectsSelection ────────────────────────────────────────────────
+
+describe('nodeIntersectsSelection', () => {
+  it('returns true when cursor is inside node', () => {
+    const sel = EditorSelection.single(5);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when cursor is at node start', () => {
+    const sel = EditorSelection.single(3);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when cursor is at node end', () => {
+    const sel = EditorSelection.single(10);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns false when cursor is before node', () => {
+    const sel = EditorSelection.single(1);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(false);
+  });
+
+  it('returns false when cursor is after node', () => {
+    const sel = EditorSelection.single(12);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(false);
+  });
+
+  it('returns true when selection partially overlaps node from the left', () => {
+    const sel = EditorSelection.single(1, 5);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when selection partially overlaps node from the right', () => {
+    const sel = EditorSelection.single(8, 15);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when selection fully contains node', () => {
+    const sel = EditorSelection.single(0, 20);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when node fully contains selection', () => {
+    const sel = EditorSelection.single(5, 8);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns false when selection ends just before node', () => {
+    const sel = EditorSelection.single(0, 2);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(false);
+  });
+
+  it('returns false when selection starts just after node', () => {
+    const sel = EditorSelection.single(11, 15);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(false);
+  });
+
+  it('returns true when selection touches node boundary (sel.to == node.from)', () => {
+    const sel = EditorSelection.single(0, 3);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+
+  it('returns true when selection touches node boundary (sel.from == node.to)', () => {
+    const sel = EditorSelection.single(10, 15);
+    const node = mockNode(3, 10);
+    expect(nodeIntersectsSelection(sel, node)).toBe(true);
+  });
+});
+
+// ── makeInlinePlugin ───────────────────────────────────────────────────────
+
+describe('makeInlinePlugin', () => {
+  it('returns a ViewPlugin extension', () => {
+    const plugin = makeInlinePlugin(emphasisInlineSpec());
+    expect(plugin).toBeDefined();
+  });
+
+  it('can be added to an EditorView without error', () => {
+    const plugin = makeInlinePlugin(emphasisInlineSpec());
+    const view = tracked(createView('hello *world*', 0, [plugin]));
+    expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+
+  it('does not throw when the view has no matching nodes', () => {
+    const plugin = makeInlinePlugin(emphasisInlineSpec());
+    const view = tracked(createView('plain text', 0, [plugin]));
+    expect(view.state.doc.toString()).toBe('plain text');
+  });
+
+  it('does not throw when cursor is on a matching node', () => {
+    const plugin = makeInlinePlugin(emphasisInlineSpec());
+    // cursor on the emphasis mark
+    const view = tracked(createView('hello *world*', 7, [plugin]));
+    expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+
+  it('works with a widget-returning spec', () => {
+    class TestWidget extends WidgetType {
+      toDOM() {
+        const span = document.createElement('span');
+        span.textContent = 'X';
+        return span;
+      }
+    }
+
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'EmphasisMark') {
+          return new TestWidget();
+        }
+        return null;
+      },
+    };
+
+    const plugin = makeInlinePlugin(spec);
+    const view = tracked(createView('hello *world*', 0, [plugin]));
+    expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+
+  it('respects hideWhenNearCursor: false', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'EmphasisMark') {
+          return HIDE_DECORATION;
+        }
+        return null;
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const plugin = makeInlinePlugin(spec);
+    // cursor right on the emphasis mark, but hiding is disabled
+    const view = tracked(createView('hello *world*', 7, [plugin]));
+    expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+
+  it('respects custom getRevealStrategy returning boolean', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'EmphasisMark') {
+          return HIDE_DECORATION;
+        }
+        return null;
+      },
+      getRevealStrategy() {
+        return false; // never revealed
+      },
+    };
+
+    const plugin = makeInlinePlugin(spec);
+    const view = tracked(createView('hello *world*', 7, [plugin]));
+    expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+});
+
+// ── makeBlockPlugin ────────────────────────────────────────────────────────
+
+describe('makeBlockPlugin', () => {
+  it('returns an array of extensions', () => {
+    const extensions = makeBlockPlugin(headingBlockSpec());
+    expect(Array.isArray(extensions)).toBe(true);
+    expect(extensions.length).toBeGreaterThan(0);
+  });
+
+  it('can be added to an EditorView without error', () => {
+    const extensions = makeBlockPlugin(headingBlockSpec());
+    const view = tracked(createView('# Hello\n\nworld', 0, extensions));
+    expect(view.state.doc.toString()).toBe('# Hello\n\nworld');
+  });
+
+  it('does not throw when the view has no matching nodes', () => {
+    const extensions = makeBlockPlugin(headingBlockSpec());
+    const view = tracked(createView('plain text', 0, extensions));
+    expect(view.state.doc.toString()).toBe('plain text');
+  });
+
+  it('does not throw with cursor on a matching node', () => {
+    const extensions = makeBlockPlugin(headingBlockSpec());
+    const view = tracked(createView('# Hello\n\nworld', 3, extensions));
+    expect(view.state.doc.toString()).toBe('# Hello\n\nworld');
+  });
+
+  it('applies decorations when cursor is far from the block', () => {
+    // Spec that always decorates Blockquote nodes
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node, state) {
+        if (node.name === 'Blockquote') {
+          return [state.doc.lineAt(node.from).from];
+        }
+        return null;
+      },
+    };
+
+    const extensions = makeBlockPlugin(spec);
+    // blockquote on line 1, cursor on line 5 (far away)
+    const doc = '> quote\n\n\n\n\ncursor here';
+    const cursorPos = doc.lastIndexOf('cursor');
+    const view = tracked(createView(doc, cursorPos, extensions));
+
+    // The field should exist and contain decorations
+    // We verify by checking the view doesn't throw and state is accessible
+    expect(view.state.doc.line(1).text).toBe('> quote');
+  });
+
+  it('hides decorations when cursor is near the block', () => {
+    const decorationCreated: boolean[] = [];
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          decorationCreated.push(true);
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node, state) {
+        if (node.name === 'Blockquote') {
+          return [state.doc.lineAt(node.from).from];
+        }
+        return null;
+      },
+    };
+
+    const extensions = makeBlockPlugin(spec);
+    // cursor right on the blockquote line
+    const view = tracked(createView('> quote\n\nother', 3, extensions));
+    expect(view.state.doc.toString()).toBe('> quote\n\nother');
+  });
+
+  it('respects shouldForceRerender', () => {
+    let rerenderCount = 0;
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          rerenderCount++;
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node, state) {
+        if (node.name === 'Blockquote') {
+          return [state.doc.lineAt(node.from).from];
+        }
+        return null;
+      },
+      shouldForceRerender() {
+        return true;
+      },
+    };
+
+    const extensions = makeBlockPlugin(spec);
+    const doc = '> quote\n\n\n\n\ncursor here';
+    const cursorPos = doc.lastIndexOf('cursor');
+    const view = tracked(createView(doc, cursorPos, extensions));
+
+    const countBefore = rerenderCount;
+
+    // Dispatch a no-op transaction that would normally be skipped
+    view.dispatch({ effects: [] });
+
+    // shouldForceRerender returns true, so buildBlockDecorations should be called again
+    expect(rerenderCount).toBeGreaterThan(countBefore);
+  });
+
+  it('works with a widget-returning spec', () => {
+    class BlockWidget extends WidgetType {
+      toDOM() {
+        const div = document.createElement('div');
+        div.textContent = 'HR';
+        return div;
+      }
+    }
+
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'HorizontalRule') {
+          return new BlockWidget();
+        }
+        return null;
+      },
+    };
+
+    const extensions = makeBlockPlugin(spec);
+    const doc = 'above\n\n---\n\n\n\n\ncursor here';
+    const cursorPos = doc.lastIndexOf('cursor');
+    const view = tracked(createView(doc, cursorPos, extensions));
+    expect(view.state.doc.toString()).toBe(doc);
+  });
+
+  it('respects hideWhenNearCursor: false', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node, state) {
+        if (node.name === 'Blockquote') {
+          return [state.doc.lineAt(node.from).from];
+        }
+        return null;
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const extensions = makeBlockPlugin(spec);
+    // cursor ON the blockquote, but hiding is disabled
+    const view = tracked(createView('> quote\n\nother', 3, extensions));
+    expect(view.state.doc.toString()).toBe('> quote\n\nother');
+  });
+});

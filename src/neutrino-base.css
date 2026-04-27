@@ -1,0 +1,140 @@
+/*
+ * Neutrino Editor — base stylesheet.
+ *
+ * Provides minimal, unstyled defaults for the ne-* semantic classes.
+ * Override these in your own CSS, or skip importing this file entirely
+ * and write your own rules targeting the ne-* classes.
+ *
+ * Compatible with @tailwindcss/typography: wrap the editor in a `prose` div
+ * and the rendered elements will pick up typography styles automatically.
+ */
+
+/* ── Headings ───────────────────────────────────────────────────────────── */
+
+.ne-h1 { font-size: 2em; font-weight: bold; line-height: 1.2; }
+.ne-h2 { font-size: 1.5em; font-weight: bold; line-height: 1.3; }
+.ne-h3 { font-size: 1.25em; font-weight: bold; line-height: 1.4; }
+.ne-h4 { font-size: 1.1em; font-weight: bold; line-height: 1.4; }
+.ne-h5 { font-size: 1em; font-weight: bold; line-height: 1.4; }
+.ne-h6 { font-size: 0.9em; font-weight: bold; line-height: 1.4; }
+
+/* ── Inline formatting ──────────────────────────────────────────────────── */
+
+.ne-bold { font-weight: bold; }
+.ne-italic { font-style: italic; }
+.ne-strikethrough { text-decoration: line-through; }
+
+.ne-code-inline {
+  background-color: rgba(127, 127, 127, 0.12);
+  padding: 0.125em 0.25em;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+}
+
+/* ── Links ──────────────────────────────────────────────────────────────── */
+
+.ne-link {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ne-link {
+    color: #60a5fa;
+  }
+}
+
+/* ── Code fences ────────────────────────────────────────────────────────── */
+
+.ne-code-fence {
+  background-color: rgba(127, 127, 127, 0.08);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+}
+
+/* ── Blockquotes ────────────────────────────────────────────────────────── */
+
+.ne-blockquote {
+  border-left: 3px solid rgba(127, 127, 127, 0.4);
+  padding-left: 1em;
+  color: rgba(127, 127, 127, 0.8);
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+
+.ne-table {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+}
+
+/* ── Dividers ───────────────────────────────────────────────────────────── */
+
+.cm-line.ne-divider {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.ne-divider-widget {
+  flex-grow: 1;
+  border: none;
+  border-bottom: 2px solid rgba(127, 127, 127, 0.3);
+  margin: 0.5em 0;
+}
+
+/* ── Checkboxes ─────────────────────────────────────────────────────────── */
+
+.ne-checkbox input {
+  width: 1.1em;
+  height: 1.1em;
+  margin: 4px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.ne-completed-task {
+  opacity: 0.6;
+}
+
+/* ── List markers ───────────────────────────────────────────────────────── */
+
+.ne-list-marker {
+  pointer-events: none;
+  position: relative;
+}
+
+.ne-list-marker .ne-list-marker-sizing {
+  color: transparent;
+}
+
+.ne-list-marker .ne-list-marker-dot {
+  position: absolute;
+  left: 0;
+  --size: 5px;
+  top: calc(50% - var(--size) / 2);
+  width: var(--size);
+  height: var(--size);
+  border-radius: var(--size);
+  background-color: currentcolor;
+  box-sizing: border-box;
+}
+
+.ne-list-marker.ne-depth-0 .ne-list-marker-dot {
+  border-radius: 0;
+}
+
+.ne-list-marker.ne-depth-2 .ne-list-marker-dot {
+  border: 1px solid currentcolor;
+  background-color: transparent;
+}
+
+/* ── Lezer token classes (tok-*) — minimal defaults ─────────────────────── */
+
+.tok-heading { font-weight: bold; }
+.tok-strong { font-weight: bold; }
+.tok-emphasis { font-style: italic; }
+.tok-strikethrough { text-decoration: line-through; }
+.tok-link { text-decoration: underline; }
+.tok-monospace {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
