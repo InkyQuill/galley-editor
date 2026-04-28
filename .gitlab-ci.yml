@@ -14,9 +14,11 @@ stages:
 
 variables:
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
-  # Don't let git clean (run between jobs) wipe cached .npm/ dir.
-  # node_modules/ is shared via the install job's artifact, not cached.
-  GIT_CLEAN_FLAGS: -ffdx -e .npm
+  # Don't let git clean (run between jobs) wipe cached/artifact dirs.
+  # The high file count in node_modules/ and .npm/_cacache races with
+  # git clean and produces 'fatal: Invalid path ... No such file or
+  # directory'. Excluding both stops the race.
+  GIT_CLEAN_FLAGS: -ffdx -e .npm -e node_modules
 
 install:
   stage: validate
