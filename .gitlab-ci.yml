@@ -1,44 +1,29 @@
 default:
   image: node:22-alpine
-  cache:
-    key:
-      files:
-        - package-lock.json
-    paths:
-      - .npm/
-    policy: pull-push
-  before_script:
-    - npm ci --legacy-peer-deps --prefer-offline --no-audit --no-fund
 
 stages:
-  - validate
-  - build
+  - test
   - publish
 
-variables:
-  npm_config_cache: "$CI_PROJECT_DIR/.npm"
-  # Let git clean wipe everything except the npm tarball cache.
-  # node_modules/ is reinstalled by before_script in each job — sharing it
-  # via artifacts produced corrupted state when extraction merged stale
-  # files from a previous pipeline's leftovers in the runner's working
-  # directory. Excluding only .npm avoids the file-count race with
-  # git clean and stops the runner from re-downloading 200 MB of tarballs.
-  GIT_CLEAN_FLAGS: -ffdx -e .npm
-
-lint:
-  stage: validate
-  script:
-    - npm run lint
-
-typecheck:
-  stage: validate
-  script:
-    - npx tsc -b
-
+# One job runs everything that depends on node_modules: install, lint,
+# typecheck, unit tests, library build, and the 3rdparty leak check.
+# Sequential in a fresh container — no node_modules artifact to share,
+# no cache to go stale, no inter-job state. The runner has only one
+# concurrent slot anyway, so we lose nothing by giving up parallelism.
 test:
-  stage: validate
+  stage: test
   script:
+    - npm ci --legacy-peer-deps --no-audit --no-fund
+    - npm run lint
+    - npx tsc -b
     - npm run test:coverage
+    - npm run build:lib
+    - |
+      if grep -rIE '(3rdparty|joplin|@joplin)' dist/ ; then
+        echo "ERROR: 3rdparty/Joplin reference material leaked into dist/." >&2
+        exit 1
+      fi
+      echo "dist/ is clean."
   coverage: '/Lines\s*:\s*([\d.]+)%/'
   artifacts:
     when: always
@@ -47,40 +32,14 @@ test:
         coverage_format: cobertura
         path: coverage/cobertura-coverage.xml
     paths:
+      - dist/
       - coverage/
     expire_in: 1 week
 
-build:
-  stage: build
-  needs:
-    - lint
-    - typecheck
-    - test
-  script:
-    - npm run build:lib
-  artifacts:
-    paths:
-      - dist/
-    expire_in: 1 week
-
-# Doesn't need node_modules — just greps the dist artifact.
-forbid-3rdparty-import:
-  stage: build
-  needs:
-    - build
-  before_script: []
-  script:
-    - |
-      if grep -rIE '(3rdparty|joplin|@joplin)' dist/ ; then
-        echo "ERROR: 3rdparty/Joplin reference material leaked into dist/." >&2
-        exit 1
-      fi
-      echo "dist/ is clean."
-
-# Doesn't need node_modules — just reads package.json with `node -p`.
+# Tag-only — verify package.json version matches the tag.
+# Doesn't need node_modules; just reads package.json with `node -p`.
 version-matches-tag:
-  stage: build
-  before_script: []
+  stage: test
   rules:
     - if: '$CI_COMMIT_TAG'
   script:
@@ -93,16 +52,14 @@ version-matches-tag:
       fi
       echo "Version $PKG_VERSION matches tag $CI_COMMIT_TAG"
 
-# Doesn't need node_modules — `npm publish` packs from package.json
-# `files` allowlist and uploads. Cache is unused too.
+# Tag-only publish. Uses dist/ artifact from the test job.
+# No npm install needed; npm publish packs from package.json `files`
+# allowlist (which is dist/ + LICENSE + README + CHANGELOG).
 publish:
   stage: publish
   needs:
-    - build
-    - forbid-3rdparty-import
+    - test
     - version-matches-tag
-  before_script: []
-  cache: []
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-.*)?$/'
   script:
