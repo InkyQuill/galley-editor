@@ -5,7 +5,6 @@ default:
       files:
         - package-lock.json
     paths:
-      - node_modules/
       - .npm/
 
 stages:
@@ -15,6 +14,9 @@ stages:
 
 variables:
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  # Don't let git clean (run between jobs) wipe cached .npm/ dir.
+  # node_modules/ is shared via the install job's artifact, not cached.
+  GIT_CLEAN_FLAGS: -ffdx -e .npm
 
 install:
   stage: validate
