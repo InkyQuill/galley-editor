@@ -1,150 +1,94 @@
 # Neutrino Editor
 
+> ⚠️ **In active development.** v0.2.0 is the first publishable build. The full feature set lands across v0.3 → v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
-## Features
+## Features (current)
 
-- 🎨 **Half-WYSIWYG editing** - Markdown blocks render as HTML when the cursor is not on that line
-- 🚀 **Real-time rendering** - See your markdown formatted as you type
-- 🎯 **Lightweight** - Built on CodeMirror 6 with minimal dependencies
-- 🌙 **Dark/light theme support** - Built-in theme switching with auto-detection
-- ⌨️ **Rich keyboard shortcuts** - Customizable keyboard handlers
-- 🔧 **TypeScript support** - Full type safety with TypeScript definitions
-- 📱 **Mobile friendly** - Touch-friendly editing experience
+- 🎨 Half-WYSIWYG editing — markdown blocks render as HTML when the cursor is not on that line
+- 🚀 Real-time markdown rendering powered by Lezer's incremental parser
+- 🎯 Lightweight (~12 kB gzipped, no markdown-to-HTML step)
+- 🌙 Theme prop API for `light` / `dark` / `auto` (styling implementation lands in v0.3)
+- ⌨️ Imperative ref API for programmatic control
+- 🔧 Full TypeScript types
 
 ## Installation
 
-```bash
-npm install @inkyquill/neutrino-editor
-```
+This package is currently published to a private GitLab Package Registry.
+
+1. Configure npm to resolve `@inky` against the GitLab registry. Copy [`.npmrc.example`](./.npmrc.example) to your project root as `.npmrc` and supply a token:
+
+   ```
+   @inky:registry=https://git.inkyquill.net/api/v4/packages/npm/
+   //git.inkyquill.net/api/v4/packages/npm/:_authToken=${GITLAB_TOKEN}
+   ```
+
+   Generate the token at *git.inkyquill.net → User Settings → Access Tokens*, scoped to `read_package_registry`.
+
+2. Install:
+
+   ```bash
+   npm install @inky/neutrino-editor
+   ```
+
+3. Import in your code (CSS import is optional — see [Styling](docs/styling.md)):
+
+   ```tsx
+   import { NeutrinoEditor } from '@inky/neutrino-editor';
+   import '@inky/neutrino-editor/style.css';
+   ```
 
 ## Quick Start
 
-```jsx
+```tsx
 import React, { useState } from 'react';
-import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
+import { NeutrinoEditor } from '@inky/neutrino-editor';
+import '@inky/neutrino-editor/style.css';
 
 function App() {
-  const [markdown, setMarkdown] = useState('# Hello World\n\nStart typing...');
-
-  return (
-    <div className="p-4">
-      <NeutrinoEditor
-        value={markdown}
-        onChange={setMarkdown}
-        placeholder="Start typing your markdown here..."
-        className="w-full h-64"
-        theme="auto"
-      />
-    </div>
-  );
-}
-```
-
-## Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `value` | `string` | `''` | The markdown content |
-| `onChange` | `(value: string) => void` | - | Called when content changes |
-| `onEnter` | `(editor: EditorView, mod: boolean, shift: boolean) => boolean` | - | Handle Enter key. Return true to prevent default behavior |
-| `onEscape` | `(editor: EditorView) => void` | - | Handle Escape key |
-| `onSubmit` | `(editor: EditorView) => void` | - | Handle Cmd+Enter or Ctrl+Enter |
-| `onBlur` | `(editor: EditorView) => void` | - | Handle blur events |
-| `onPaste` | `(e: ClipboardEvent, editor: EditorView) => void` | - | Handle paste events |
-| `placeholder` | `string` | `''` | Placeholder text when empty |
-| `className` | `string` | `''` | Additional CSS classes |
-| `editable` | `boolean` | `true` | Whether the editor is editable |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color theme |
-
-## Keyboard Shortcuts
-
-- `Enter` - New line with smart list continuation
-- `Cmd/Ctrl + Enter` - Submit/submit action
-- `Shift + Enter` - New line (different behavior)
-- `Tab` - Indent
-- `Escape` - Blur/focus out
-
-## How It Works
-
-The editor uses a half-WYSIWYG approach:
-- When your cursor is on a line, you see the raw markdown source
-- When your cursor moves away, the line automatically renders as formatted HTML
-- This gives you the best of both worlds: easy editing with visual feedback
-
-## Styling
-
-The component is designed to work with Tailwind CSS and custom styling:
-
-```jsx
-<NeutrinoEditor
-  className="border-2 border-blue-500 rounded-lg focus:ring-4 focus:ring-blue-200"
-  theme="dark"
-/>
-```
-
-## Advanced Usage
-
-### Custom Event Handlers
-
-```jsx
-function MyEditor() {
-  const handleSubmit = (editor) => {
-    const content = editor.state.doc.toString();
-    console.log('Submitted:', content);
-  };
-
-  const handleEnter = (editor, mod, shift) => {
-    if (mod) {
-      handleSubmit(editor);
-      return true; // Prevent default behavior
-    }
-    return false; // Allow default behavior
-  };
+  const [markdown, setMarkdown] = useState('# Hello\n\nStart typing...');
 
   return (
     <NeutrinoEditor
-      onSubmit={handleSubmit}
-      onEnter={handleEnter}
+      value={markdown}
+      onChange={setMarkdown}
+      placeholder="Start typing your markdown here..."
+      minRows={10}
+      theme="auto"
     />
   );
 }
 ```
 
-### Theme Integration
+## Documentation
 
-```jsx
-const [theme, setTheme] = useState('auto');
-
-// Switch between themes
-<button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-  Toggle Theme
-</button>
-
-<NeutrinoEditor
-  theme={theme}
-  className={theme === 'dark' ? 'border-gray-700' : 'border-gray-300'}
-/>
-```
+- [Architecture](docs/architecture.md)
+- [API reference](docs/api-reference.md)
+- [Plugins](docs/plugins.md)
+- [Styling](docs/styling.md)
+- [Roadmap](docs/specs/ROADMAP.md)
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Start Storybook
-npm run storybook
-
-# Build for production
-npm run build:lib
+git clone https://git.inkyquill.net/inky/neutrino-editor.git
+cd neutrino-editor
+npm install --legacy-peer-deps
+npm run dev          # demo app
+npm run storybook    # component playground
+npm run test         # unit tests
+npm run build:lib    # build the publishable library
 ```
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room rule and PR checklist.
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT — see [`LICENSE`](./LICENSE).
 
 ## Acknowledgments
 
-- Built on [CodeMirror 6](https://codemirror.net/)
-- Markdown parsing powered by [markdown-it](https://github.com/markdown-it/markdown-it)
+Built on [CodeMirror 6](https://codemirror.net/) and [Lezer](https://lezer.codemirror.net/).
+
+Behavior in this library was inspired by studying [Joplin's editor](https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under AGPL-3.0-or-later. No Joplin source code is included in this package; see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room workflow.
