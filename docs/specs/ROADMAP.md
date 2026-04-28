@@ -25,7 +25,7 @@ Each milestone is independently shippable to the private GitLab registry. Implem
 
 | Version | Title | Status | Spec | Tag |
 |---|---|---|---|---|
-| 0.2.0 | Publishable | draft | [v0.2-publishable.md](./v0.2-publishable.md) | — |
+| 0.2.0 | Publishable | shipped 2026-04-28 | [v0.2-publishable.md](./v0.2-publishable.md) | v0.2.0 |
 | 0.3.0 | Correctness & Theming | draft | [v0.3-correctness.md](./v0.3-correctness.md) | — |
 | 0.4.0 | Smart Input | draft | [v0.4-smart-input.md](./v0.4-smart-input.md) | — |
 | 0.5.0 | Editor Commands | draft | [v0.5-editor-commands.md](./v0.5-editor-commands.md) | — |
