@@ -77,10 +77,14 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       disabledPlugins,
       extraExtensions: extensions,
     });
+    const settingsRef = useRef<ControllerSettings | null>(null);
+    settingsRef.current = buildSettings();
 
     // ── Create EditorView ONCE on mount ─────────────────────────────────
     useEffect(() => {
       if (!containerRef.current) return;
+      const initialSettings = settingsRef.current;
+      if (!initialSettings) return;
 
       // Proxy callbacks through the ref so they're always fresh
       const callbackProxy: EditorCallbacks = {
@@ -98,7 +102,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       const controller = new EditorController(
         containerRef.current,
         initialValueRef.current,
-        buildSettings(),
+        initialSettings,
         callbackProxy,
       );
 
@@ -108,21 +112,23 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
         controller.destroy();
         controllerRef.current = null;
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Intentionally empty — view created once
 
     // ── Sync settings changes via Compartment reconfiguration ───────────
     useEffect(() => {
-      if (!controllerRef.current) return;
+      if (!controllerRef.current || !settingsRef.current) return;
 
-      controllerRef.current.updateSettings(buildSettings());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are the individual settings props, not the builder function
+      controllerRef.current.updateSettings(settingsRef.current);
     }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, plugins, disabledPlugins, extensions]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {
       setResolvedTheme(resolveColorScheme(theme));
-      return watchColorScheme(theme, setResolvedTheme);
+      return watchColorScheme(theme, (nextTheme) => {
+        setResolvedTheme(nextTheme);
+        if (!controllerRef.current || !settingsRef.current) return;
+        controllerRef.current.updateSettings(settingsRef.current);
+      });
     }, [theme]);
 
     // ── Sync controlled value ───────────────────────────────────────────

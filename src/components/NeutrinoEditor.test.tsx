@@ -6,6 +6,19 @@ import type { EditorView } from '@codemirror/view';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+const emptyDomRectList = {
+  length: 0,
+  item: () => null,
+  [Symbol.iterator]: function* iterate() {},
+} as DOMRectList;
+
+if (!Range.prototype.getClientRects) {
+  Range.prototype.getClientRects = () => emptyDomRectList;
+}
+if (!Range.prototype.getBoundingClientRect) {
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
+}
+
 const roots: Root[] = [];
 const containers: HTMLElement[] = [];
 
@@ -30,6 +43,14 @@ function rerender(root: Root, element: React.ReactNode): void {
   act(() => {
     root.render(element);
   });
+}
+
+function unmount(root: Root): void {
+  act(() => {
+    root.unmount();
+  });
+  const rootIndex = roots.indexOf(root);
+  if (rootIndex >= 0) roots.splice(rootIndex, 1);
 }
 
 interface MockMediaQueryList {
@@ -139,16 +160,33 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('updates auto theme when the preferred color scheme changes', () => {
     const mediaList = mockPrefersDark(false);
-    const { container } = mount(<NeutrinoEditor value="hello" theme="auto" />);
+    const { container, root } = mount(<NeutrinoEditor value="hello" theme="auto" />);
     const wrapper = container.firstElementChild;
+    const editor = container.querySelector('.cm-editor');
 
     expect(wrapper).toBeInstanceOf(HTMLElement);
+    expect(editor).toBeInstanceOf(HTMLElement);
     expect(wrapper?.getAttribute('data-theme')).toBe('light');
+    expect(editor?.classList.contains('cm-light')).toBe(true);
+    expect(editor?.classList.contains('cm-dark')).toBe(false);
 
     act(() => {
       mediaList.dispatch(true);
     });
 
     expect(wrapper?.getAttribute('data-theme')).toBe('dark');
+    expect(editor?.classList.contains('cm-light')).toBe(false);
+    expect(editor?.classList.contains('cm-dark')).toBe(true);
+
+    const removeCallsBeforeUnmount = vi.mocked(mediaList.removeEventListener).mock.calls.length;
+    unmount(root);
+
+    expect(vi.mocked(mediaList.removeEventListener).mock.calls.length).toBeGreaterThan(
+      removeCallsBeforeUnmount,
+    );
+    expect(mediaList.removeEventListener).toHaveBeenCalledWith(
+      'change',
+      expect.any(Function),
+    );
   });
 });

@@ -40,9 +40,16 @@ export function watchColorScheme(
     onChange(resolveColorScheme('auto'));
   };
 
-  media.addEventListener('change', listener);
+  if (typeof media.addEventListener === 'function') {
+    media.addEventListener('change', listener);
+    return () => {
+      media.removeEventListener('change', listener);
+    };
+  }
+
+  media.addListener(listener);
   return () => {
-    media.removeEventListener('change', listener);
+    media.removeListener(listener);
   };
 }
 
@@ -55,6 +62,9 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
   const isDark = resolveColorScheme(scheme) === 'dark';
 
   return [
+    EditorView.editorAttributes.of({
+      class: isDark ? 'cm-dark' : 'cm-light',
+    }),
     EditorView.theme(
       {
         '&': {
