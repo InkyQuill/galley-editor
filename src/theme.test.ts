@@ -22,6 +22,8 @@ const lightVariables = {
   '--ne-color-selection': 'rgba(37, 99, 235, 0.2)',
   '--ne-color-caret': 'currentColor',
   '--ne-color-focus-ring': '#2563eb',
+  '--ne-color-transparent': 'transparent',
+  '--ne-color-list-marker': 'currentColor',
   '--ne-font-body': 'ui-sans-serif, system-ui, -apple-system, sans-serif',
   '--ne-font-mono': 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
   '--ne-font-size': '1rem',
@@ -100,6 +102,21 @@ describe('neutrino-base.css theme contract', () => {
     );
 
     expect(cssWithoutVariableDeclarations.match(/#[0-9a-fA-F]{3,8}\b/g)).toBeNull();
+  });
+
+  it('keeps literal color keywords inside CSS variable declarations only', () => {
+    const cssWithoutComments = readCss().replace(/\/\*[\s\S]*?\*\//g, '');
+    const cssWithoutVariableDeclarations = cssWithoutComments.replace(
+      /^\s*--ne-[\w-]+\s*:\s*[^;]+;\s*$/gm,
+      '',
+    ).replace(
+      /var\(--ne-[\w-]+\)/g,
+      '',
+    );
+
+    expect(
+      cssWithoutVariableDeclarations.match(/\b(?:transparent|currentcolor|currentColor)\b/g),
+    ).toBeNull();
   });
 
   it('defines dark theme overrides for key color variables', () => {

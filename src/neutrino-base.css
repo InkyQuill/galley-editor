@@ -24,6 +24,8 @@
   --ne-color-selection: rgba(37, 99, 235, 0.2);
   --ne-color-caret: currentColor;
   --ne-color-focus-ring: #2563eb;
+  --ne-color-transparent: transparent;
+  --ne-color-list-marker: currentColor;
 
   /* Typography */
   --ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -223,12 +225,12 @@
 }
 
 .ne-list-marker .ne-list-marker-sizing {
-  color: transparent;
+  color: var(--ne-color-transparent);
 }
 
 .ne-list-marker .ne-list-marker-dot {
   --size: 5px;
-  background-color: currentcolor;
+  background-color: var(--ne-color-list-marker);
   border-radius: var(--size);
   box-sizing: border-box;
   height: var(--size);
@@ -243,8 +245,8 @@
 }
 
 .ne-list-marker.ne-depth-2 .ne-list-marker-dot {
-  background-color: transparent;
-  border: 1px solid currentcolor;
+  background-color: var(--ne-color-transparent);
+  border: 1px solid var(--ne-color-list-marker);
 }
 
 /* Lezer token classes */
