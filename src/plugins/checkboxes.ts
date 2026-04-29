@@ -42,17 +42,12 @@ class CheckboxWidget extends WidgetType {
       const lineText = line.text;
       // Read actual DOM state, not widget state, to handle updateDOM reuse
       const isNowChecked = checkbox.checked;
-      let newText: string;
-      if (isNowChecked) {
-        newText = lineText.replace(/\[ \]/, '[x]');
-      } else {
-        newText = lineText.replace(/\[x\]/i, '[ ]');
-      }
-      if (newText !== lineText) {
-        view.dispatch({
-          changes: { from: line.from, to: line.to, insert: newText },
-        });
-      }
+      const markerMatch = /\[[ xX]\]/.exec(lineText);
+      if (!markerMatch) return;
+      const from = line.from + markerMatch.index;
+      const to = from + markerMatch[0].length;
+      const insert = isNowChecked ? '[x]' : '[ ]';
+      view.dispatch({ changes: { from, to, insert } });
     };
 
     return container;

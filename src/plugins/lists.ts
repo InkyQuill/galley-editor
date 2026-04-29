@@ -5,14 +5,16 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 /** Number of distinct visual bullet styles that cycle with nesting depth. */
 const DEPTH_STYLE_COUNT = 3;
 
-class BulletMarkerWidget extends WidgetType {
+export class BulletMarkerWidget extends WidgetType {
   private depthClass: string;
   private markerClass: string;
+  private previousDepthClass: string;
 
   constructor(depth: number, markerClass: string) {
     super();
     this.markerClass = markerClass;
     this.depthClass = `ne-depth-${depth % DEPTH_STYLE_COUNT}`;
+    this.previousDepthClass = this.depthClass;
   }
 
   eq(other: BulletMarkerWidget) {
@@ -22,8 +24,7 @@ class BulletMarkerWidget extends WidgetType {
   toDOM() {
     const span = document.createElement('span');
     span.className = `${this.markerClass} ${this.depthClass}`;
-    span.setAttribute('aria-label', 'bullet');
-    span.role = 'img';
+    span.setAttribute('aria-hidden', 'true');
 
     // Sizing element preserves the width of the original marker
     const sizing = document.createElement('span');
@@ -40,8 +41,13 @@ class BulletMarkerWidget extends WidgetType {
   }
 
   updateDOM(dom: HTMLElement) {
-    dom.classList.remove('ne-depth-0', 'ne-depth-1', 'ne-depth-2');
+    const currentDepthClass =
+      Array.from(dom.classList).find((className) => /^ne-depth-[0-2]$/.test(className)) ??
+      this.previousDepthClass;
+    this.previousDepthClass = currentDepthClass;
+    dom.classList.remove(this.previousDepthClass);
     dom.classList.add(this.depthClass);
+    this.previousDepthClass = this.depthClass;
     return true;
   }
 

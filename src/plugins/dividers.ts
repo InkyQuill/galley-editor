@@ -17,6 +17,7 @@ class DividerWidget extends WidgetType {
   toDOM() {
     const hr = document.createElement('hr');
     hr.className = this.widgetClass;
+    hr.setAttribute('aria-hidden', 'true');
     return hr;
   }
 
