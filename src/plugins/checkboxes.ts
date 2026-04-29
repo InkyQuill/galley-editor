@@ -2,7 +2,8 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
-class CheckboxWidget extends WidgetType {
+/** @internal */
+export class CheckboxWidget extends WidgetType {
   checked: boolean;
   depth: number;
   label: string;
@@ -56,7 +57,10 @@ class CheckboxWidget extends WidgetType {
   updateDOM(dom: HTMLElement) {
     const input = dom.querySelector('input');
     if (input) {
+      dom.className = `${this.checkboxClass} ne-depth-${this.depth}`;
       input.checked = this.checked;
+      input.ariaLabel = this.label;
+      input.title = this.label;
       return true;
     }
     return false;
