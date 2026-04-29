@@ -41,10 +41,6 @@ export class BulletMarkerWidget extends WidgetType {
   }
 
   updateDOM(dom: HTMLElement) {
-    const currentDepthClass =
-      Array.from(dom.classList).find((className) => /^ne-depth-[0-2]$/.test(className)) ??
-      this.previousDepthClass;
-    this.previousDepthClass = currentDepthClass;
     dom.classList.remove(this.previousDepthClass);
     dom.classList.add(this.depthClass);
     this.previousDepthClass = this.depthClass;

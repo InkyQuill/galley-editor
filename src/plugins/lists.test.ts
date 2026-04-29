@@ -30,12 +30,13 @@ describe('listsPlugin', () => {
   });
 
   it('updates only the previous bullet depth class when reused', () => {
-    const previousWidget = new BulletMarkerWidget(1, 'ne-list-marker');
-    const nextWidget = new BulletMarkerWidget(2, 'ne-list-marker');
-    const marker = previousWidget.toDOM();
-    marker.classList.add('ne-depth-0');
+    const widget = new BulletMarkerWidget(1, 'ne-list-marker') as unknown as
+      BulletMarkerWidget & { depthClass: string };
+    const marker = widget.toDOM();
+    marker.className = 'ne-list-marker ne-depth-0 ne-depth-1';
+    widget.depthClass = 'ne-depth-2';
 
-    expect(nextWidget.updateDOM(marker)).toBe(true);
+    expect(widget.updateDOM(marker)).toBe(true);
 
     expect(marker.classList.contains('ne-depth-1')).toBe(false);
     expect(marker.classList.contains('ne-depth-2')).toBe(true);
