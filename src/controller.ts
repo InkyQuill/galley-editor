@@ -7,7 +7,7 @@
  * - historyCompartment: undo/redo history
  */
 
-import { EditorView, keymap, placeholder as cmPlaceholder } from '@codemirror/view';
+import { EditorView, ViewPlugin, keymap, placeholder as cmPlaceholder } from '@codemirror/view';
 import {
   Compartment,
   EditorSelection,
@@ -63,6 +63,7 @@ export interface ControllerSettings {
   editable: boolean;
   placeholder: string;
   theme: ColorScheme;
+  editorClassName: string;
   classNames: NeutrinoClassNames;
   minRows: number;
   maxRows?: number;
@@ -108,6 +109,43 @@ function rafCoalesce<T extends unknown[]>(fn: (...args: T) => void): CoalescedCa
   return coalesced;
 }
 
+function classTokens(className: string): Set<string> {
+  return new Set(className.split(/\s+/).filter(Boolean));
+}
+
+function syncClassTokens(view: EditorView, previous: Set<string>, next: Set<string>): void {
+  for (const token of previous) {
+    if (!next.has(token)) view.dom.classList.remove(token);
+  }
+  for (const token of next) {
+    if (!previous.has(token)) view.dom.classList.add(token);
+  }
+}
+
+function editorClassNameExtension(className: string): Extension {
+  const desiredTokens = classTokens(className);
+
+  return [
+    EditorView.editorAttributes.of(className ? { class: className } : {}),
+    ViewPlugin.define((view) => {
+      let previousTokens = new Set<string>();
+      const sync = () => {
+        syncClassTokens(view, previousTokens, desiredTokens);
+        previousTokens = new Set(desiredTokens);
+      };
+
+      sync();
+
+      return {
+        update: sync,
+        destroy() {
+          syncClassTokens(view, previousTokens, new Set());
+        },
+      };
+    }),
+  ];
+}
+
 // ── EditorController ────────────────────────────────────────────────────────
 
 export class EditorController implements NeutrinoHandle {
@@ -117,6 +155,7 @@ export class EditorController implements NeutrinoHandle {
   private readonly autosizeCompartment = new Compartment();
   private readonly historyCompartment = new Compartment();
   private readonly runtimeExtensionsCompartment = new Compartment();
+  private readonly editorClassNameCompartment = new Compartment();
   private readonly runtimeExtensions = new Map<symbol, Extension>();
 
   private readonly customCommands = new Map<string, CommandFn>();
@@ -160,6 +199,10 @@ export class EditorController implements NeutrinoHandle {
         this.historyCompartment.of(history()),
         // Runtime extensions added through the imperative handle
         this.runtimeExtensionsCompartment.of([]),
+        // Classes applied to the .cm-editor root
+        this.editorClassNameCompartment.of(
+          editorClassNameExtension(settings.editorClassName),
+        ),
       ],
     });
 
@@ -305,6 +348,14 @@ export class EditorController implements NeutrinoHandle {
       effects.push(
         this.autosizeCompartment.reconfigure(
           autosizeExtension(newSettings.minRows, newSettings.maxRows),
+        ),
+      );
+    }
+
+    if (newSettings.editorClassName !== this.settings.editorClassName) {
+      effects.push(
+        this.editorClassNameCompartment.reconfigure(
+          editorClassNameExtension(newSettings.editorClassName),
         ),
       );
     }

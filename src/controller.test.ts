@@ -15,6 +15,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     editable: true,
     placeholder: '',
     theme: 'light',
+    editorClassName: '',
     classNames: {},
     minRows: 3,
     plugins: [],

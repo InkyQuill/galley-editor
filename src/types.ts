@@ -166,8 +166,8 @@ export interface NeutrinoHandle {
   /** Add a CM6 extension at runtime. Returns a handle to remove it. */
   addExtension(ext: Extension): { remove(): void };
 
-  /** The underlying CodeMirror EditorView (escape hatch). */
-  readonly view: EditorView;
+  /** The underlying CodeMirror EditorView (escape hatch), or null before mount. */
+  readonly view: EditorView | null;
 }
 
 // ── Editor props ────────────────────────────────────────────────────────────

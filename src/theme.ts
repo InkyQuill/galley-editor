@@ -15,11 +15,35 @@ export type ColorScheme = 'light' | 'dark' | 'auto';
 export function resolveColorScheme(scheme: ColorScheme): 'light' | 'dark' {
   if (scheme === 'auto') {
     return typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
       : 'light';
   }
   return scheme;
+}
+
+export function watchColorScheme(
+  scheme: ColorScheme,
+  onChange: (resolved: 'light' | 'dark') => void,
+): () => void {
+  if (
+    scheme !== 'auto' ||
+    typeof window === 'undefined' ||
+    typeof window.matchMedia !== 'function'
+  ) {
+    return () => {};
+  }
+
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const listener = () => {
+    onChange(resolveColorScheme('auto'));
+  };
+
+  media.addEventListener('change', listener);
+  return () => {
+    media.removeEventListener('change', listener);
+  };
 }
 
 /**
