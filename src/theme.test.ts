@@ -88,6 +88,15 @@ function stripVariableDeclarations(css: string) {
     .replace(/^\s*--ne-[\w-]+\s*:\s*[^;]+;\s*$/gm, '');
 }
 
+function getSelectors(css: string) {
+  const cssWithoutComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  return Array.from(cssWithoutComments.matchAll(/(?:^|})\s*([^{}]+)\s*\{/g))
+    .flatMap((match) => match[1].split(','))
+    .map((selector) => selector.trim())
+    .filter(Boolean);
+}
+
 describe('neutrino-base.css theme contract', () => {
   it('defines the canonical light variable defaults', () => {
     const css = readCss();
@@ -127,5 +136,13 @@ describe('neutrino-base.css theme contract', () => {
     const darkBlock = getBlock(css, /\[data-theme="dark"\]\s*\{(?<body>[\s\S]*?)\}/);
 
     expect(parseVariables(darkBlock)).toEqual(darkVariables);
+  });
+
+  it('does not leak global CodeMirror root selectors', () => {
+    const leakedSelectors = getSelectors(readCss()).filter((selector) =>
+      /^\.cm-(?:editor|content)(?:\b|:|\.|#|\[)/.test(selector),
+    );
+
+    expect(leakedSelectors).toEqual([]);
   });
 });

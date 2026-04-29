@@ -71,19 +71,6 @@
   --ne-color-focus-ring: #60a5fa;
 }
 
-/* CodeMirror-adjacent defaults */
-
-.cm-editor {
-  background-color: var(--ne-color-bg);
-  color: var(--ne-color-text);
-}
-
-.cm-content {
-  font-family: var(--ne-font-body);
-  font-size: var(--ne-font-size);
-  line-height: var(--ne-line-height);
-}
-
 /* Headings */
 
 .ne-heading {
