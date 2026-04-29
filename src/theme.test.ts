@@ -22,8 +22,6 @@ const lightVariables = {
   '--ne-color-selection': 'rgba(37, 99, 235, 0.2)',
   '--ne-color-caret': 'currentColor',
   '--ne-color-focus-ring': '#2563eb',
-  '--ne-color-transparent': 'transparent',
-  '--ne-color-list-marker': 'currentColor',
   '--ne-font-body': 'ui-sans-serif, system-ui, -apple-system, sans-serif',
   '--ne-font-mono': 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
   '--ne-font-size': '1rem',
