@@ -1,0 +1,16 @@
+# Migrated from .claude/settings.local.json on 2026-04-29.
+#
+# Claude Code's permissions.allow command list has no direct Codex project-local
+# equivalent. Shell command approvals are handled by the active Codex session
+# approval policy and persisted approval rules, not this file.
+#
+# The WebSearch/WebFetch portion does map to Codex web/network settings.
+web_search = "live"
+
+[permissions.network]
+enabled = true
+mode = "limited"
+allowed_domains = [
+  "github.com",
+  "raw.githubusercontent.com",
+]
