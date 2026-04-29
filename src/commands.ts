@@ -343,17 +343,15 @@ const createToggleHeading = (level: number): CommandFn => {
     const prefix = '#'.repeat(level) + ' ';
     const matchEmpty = true;
 
-    if (level > 1) {
-      const removeOtherLevels = toggleSelectedLinesStartWith(
-        view.state,
-        new RegExp(
-          `${level - 1 >= 1 ? `(?:^[#]{1,${level - 1}}\\s)|` : ''}(?:^[#]{${level + 1},}\\s)`,
-        ),
-        '',
-        matchEmpty,
-      );
-      view.dispatch(removeOtherLevels);
-    }
+    const removeOtherLevels = toggleSelectedLinesStartWith(
+      view.state,
+      new RegExp(
+        `${level - 1 >= 1 ? `(?:^[#]{1,${level - 1}}\\s)|` : ''}(?:^[#]{${level + 1},}\\s)`,
+      ),
+      '',
+      matchEmpty,
+    );
+    view.dispatch(removeOtherLevels);
 
     const changes = toggleSelectedLinesStartWith(
       view.state,
