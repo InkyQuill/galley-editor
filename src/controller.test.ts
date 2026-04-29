@@ -18,6 +18,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     editorClassName: '',
     classNames: {},
     minRows: 3,
+    tabIndents: true,
     plugins: [],
     disabledPlugins: [],
     extraExtensions: [],
@@ -182,6 +183,46 @@ describe('EditorController key handling', () => {
     expect(onEnter).toHaveBeenCalledWith(false, false);
     expect(controller.getContent()).toBe('a\nbc\nd');
     expect(controller.view.state.selection.ranges.map((range) => range.head)).toEqual([2, 5]);
+  });
+
+  it('falls through Tab when tabIndents=false', () => {
+    const controller = createController('hello', {}, { tabIndents: false });
+    const event = dispatchKey(controller.view, {
+      key: 'Tab',
+      code: 'Tab',
+      keyCode: 9,
+      which: 9,
+    });
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('preserves defaults when keymap is extended and keeps custom binding', () => {
+    const custom = vi.fn(() => true);
+    const controller = createController('hello', {}, {
+      keymap: (defaults) => [...defaults, { key: 'F9', run: () => custom() }],
+    });
+
+    const f9 = dispatchKey(controller.view, {
+      key: 'F9',
+      code: 'F9',
+      keyCode: 120,
+      which: 120,
+    });
+    expect(custom).toHaveBeenCalledOnce();
+    expect(f9.defaultPrevented).toBe(true);
+
+    controller.view.dispatch({
+      selection: EditorSelection.cursor(controller.getContent().length),
+    });
+
+    dispatchKey(controller.view, {
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 13,
+      which: 13,
+    });
+    expect(controller.getContent()).toBe('hello\n');
   });
 });
 

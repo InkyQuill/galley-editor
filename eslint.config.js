@@ -10,6 +10,7 @@ export default defineConfig([
     'dist',
     'storybook-static',
     '.remember',
+    '.worktrees',
     'coverage',
     '3rdparty',
   ]),

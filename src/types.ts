@@ -1,5 +1,5 @@
 import type { EditorState, Extension, Transaction } from '@codemirror/state';
-import type { Decoration, EditorView, WidgetType } from '@codemirror/view';
+import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
 // ── Reveal strategy ─────────────────────────────────────────────────────────
@@ -107,12 +107,7 @@ export type BuiltinCommand =
   | 'toggleItalic'
   | 'toggleCode'
   | 'toggleStrikethrough'
-  | 'toggleHeading1'
-  | 'toggleHeading2'
-  | 'toggleHeading3'
-  | 'toggleHeading4'
-  | 'toggleHeading5'
-  | 'toggleHeading6'
+  | 'toggleHeading'
   | 'toggleBulletList'
   | 'toggleOrderedList'
   | 'toggleCheckList'
@@ -197,6 +192,10 @@ export interface NeutrinoEditorProps {
 
   /** Color scheme. Default: 'auto'. */
   theme?: 'light' | 'dark' | 'auto';
+  /** Tab inserts/deletes indentation instead of moving focus out. Default: true. */
+  tabIndents?: boolean;
+  /** Override or extend the default keymap. */
+  keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
 
   /** Additional plugins to register alongside built-ins. */
   plugins?: NeutrinoPlugin[];

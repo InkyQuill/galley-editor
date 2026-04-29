@@ -7,7 +7,13 @@
  * - historyCompartment: undo/redo history
  */
 
-import { EditorView, ViewPlugin, keymap, placeholder as cmPlaceholder } from '@codemirror/view';
+import {
+  EditorView,
+  ViewPlugin,
+  keymap,
+  placeholder as cmPlaceholder,
+  type KeyBinding,
+} from '@codemirror/view';
 import {
   Compartment,
   EditorSelection,
@@ -21,7 +27,6 @@ import {
   history,
   standardKeymap,
   historyKeymap,
-  indentWithTab,
 } from '@codemirror/commands';
 import { indentOnInput, bracketMatching } from '@codemirror/language';
 import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/view';
@@ -29,7 +34,13 @@ import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/vi
 import { buildCmTheme, type ColorScheme } from './theme';
 import { autosizeExtension } from './autosize';
 import { BUILT_IN_PLUGINS } from './plugins';
-import { BUILTIN_COMMANDS } from './commands';
+import {
+  BUILTIN_COMMANDS,
+  makeSmartBackspaceTransaction,
+  makeSmartEnterTransaction,
+  makeSmartTabTransaction,
+} from './commands';
+import { parseListLine } from './commands/list-syntax';
 import {
   resolveClassNames,
   type CommandFn,
@@ -67,6 +78,8 @@ export interface ControllerSettings {
   classNames: NeutrinoClassNames;
   minRows: number;
   maxRows?: number;
+  tabIndents: boolean;
+  keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   plugins: NeutrinoPlugin[];
   disabledPlugins: string[];
   extraExtensions: Extension[];
@@ -154,6 +167,7 @@ export class EditorController implements NeutrinoHandle {
   private readonly dynamicCompartment = new Compartment();
   private readonly autosizeCompartment = new Compartment();
   private readonly historyCompartment = new Compartment();
+  private readonly keymapCompartment = new Compartment();
   private readonly runtimeExtensionsCompartment = new Compartment();
   private readonly editorClassNameCompartment = new Compartment();
   private readonly runtimeExtensions = new Map<symbol, Extension>();
@@ -197,6 +211,8 @@ export class EditorController implements NeutrinoHandle {
         ),
         // History (separate so it can be cleared independently)
         this.historyCompartment.of(history()),
+        // Configured keymap
+        this.keymapCompartment.of(this.buildKeymap(this.settings)),
         // Runtime extensions added through the imperative handle
         this.runtimeExtensionsCompartment.of([]),
         // Classes applied to the .cm-editor root
@@ -222,30 +238,6 @@ export class EditorController implements NeutrinoHandle {
       EditorState.allowMultipleSelections.of(true),
       EditorView.lineWrapping,
       EditorState.tabSize.of(2),
-
-      // Keymaps
-      keymap.of([
-        {
-          key: 'Enter',
-          run: (cm) => this.handleEnter(cm, false, false),
-          shift: (cm) => this.handleEnter(cm, false, true),
-        },
-        {
-          key: 'Mod-Enter',
-          run: (cm) => this.handleEnter(cm, true, false),
-          shift: (cm) => this.handleEnter(cm, true, true),
-        },
-        {
-          key: 'Escape',
-          run: () => {
-            const handled = this.callbacks.onEscape?.();
-            return handled === true;
-          },
-        },
-        ...standardKeymap,
-        ...historyKeymap,
-        indentWithTab,
-      ]),
 
       // Event listeners (use callback refs so they never go stale)
       EditorView.updateListener.of((update) => {
@@ -291,21 +283,93 @@ export class EditorController implements NeutrinoHandle {
       const handled = this.callbacks.onEnter(mod, shift);
       if (handled) return true;
     }
-    // Default: insert newline
-    cm.dispatch(
-      cm.state.update({
-        ...cm.state.changeByRange((range) => ({
-          changes: {
-            from: range.from,
-            to: range.to,
-            insert: '\n',
-          },
-          range: EditorSelection.cursor(range.from + 1),
-        })),
-        scrollIntoView: true,
-      }),
-    );
+
+    cm.dispatch({
+      ...makeSmartEnterTransaction(cm.state),
+      scrollIntoView: true,
+    });
     return true;
+  }
+
+  private handleDefaultEnter(cm: EditorView): boolean {
+    cm.dispatch({
+      ...cm.state.changeByRange((range) => ({
+        changes: { from: range.from, to: range.to, insert: '\n' },
+        range: EditorSelection.cursor(range.from + 1),
+      })),
+      scrollIntoView: true,
+    });
+    return true;
+  }
+
+  private handleTab(cm: EditorView, shift: boolean): boolean {
+    const ranges = cm.state.selection.ranges;
+    const hasListSelection = ranges.some((range) => {
+      const line = cm.state.doc.lineAt(range.from);
+      return parseListLine(line.text) !== null;
+    });
+
+    if (hasListSelection) {
+      cm.dispatch({
+        ...makeSmartTabTransaction(cm.state, shift),
+        scrollIntoView: true,
+      });
+      return true;
+    }
+
+    if (!this.settings.tabIndents) {
+      return false;
+    }
+
+    if (shift) {
+      this.execCommand('outdent');
+      return true;
+    }
+
+    this.execCommand('indent');
+    return true;
+  }
+
+  private handleBackspace(cm: EditorView): boolean {
+    cm.dispatch({
+      ...makeSmartBackspaceTransaction(cm.state),
+      scrollIntoView: true,
+    });
+    return true;
+  }
+
+  private buildKeymap(settings: ControllerSettings): Extension {
+    const commandDefaults: KeyBinding[] = [
+      { key: 'Enter', run: (cm) => this.handleEnter(cm, false, false) },
+      { key: 'Shift-Enter', run: (cm) => this.handleDefaultEnter(cm) },
+      { key: 'Mod-Enter', run: (cm) => this.handleEnter(cm, true, false) },
+      { key: 'Mod-Shift-Enter', run: () => false },
+      { key: 'Tab', run: (cm) => this.handleTab(cm, false) },
+      { key: 'Shift-Tab', run: (cm) => this.handleTab(cm, true) },
+      { key: 'Backspace', run: (cm) => this.handleBackspace(cm) },
+      {
+        key: 'Escape',
+        run: () => {
+          const handled = this.callbacks.onEscape?.();
+          return handled === true;
+        },
+      },
+      { key: 'Mod-K', run: () => !!this.execCommand('insertLink') },
+      { key: 'Mod-b', run: () => !!this.execCommand('toggleBold') },
+      { key: 'Mod-i', run: () => !!this.execCommand('toggleItalic') },
+      { key: 'Mod-z', run: () => !!this.execCommand('undo') },
+      { key: 'Mod-Shift-z', run: () => !!this.execCommand('redo') },
+      { key: 'Mod-a', run: () => !!this.execCommand('selectAll') },
+    ];
+
+    const combinedKeymap = [...commandDefaults, ...standardKeymap, ...historyKeymap];
+    if (typeof settings.keymap === 'function') {
+      return keymap.of(settings.keymap(combinedKeymap));
+    }
+    if (settings.keymap) {
+      return keymap.of([...combinedKeymap, ...settings.keymap]);
+    }
+    return keymap.of(combinedKeymap);
   }
 
   // ── Dynamic extensions (reconfigured on settings change) ──────────────
@@ -340,6 +404,10 @@ export class EditorController implements NeutrinoHandle {
   updateSettings(newSettings: ControllerSettings) {
     const effects: StateEffect<unknown>[] = [];
 
+    const keymapChanged =
+      newSettings.tabIndents !== this.settings.tabIndents ||
+      newSettings.keymap !== this.settings.keymap;
+
     // Check if autosize needs reconfiguring
     if (
       newSettings.minRows !== this.settings.minRows ||
@@ -357,6 +425,12 @@ export class EditorController implements NeutrinoHandle {
         this.editorClassNameCompartment.reconfigure(
           editorClassNameExtension(newSettings.editorClassName),
         ),
+      );
+    }
+
+    if (keymapChanged) {
+      effects.push(
+        this.keymapCompartment.reconfigure(this.buildKeymap(newSettings)),
       );
     }
 

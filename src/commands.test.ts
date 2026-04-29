@@ -156,51 +156,51 @@ describe('toggleStrikethrough', () => {
 // ── Headings ───────────────────────────────────────────────────────────────
 
 describe('headings', () => {
-  it('toggleHeading1 adds # prefix', () => {
+  it('toggleHeading adds # prefix', () => {
     const view = tracked(createView('hello', 3));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     expect(docOf(view)).toBe('# hello');
   });
 
-  it('toggleHeading1 removes # prefix when toggled off', () => {
+  it('toggleHeading removes # prefix when toggled off', () => {
     const view = tracked(createView('# hello', 4));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     expect(docOf(view)).toBe('hello');
   });
 
-  it('toggleHeading2 adds ## prefix', () => {
+  it('toggleHeading adds ## prefix', () => {
     const view = tracked(createView('hello', 3));
-    BUILTIN_COMMANDS.toggleHeading2(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 2);
     expect(docOf(view)).toBe('## hello');
   });
 
-  it('toggleHeading2 removes ## prefix when toggled off', () => {
+  it('toggleHeading removes ## prefix when toggled off', () => {
     const view = tracked(createView('## hello', 5));
-    BUILTIN_COMMANDS.toggleHeading2(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 2);
     expect(docOf(view)).toBe('hello');
   });
 
-  it('toggleHeading3 adds ### prefix', () => {
+  it('toggleHeading adds ### prefix', () => {
     const view = tracked(createView('hello', 3));
-    BUILTIN_COMMANDS.toggleHeading3(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
     expect(docOf(view)).toBe('### hello');
   });
 
-  it('toggleHeading2 replaces # with ## (upgrades heading level)', () => {
+  it('toggleHeading replaces # with ## (upgrades heading level)', () => {
     const view = tracked(createView('# hello', 4));
-    BUILTIN_COMMANDS.toggleHeading2(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 2);
     expect(docOf(view)).toBe('## hello');
   });
 
-  it('toggleHeading1 replaces ## with # (downgrades heading level)', () => {
+  it('toggleHeading replaces ## with # (downgrades heading level)', () => {
     const view = tracked(createView('## hello', 5));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     expect(docOf(view)).toBe('# hello');
   });
 
-  it('toggleHeading1 treats seven hashes as plain content', () => {
+  it('toggleHeading treats seven hashes as plain content', () => {
     const view = tracked(createView('####### hello', 5));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     expect(docOf(view)).toBe('# ####### hello');
   });
 
@@ -217,38 +217,33 @@ describe('headings', () => {
       const sourcePrefix = '#'.repeat(sourceLevel);
       const targetPrefix = '#'.repeat(targetLevel);
       const view = tracked(createView(`${sourcePrefix} hello`, sourcePrefix.length + 2));
-      const command =
-        BUILTIN_COMMANDS[
-          `toggleHeading${targetLevel}` as keyof typeof BUILTIN_COMMANDS
-        ];
-
-      command(view);
+      BUILTIN_COMMANDS.toggleHeading(view, targetLevel);
 
       expect(docOf(view)).toBe(`${targetPrefix} hello`);
     },
   );
 
-  it('toggleHeading4 adds #### prefix', () => {
+  it('toggleHeading adds #### prefix', () => {
     const view = tracked(createView('hello'));
-    BUILTIN_COMMANDS.toggleHeading4(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 4);
     expect(docOf(view)).toBe('#### hello');
   });
 
-  it('toggleHeading5 adds ##### prefix', () => {
+  it('toggleHeading adds ##### prefix', () => {
     const view = tracked(createView('hello'));
-    BUILTIN_COMMANDS.toggleHeading5(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 5);
     expect(docOf(view)).toBe('##### hello');
   });
 
-  it('toggleHeading6 adds ###### prefix', () => {
+  it('toggleHeading adds ###### prefix', () => {
     const view = tracked(createView('hello'));
-    BUILTIN_COMMANDS.toggleHeading6(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 6);
     expect(docOf(view)).toBe('###### hello');
   });
 
   it('applies heading to multiple selected lines', () => {
     const view = tracked(createViewWithSelection('hello\nworld', 0, 11));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     expect(docOf(view)).toBe('# hello\n# world');
   });
 });
@@ -305,7 +300,7 @@ describe('toggleOrderedList', () => {
   it('applies to multiple selected lines', () => {
     const view = tracked(createViewWithSelection('hello\nworld', 0, 11));
     BUILTIN_COMMANDS.toggleOrderedList(view);
-    expect(docOf(view)).toBe('1. hello\n1. world');
+    expect(docOf(view)).toBe('1. hello\n2. world');
   });
 });
 
@@ -521,7 +516,7 @@ describe('edge cases', () => {
 
   it('heading on multiline with empty lines', () => {
     const view = tracked(createViewWithSelection('hello\n\nworld', 0, 12));
-    BUILTIN_COMMANDS.toggleHeading1(view);
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
     // matchEmpty is true for headings, so empty lines also get prefix
     expect(docOf(view)).toBe('# hello\n# \n# world');
   });
@@ -532,7 +527,7 @@ describe('edge cases', () => {
     expect(BUILTIN_COMMANDS.toggleItalic(view)).toBe(true);
     expect(BUILTIN_COMMANDS.toggleCode(view)).toBe(true);
     expect(BUILTIN_COMMANDS.toggleStrikethrough(view)).toBe(true);
-    expect(BUILTIN_COMMANDS.toggleHeading1(view)).toBe(true);
+    expect(BUILTIN_COMMANDS.toggleHeading(view, 1)).toBe(true);
     expect(BUILTIN_COMMANDS.toggleBulletList(view)).toBe(true);
     expect(BUILTIN_COMMANDS.toggleOrderedList(view)).toBe(true);
     expect(BUILTIN_COMMANDS.toggleCheckList(view)).toBe(true);

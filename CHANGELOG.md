@@ -8,6 +8,25 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-29
+
+### Added
+- Smart Enter behavior for lists (bullets, tasks, and ordered lists), with line continuation and list-aware mid-line splitting.
+- Smart Tab/Shift-Tab behavior for list indentation and outdentation.
+- Smart Backspace behavior for empty list markers.
+- `tabIndents` editor prop (default: `true`) to control fallback tab indentation behavior.
+- `keymap` editor prop for overriding or extending default key bindings.
+
+### Changed
+- Consolidated heading commands behind `toggleHeading(level)`; removed `toggleHeading1`…`toggleHeading6` builtin command names.
+- Enter/Tab/Backspace handling in the controller now routes through smart-command builders with keyboard-map integration.
+
+### Fixed
+- Keymap extension assembly preserves default bindings and custom extensions.
+- Ordered-list indentation resets nested markers to `1.` while outdent keeps existing numbering.
+
+## [0.3.0] — 2026-04-29
+
 ### Added
 - CSS variable theming contract for Neutrino's base styles.
 - Live auto theme subscription so `theme="auto"` updates when the OS color scheme changes.
@@ -68,5 +87,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.2.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.4.0...HEAD
+[0.4.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.4.0
+[0.3.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.3.0
 [0.2.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.2.0

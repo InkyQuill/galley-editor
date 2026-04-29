@@ -33,6 +33,8 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `editorClassName` | `string` | `''` | CSS class applied to the CodeMirror `.cm-editor` element |
 | `classNames` | `NeutrinoClassNames` | `DEFAULT_CLASS_NAMES` | Override semantic CSS class names |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme |
+| `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
+| `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Override or extend the default CodeMirror keymap |
 | `plugins` | `NeutrinoPlugin[]` | `[]` | Additional plugins alongside built-ins |
 | `disabledPlugins` | `string[]` | `[]` | Built-in plugin IDs to disable |
 | `extensions` | `Extension[]` | `[]` | Additional CM6 extensions (appended last) |
@@ -236,13 +238,12 @@ interface NeutrinoClassNames {
 
 ### `BuiltinCommand`
 
-Union type of all 23 built-in command names:
+Union type of all built-in command names:
 
 ```typescript
 type BuiltinCommand =
   | 'toggleBold' | 'toggleItalic' | 'toggleCode' | 'toggleStrikethrough'
-  | 'toggleHeading1' | 'toggleHeading2' | 'toggleHeading3'
-  | 'toggleHeading4' | 'toggleHeading5' | 'toggleHeading6'
+  | 'toggleHeading'
   | 'toggleBulletList' | 'toggleOrderedList' | 'toggleCheckList'
   | 'insertLink' | 'insertImage' | 'insertCodeBlock' | 'insertTable' | 'insertHr'
   | 'indent' | 'outdent'
@@ -300,7 +301,7 @@ The registry of all built-in commands. Each command is a function that takes an 
 
 | Command | Description | Arguments |
 |---|---|---|
-| `toggleHeading1` - `toggleHeading6` | Adds/removes `# ` through `###### ` prefix. Auto-clears other heading levels on the same line. | -- |
+| `toggleHeading` | Adds/removes heading syntax for the requested level. Replaces other heading levels on the same line. | `level?: 1 \| 2 \| 3 \| 4 \| 5 \| 6` |
 
 #### Lists
 

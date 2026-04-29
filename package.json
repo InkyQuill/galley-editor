@@ -1,6 +1,6 @@
 {
   "name": "@inky/neutrino-editor",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6 with Obsidian-style live preview.",
   "type": "module",
   "license": "MIT",

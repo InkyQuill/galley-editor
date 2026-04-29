@@ -188,9 +188,45 @@ function WithToolbarStory() {
         {btn('I', 'toggleItalic')}
         {btn('S', 'toggleStrikethrough')}
         {btn('Code', 'toggleCode')}
-        {btn('H1', 'toggleHeading1')}
-        {btn('H2', 'toggleHeading2')}
-        {btn('H3', 'toggleHeading3')}
+        <button
+          onClick={() => ref.current?.execCommand('toggleHeading', 1)}
+          style={{
+            padding: '4px 8px',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: '13px',
+          }}
+        >
+          H1
+        </button>
+        <button
+          onClick={() => ref.current?.execCommand('toggleHeading', 2)}
+          style={{
+            padding: '4px 8px',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: '13px',
+          }}
+        >
+          H2
+        </button>
+        <button
+          onClick={() => ref.current?.execCommand('toggleHeading', 3)}
+          style={{
+            padding: '4px 8px',
+            border: '1px solid #d1d5db',
+            borderRadius: '4px',
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: '13px',
+          }}
+        >
+          H3
+        </button>
         {btn('UL', 'toggleBulletList')}
         {btn('OL', 'toggleOrderedList')}
         {btn('Task', 'toggleCheckList')}

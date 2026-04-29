@@ -153,7 +153,7 @@ Plugins produce three types of decorations:
 Commands are pure functions `(view: EditorView, ...args) => unknown` registered in `BUILTIN_COMMANDS`. They fall into categories:
 
 - **Inline formatting**: `toggleBold`, `toggleItalic`, `toggleCode`, `toggleStrikethrough` -- wrap/unwrap selection with delimiters
-- **Headings**: `toggleHeading1` through `toggleHeading6` -- add/remove line prefixes, auto-clear other heading levels
+- **Headings**: `toggleHeading(level)` -- add/remove line prefixes, auto-clear other heading levels
 - **Lists**: `toggleBulletList`, `toggleOrderedList`, `toggleCheckList` -- add/remove line prefixes
 - **Insert**: `insertLink`, `insertImage`, `insertCodeBlock`, `insertTable`, `insertHr` -- insert markdown at cursor
 - **Editing**: `indent`, `outdent`, `undo`, `redo`, `selectAll`

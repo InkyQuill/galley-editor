@@ -67,9 +67,9 @@ function App() {
           <button onClick={() => editorRef.current?.execCommand('toggleItalic')}>Italic</button>
           <button onClick={() => editorRef.current?.execCommand('toggleCode')}>Code</button>
           <button onClick={() => editorRef.current?.execCommand('toggleStrikethrough')}>Strike</button>
-          <button onClick={() => editorRef.current?.execCommand('toggleHeading1')}>H1</button>
-          <button onClick={() => editorRef.current?.execCommand('toggleHeading2')}>H2</button>
-          <button onClick={() => editorRef.current?.execCommand('toggleHeading3')}>H3</button>
+          <button onClick={() => editorRef.current?.execCommand('toggleHeading', 1)}>H1</button>
+          <button onClick={() => editorRef.current?.execCommand('toggleHeading', 2)}>H2</button>
+          <button onClick={() => editorRef.current?.execCommand('toggleHeading', 3)}>H3</button>
           <button onClick={() => editorRef.current?.execCommand('toggleBulletList')}>Bullet</button>
           <button onClick={() => editorRef.current?.execCommand('toggleOrderedList')}>Ordered</button>
           <button onClick={() => editorRef.current?.execCommand('toggleCheckList')}>Check</button>
