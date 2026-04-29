@@ -54,6 +54,7 @@ const lightVariables = {
 const darkVariables = {
   '--ne-color-text': '#e5e7eb',
   '--ne-color-text-muted': '#9ca3af',
+  '--ne-color-code-fg': '#e5e7eb',
   '--ne-color-link': '#60a5fa',
   '--ne-color-link-hover': '#93c5fd',
   '--ne-color-blockquote-fg': '#9ca3af',
@@ -81,6 +82,12 @@ function parseVariables(block: string) {
   );
 }
 
+function stripVariableDeclarations(css: string) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*--ne-[\w-]+\s*:\s*[^;]+;\s*$/gm, '');
+}
+
 describe('neutrino-base.css theme contract', () => {
   it('defines the canonical light variable defaults', () => {
     const css = readCss();
@@ -92,29 +99,27 @@ describe('neutrino-base.css theme contract', () => {
     expect(parseVariables(lightBlock)).toEqual(lightVariables);
   });
 
-  it('keeps hex colors inside CSS variable declarations only', () => {
-    const cssWithoutComments = readCss().replace(/\/\*[\s\S]*?\*\//g, '');
-    const cssWithoutVariableDeclarations = cssWithoutComments.replace(
-      /^\s*--ne-[\w-]+\s*:\s*[^;]+;\s*$/gm,
-      '',
-    );
-
-    expect(cssWithoutVariableDeclarations.match(/#[0-9a-fA-F]{3,8}\b/g)).toBeNull();
-  });
-
-  it('keeps literal color keywords inside CSS variable declarations only', () => {
-    const cssWithoutComments = readCss().replace(/\/\*[\s\S]*?\*\//g, '');
-    const cssWithoutVariableDeclarations = cssWithoutComments.replace(
-      /^\s*--ne-[\w-]+\s*:\s*[^;]+;\s*$/gm,
-      '',
-    ).replace(
+  it('keeps color literals inside CSS variable declarations only', () => {
+    const cssWithoutVariables = stripVariableDeclarations(readCss()).replace(
       /var\(--ne-[\w-]+\)/g,
       '',
     );
 
     expect(
-      cssWithoutVariableDeclarations.match(/\b(?:transparent|currentcolor|currentColor)\b/g),
+      cssWithoutVariables.match(
+        /#[0-9a-fA-F]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|color-mix)\([^)]*\)|\b(?:transparent|currentcolor|currentColor)\b/g,
+      ),
     ).toBeNull();
+  });
+
+  it('declares only canonical theme custom properties', () => {
+    const canonicalVariables = new Set(Object.keys(lightVariables));
+    const declaredVariables = Array.from(
+      readCss().matchAll(/(^|\s)(--[\w-]+)\s*:/g),
+      (match) => match[2],
+    );
+
+    expect(declaredVariables.filter((name) => !canonicalVariables.has(name))).toEqual([]);
   });
 
   it('defines dark theme overrides for key color variables', () => {

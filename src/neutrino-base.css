@@ -62,6 +62,7 @@
 [data-theme="dark"] {
   --ne-color-text: #e5e7eb;
   --ne-color-text-muted: #9ca3af;
+  --ne-color-code-fg: #e5e7eb;
   --ne-color-link: #60a5fa;
   --ne-color-link-hover: #93c5fd;
   --ne-color-blockquote-fg: #9ca3af;
@@ -227,15 +228,14 @@
 }
 
 .ne-list-marker .ne-list-marker-dot {
-  --size: 5px;
   background-color: var(--ne-color-text);
-  border-radius: var(--size);
+  border-radius: 5px;
   box-sizing: border-box;
-  height: var(--size);
+  height: 5px;
   left: 0;
   position: absolute;
-  top: calc(50% - var(--size) / 2);
-  width: var(--size);
+  top: calc(50% - 5px / 2);
+  width: 5px;
 }
 
 .ne-list-marker.ne-depth-0 .ne-list-marker-dot {

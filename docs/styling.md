@@ -66,6 +66,7 @@ Dark mode overrides only the color variables that need different values:
 [data-theme="dark"] {
   --ne-color-text: #e5e7eb;
   --ne-color-text-muted: #9ca3af;
+  --ne-color-code-fg: #e5e7eb;
   --ne-color-link: #60a5fa;
   --ne-color-link-hover: #93c5fd;
   --ne-color-blockquote-fg: #9ca3af;

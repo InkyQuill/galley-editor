@@ -287,6 +287,7 @@ function CssVariableOverridesStory() {
           --ne-color-text: #e6edf7;
           --ne-color-text-muted: #9fb0c7;
           --ne-color-bg: #101820;
+          --ne-color-code-fg: #e6edf7;
           --ne-color-link: #5eead4;
           --ne-color-link-hover: #99f6e4;
           --ne-color-blockquote-fg: #b6c3d4;
