@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all public exports from `@inkyquill/neutrino-editor`.
+Complete reference for all public exports from `@inky/neutrino-editor`.
 
 ## Components
 
@@ -9,7 +9,7 @@ Complete reference for all public exports from `@inkyquill/neutrino-editor`.
 The main editor component. A React `forwardRef` wrapper around `EditorController`.
 
 ```tsx
-import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
+import { NeutrinoEditor } from '@inky/neutrino-editor';
 
 <NeutrinoEditor
   ref={editorRef}
@@ -55,7 +55,7 @@ import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
 React error boundary for graceful error handling.
 
 ```tsx
-import { ErrorBoundary } from '@inkyquill/neutrino-editor';
+import { ErrorBoundary } from '@inky/neutrino-editor';
 
 <ErrorBoundary fallback={<div>Editor failed to load</div>}>
   <NeutrinoEditor value={value} onChange={setValue} />
@@ -355,12 +355,12 @@ Each plugin is also exported individually for selective inclusion.
 
 ## CSS
 
-### `neutrino-base.css`
+### `style.css`
 
 Optional stylesheet with minimal visual defaults. Import it for quick setup:
 
 ```typescript
-import '@inkyquill/neutrino-editor/dist/neutrino-base.css';
+import '@inky/neutrino-editor/style.css';
 ```
 
 See [Styling Guide](./styling.md) for details on all classes and customization.

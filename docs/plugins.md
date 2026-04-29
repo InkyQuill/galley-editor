@@ -195,8 +195,8 @@ The simplest built-in plugin. Uses `makeBlockPlugin` to add `ne-table` line deco
 
 ```typescript
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin } from '@inkyquill/neutrino-editor';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '@inkyquill/neutrino-editor';
+import { makeInlinePlugin } from '@inky/neutrino-editor';
+import type { NeutrinoPlugin, NeutrinoClassNames } from '@inky/neutrino-editor';
 
 const todoHighlightPlugin: NeutrinoPlugin = {
   id: 'custom:todo-highlight',
@@ -222,8 +222,8 @@ const todoHighlightPlugin: NeutrinoPlugin = {
 
 ```typescript
 import { WidgetType } from '@codemirror/view';
-import { makeInlinePlugin } from '@inkyquill/neutrino-editor';
-import type { NeutrinoPlugin } from '@inkyquill/neutrino-editor';
+import { makeInlinePlugin } from '@inky/neutrino-editor';
+import type { NeutrinoPlugin } from '@inky/neutrino-editor';
 
 class EmojiWidget extends WidgetType {
   constructor(private emoji: string) { super(); }
