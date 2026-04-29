@@ -43,10 +43,17 @@ function hello() {
 function App() {
   const [markdown, setMarkdown] = useState(sampleMarkdown);
   const [log, setLog] = useState<string[]>([]);
+  const [theme, setTheme] = useState<'auto' | 'light' | 'dark'>('auto');
   const editorRef = useRef<NeutrinoHandle>(null);
 
   const addLog = (message: string) => {
     setLog((prev) => [...prev.slice(-49), `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
+
+  const cycleTheme = () => {
+    setTheme((current) =>
+      current === 'auto' ? 'light' : current === 'light' ? 'dark' : 'auto',
+    );
   };
 
   return (
@@ -73,6 +80,8 @@ function App() {
           <span style={{ borderLeft: '1px solid #ccc', margin: '0 4px' }} />
           <button onClick={() => editorRef.current?.undo()}>Undo</button>
           <button onClick={() => editorRef.current?.redo()}>Redo</button>
+          <span style={{ borderLeft: '1px solid #ccc', margin: '0 4px' }} />
+          <button onClick={cycleTheme}>Theme: {theme}</button>
         </div>
 
         <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
@@ -83,7 +92,7 @@ function App() {
               onChange={setMarkdown}
               placeholder="Start typing your markdown here..."
               minRows={10}
-              theme="auto"
+              theme={theme}
               onFocus={() => addLog('Focus')}
               onBlur={() => addLog('Blur')}
               onSelectionChange={(sel) => addLog(`Selection: ${sel.from}-${sel.to}`)}
