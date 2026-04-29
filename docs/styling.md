@@ -1,214 +1,210 @@
 # Styling Guide
 
-Neutrino Editor is **style-agnostic**. It applies semantic CSS classes to rendered elements but ships no colors, fonts, or typography rules. You control the visual appearance entirely through CSS.
+Neutrino Editor styles rendered markdown with semantic classes and a CSS custom property contract. Import the base stylesheet for defaults, then override `--ne-*` variables from your app.
 
-## CSS Class Reference
-
-### Inline Elements
-
-| Class | Applied To | Description |
-|---|---|---|
-| `ne-bold` | `<span>` wrapping bold text | Text wrapped in `**` or `__` |
-| `ne-italic` | `<span>` wrapping italic text | Text wrapped in `*` or `_` |
-| `ne-strikethrough` | `<span>` wrapping strikethrough | Text wrapped in `~~` |
-| `ne-code-inline` | `<span>` wrapping inline code | Text wrapped in `` ` `` |
-| `ne-link` | `<span>` wrapping link text | `[text](url)` links |
-
-### Block Elements (Line Decorations)
-
-| Class | Applied To | Description |
-|---|---|---|
-| `ne-heading` | Line containing any heading | All heading lines (H1-H6) |
-| `ne-h1` through `ne-h6` | Line containing specific heading level | Applied alongside `ne-heading` |
-| `ne-code-fence` | Each line inside a fenced code block | Lines between `` ``` `` markers |
-| `ne-blockquote` | Lines inside a blockquote | Lines starting with `>` |
-| `ne-table` | Lines inside a table | Table rows and dividers |
-| `ne-divider` | Line containing `---` | Horizontal rule line |
-| `ne-completed-task` | Line with checked task | Lines with `[x]` |
-
-### Widget Elements
-
-| Class | Applied To | Description |
-|---|---|---|
-| `ne-checkbox` | `<span>` containing checkbox `<input>` | Task list checkbox container |
-| `ne-list-marker` | `<span>` replacing bullet marker | Custom bullet point widget |
-| `ne-list-marker-sizing` | Inner `<span>` | Preserves original marker width |
-| `ne-list-marker-dot` | Inner `<span>` | Visual bullet dot |
-| `ne-divider-widget` | `<hr>` element | Rendered horizontal rule |
-
-### Depth Classes
-
-| Class | Applied To | Description |
-|---|---|---|
-| `ne-depth-0` | List markers, checkboxes | Top-level list items |
-| `ne-depth-1` | List markers, checkboxes | First nesting level |
-| `ne-depth-2` | List markers, checkboxes | Second nesting level |
-
-Depth classes cycle every 3 levels (e.g., depth 3 gets `ne-depth-0` again).
-
-### Lezer Token Classes
-
-Applied by CodeMirror's `classHighlighter` to the raw text in the editor:
-
-| Class | Applied To |
-|---|---|
-| `tok-heading` | Heading text including marks |
-| `tok-strong` | Bold text including `**` marks |
-| `tok-emphasis` | Italic text including `*` marks |
-| `tok-strikethrough` | Strikethrough text including `~~` marks |
-| `tok-link` | Link text and URL |
-| `tok-monospace` | Inline code and code fence content |
-| `tok-url` | URL portion of links |
-| `tok-meta` | Markdown syntax characters |
-| `tok-comment` | HTML comments |
-
-## Styling Approaches
-
-### 1. Import Base Styles
-
-The quickest way to get started. `neutrino-base.css` provides sensible defaults:
-
-```css
-import '@inkyquill/neutrino-editor/dist/neutrino-base.css';
+```ts
+import '@inky/neutrino-editor/style.css';
 ```
 
-This sets:
-- Heading sizes and weights (H1 = 2em down to H6 = 0.85em)
-- Bold, italic, strikethrough formatting
-- Inline code with light gray background and monospace font
-- Link styling (blue, underlined, dark mode aware)
-- Code fence with monospace font and background
-- Blockquote with left border and muted color
-- Table with monospace font
-- Checkbox styling with completed task opacity
-- List marker depth-based visual styles (disc, circle, square)
-- Divider as a centered horizontal line
+The `theme` prop resolves to `data-theme="light"` or `data-theme="dark"` on the editor wrapper, so the same variables drive rendered markdown and CodeMirror chrome.
 
-### 2. Tailwind CSS Typography
+## CSS Variables
 
-Compatible with `@tailwindcss/typography` prose classes. Wrap the editor in a `prose` container:
+The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
+
+```css
+--ne-color-text: #1a1a1a;
+--ne-color-text-muted: #6b7280;
+--ne-color-bg: transparent;
+--ne-color-link: #2563eb;
+--ne-color-link-hover: #1d4ed8;
+--ne-color-code-fg: #1a1a1a;
+--ne-color-code-bg: rgba(127, 127, 127, 0.12);
+--ne-color-code-fence-bg: rgba(127, 127, 127, 0.08);
+--ne-color-blockquote-border: rgba(127, 127, 127, 0.4);
+--ne-color-blockquote-fg: #4b5563;
+--ne-color-divider: rgba(127, 127, 127, 0.3);
+--ne-color-table-border: rgba(127, 127, 127, 0.3);
+--ne-color-checkbox-accent: #2563eb;
+--ne-color-selection: rgba(37, 99, 235, 0.2);
+--ne-color-caret: currentColor;
+--ne-color-focus-ring: #2563eb;
+
+--ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
+--ne-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+--ne-font-size: 1rem;
+--ne-line-height: 1.6;
+--ne-h1-size: 2em;
+--ne-h1-weight: 700;
+--ne-h1-leading: 1.2;
+--ne-h2-size: 1.5em;
+--ne-h2-weight: 700;
+--ne-h2-leading: 1.3;
+--ne-h3-size: 1.25em;
+--ne-h3-weight: 700;
+--ne-h3-leading: 1.4;
+--ne-h4-size: 1.1em;
+--ne-h4-weight: 700;
+--ne-h4-leading: 1.4;
+--ne-h5-size: 1em;
+--ne-h5-weight: 700;
+--ne-h5-leading: 1.4;
+--ne-h6-size: 0.9em;
+--ne-h6-weight: 700;
+--ne-h6-leading: 1.4;
+
+--ne-radius-code: 3px;
+--ne-spacing-block: 0.5em;
+--ne-spacing-inline-padding: 0.125em 0.25em;
+--ne-blockquote-indent: 1em;
+--ne-code-font-size: 0.9em;
+```
+
+Dark mode overrides only the color variables that need different values:
+
+```css
+[data-theme="dark"] {
+  --ne-color-text: #e5e7eb;
+  --ne-color-text-muted: #9ca3af;
+  --ne-color-link: #60a5fa;
+  --ne-color-link-hover: #93c5fd;
+  --ne-color-blockquote-fg: #9ca3af;
+  --ne-color-checkbox-accent: #60a5fa;
+  --ne-color-selection: rgba(96, 165, 250, 0.3);
+  --ne-color-focus-ring: #60a5fa;
+}
+```
+
+## Plain CSS
+
+Scope overrides with `className` on the editor wrapper:
 
 ```tsx
-<div className="prose dark:prose-invert max-w-none">
-  <NeutrinoEditor value={value} onChange={setValue} />
+<NeutrinoEditor className="notes-editor" theme="auto" value={value} onChange={setValue} />
+```
+
+```css
+.notes-editor {
+  --ne-color-text: #172033;
+  --ne-color-link: #0f766e;
+  --ne-color-link-hover: #115e59;
+  --ne-color-code-bg: color-mix(in srgb, currentColor 8%, transparent);
+  --ne-color-focus-ring: #0f766e;
+  --ne-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+  --ne-font-size: 0.975rem;
+}
+
+.notes-editor[data-theme="dark"] {
+  --ne-color-text: #e6edf7;
+  --ne-color-link: #5eead4;
+  --ne-color-link-hover: #99f6e4;
+  --ne-color-focus-ring: #5eead4;
+}
+```
+
+Use `editorClassName` when you need to style the CodeMirror `.cm-editor` element itself:
+
+```tsx
+<NeutrinoEditor className="notes-editor" editorClassName="notes-editor-frame" />
+```
+
+```css
+.notes-editor-frame {
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 8px;
+}
+```
+
+## Tailwind V4
+
+Tailwind v4 theme variables are CSS variables, so map your app tokens into the Neutrino contract. Keep `@theme` top-level, then assign `--ne-*` variables in a normal selector.
+
+```css
+@import "tailwindcss";
+@import "@inky/neutrino-editor/style.css";
+
+@theme static {
+  --color-editor-text: var(--color-slate-950);
+  --color-editor-muted: var(--color-slate-500);
+  --color-editor-link: var(--color-blue-600);
+  --color-editor-link-hover: var(--color-blue-700);
+  --color-editor-ring: var(--color-blue-600);
+  --font-editor-body: var(--font-sans);
+  --font-editor-mono: var(--font-mono);
+}
+
+.neutrino-tailwind {
+  --ne-color-text: var(--color-editor-text);
+  --ne-color-text-muted: var(--color-editor-muted);
+  --ne-color-link: var(--color-editor-link);
+  --ne-color-link-hover: var(--color-editor-link-hover);
+  --ne-color-focus-ring: var(--color-editor-ring);
+  --ne-color-checkbox-accent: var(--color-editor-link);
+  --ne-font-body: var(--font-editor-body);
+  --ne-font-mono: var(--font-editor-mono);
+}
+
+.neutrino-tailwind[data-theme="dark"] {
+  --color-editor-text: var(--color-slate-100);
+  --color-editor-muted: var(--color-slate-400);
+  --color-editor-link: var(--color-sky-400);
+  --color-editor-link-hover: var(--color-sky-300);
+  --color-editor-ring: var(--color-sky-400);
+}
+```
+
+You can still wrap the editor with typography utilities when they fit your app:
+
+```tsx
+<div className="prose max-w-none dark:prose-invert">
+  <NeutrinoEditor className="neutrino-tailwind" value={value} onChange={setValue} />
 </div>
 ```
 
-Since Neutrino applies semantic classes rather than inline styles, Tailwind's typography plugin can target the rendered output naturally. You may want to add additional styles for Neutrino-specific classes:
+## Class Names
 
-```css
-.prose .ne-code-fence {
-  @apply bg-gray-100 dark:bg-gray-800 font-mono;
-}
-.prose .ne-blockquote {
-  @apply border-l-4 border-gray-300 pl-4 text-gray-600;
-}
-```
-
-### 3. Custom CSS
-
-Target `ne-*` classes directly in your stylesheet:
-
-```css
-/* Headings */
-.ne-h1 { font-size: 2em; font-weight: 700; }
-.ne-h2 { font-size: 1.5em; font-weight: 600; }
-
-/* Inline formatting */
-.ne-bold { font-weight: 700; }
-.ne-italic { font-style: italic; }
-.ne-strikethrough { text-decoration: line-through; }
-.ne-code-inline {
-  background: #f1f5f9;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: monospace;
-}
-
-/* Links */
-.ne-link { color: #2563eb; text-decoration: underline; }
-
-/* Code blocks */
-.ne-code-fence {
-  background: #f8fafc;
-  font-family: monospace;
-  font-size: 0.9em;
-}
-
-/* Blockquotes */
-.ne-blockquote {
-  border-left: 3px solid #d1d5db;
-  padding-left: 1em;
-  color: #6b7280;
-}
-```
-
-### 4. Override Class Names
-
-Replace `ne-*` classes entirely with your own:
+The `classNames` prop is the escape hatch for design systems that do not want `ne-*` classes at all. Unspecified keys keep their defaults.
 
 ```tsx
 <NeutrinoEditor
   value={value}
   onChange={setValue}
   classNames={{
-    bold: 'my-bold',
-    italic: 'my-italic',
-    h1: 'my-heading-xl',
-    h2: 'my-heading-lg',
-    link: 'my-link',
-    blockCode: 'my-code-block',
+    bold: 'ds-text-strong',
+    italic: 'ds-text-emphasis',
+    h1: 'ds-heading-xl',
+    link: 'ds-link',
+    blockCode: 'ds-code-block',
+    completedTask: 'ds-task-complete',
   }}
 />
 ```
 
-Unspecified keys keep their defaults. This is useful when integrating into a design system with its own class naming convention.
-
-## Theme Integration
-
-### Color Scheme
-
-The `theme` prop controls the CodeMirror dark mode flag:
-
-| Value | Behavior |
-|---|---|
-| `'auto'` | Detects from `prefers-color-scheme` media query |
-| `'light'` | Forces light mode |
-| `'dark'` | Forces dark mode |
-
-The editor itself only applies structural styles (padding, line-height, etc.). The dark mode flag enables dark-scoped CM6 selectors. You must provide dark-mode CSS:
+You then own those class rules:
 
 ```css
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .ne-code-inline { background: #1e293b; }
-  .ne-code-fence { background: #0f172a; }
-  .ne-link { color: #60a5fa; }
-  .ne-blockquote { border-color: #4b5563; color: #9ca3af; }
-}
+.ds-text-strong { font-weight: 800; }
+.ds-text-emphasis { font-style: italic; }
+.ds-heading-xl { font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 800; }
+.ds-link { color: var(--color-brand-link); text-decoration: underline; }
+.ds-code-block { background: var(--color-code-surface); font-family: var(--font-mono); }
+.ds-task-complete { opacity: 0.55; text-decoration: line-through; }
 ```
 
-Or with a dark class:
+## Theme Prop
 
-```css
-.dark .ne-code-inline { background: #1e293b; }
-```
+| Value | Wrapper attribute | Behavior |
+|---|---|---|
+| `theme="light"` | `data-theme="light"` | Forces light variables and CodeMirror light mode. |
+| `theme="dark"` | `data-theme="dark"` | Forces dark overrides and CodeMirror dark mode. |
+| `theme="auto"` | `data-theme="light"` or `data-theme="dark"` | Resolves from `prefers-color-scheme` and updates when the OS preference changes. |
 
-### Editor Container Styling
+The wrapper structure is:
 
-```tsx
-{/* Outer wrapper div */}
-<NeutrinoEditor className="border rounded-lg shadow-sm" />
-
-{/* CodeMirror .cm-editor element */}
-<NeutrinoEditor editorClassName="custom-editor" />
-```
-
-The DOM structure is:
 ```html
-<div class="{className}">
+<div class="{className}" data-theme="light">
   <div>
-    <div class="cm-editor {editorClassName}">
+    <div class="cm-editor cm-light {editorClassName}">
       <div class="cm-scroller">
         <div class="cm-content">
           <!-- editor lines -->
@@ -219,104 +215,14 @@ The DOM structure is:
 </div>
 ```
 
-### CodeMirror Structural Classes
+## Class Reference
 
-These are set by the built-in theme and can be overridden with CSS:
+Inline classes: `ne-bold`, `ne-italic`, `ne-strikethrough`, `ne-code-inline`, `ne-link`.
 
-| Selector | Default |
-|---|---|
-| `.cm-editor` | `width: 100%; height: auto; box-sizing: border-box` |
-| `.cm-content` | `padding: 12px; line-height: 1.6` |
-| `.cm-focused` | `outline: none` |
-| `.cm-scroller` | `overflow-y: auto; overflow-x: hidden` |
-| `.cm-line` | `padding: 0 4px` |
-| `.cm-cursor` | `z-index: 10` |
+Block line classes: `ne-heading`, `ne-h1` through `ne-h6`, `ne-code-fence`, `ne-blockquote`, `ne-table`, `ne-divider`, `ne-completed-task`.
 
-## Complete Example
+Widget classes: `ne-checkbox`, `ne-list-marker`, `ne-list-marker-sizing`, `ne-list-marker-dot`, `ne-divider-widget`.
 
-```css
-/* Custom theme for Neutrino Editor */
+Depth classes: `ne-depth-0`, `ne-depth-1`, `ne-depth-2`. Depth classes cycle every 3 nesting levels.
 
-/* Headings */
-.ne-heading { margin: 0.5em 0; }
-.ne-h1 { font-size: 2em; font-weight: 800; letter-spacing: -0.02em; }
-.ne-h2 { font-size: 1.5em; font-weight: 700; }
-.ne-h3 { font-size: 1.25em; font-weight: 600; }
-.ne-h4 { font-size: 1.1em; font-weight: 600; }
-.ne-h5 { font-size: 1em; font-weight: 600; }
-.ne-h6 { font-size: 0.9em; font-weight: 600; color: #6b7280; }
-
-/* Inline */
-.ne-bold { font-weight: 700; }
-.ne-italic { font-style: italic; }
-.ne-strikethrough { text-decoration: line-through; opacity: 0.7; }
-.ne-code-inline {
-  background: #f1f5f9;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.88em;
-}
-.ne-link {
-  color: #2563eb;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* Blocks */
-.ne-code-fence {
-  background: #f8fafc;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.88em;
-}
-.ne-blockquote {
-  border-left: 3px solid #3b82f6;
-  padding-left: 1em;
-  color: #64748b;
-  font-style: italic;
-}
-.ne-table {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.9em;
-}
-
-/* Dividers */
-.ne-divider { display: flex; align-items: center; }
-.ne-divider-widget {
-  width: 100%;
-  border: none;
-  border-top: 1px solid #e2e8f0;
-  margin: 0.5em 0;
-}
-
-/* Checkboxes */
-.ne-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #3b82f6;
-}
-.ne-completed-task { opacity: 0.5; text-decoration: line-through; }
-
-/* List markers */
-.ne-list-marker { display: inline-flex; align-items: center; }
-.ne-list-marker-sizing { visibility: hidden; width: 0; }
-.ne-list-marker-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.ne-depth-1 .ne-list-marker-dot { border-radius: 50%; background: none; border: 1px solid currentColor; }
-.ne-depth-2 .ne-list-marker-dot { border-radius: 1px; }
-
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .ne-code-inline { background: #1e293b; }
-  .ne-code-fence { background: #0f172a; }
-  .ne-link { color: #60a5fa; }
-  .ne-blockquote { border-color: #3b82f6; color: #94a3b8; }
-  .ne-divider-widget { border-color: #334155; }
-  .ne-h6 { color: #9ca3af; }
-}
-```
+Lezer token classes: `tok-heading`, `tok-strong`, `tok-emphasis`, `tok-strikethrough`, `tok-link`, `tok-url`, `tok-meta`, `tok-comment`, `tok-monospace`.

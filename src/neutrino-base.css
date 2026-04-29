@@ -1,74 +1,191 @@
 /*
- * Neutrino Editor — base stylesheet.
+ * Neutrino Editor base stylesheet.
  *
- * Provides minimal, unstyled defaults for the ne-* semantic classes.
- * Override these in your own CSS, or skip importing this file entirely
- * and write your own rules targeting the ne-* classes.
- *
- * Compatible with @tailwindcss/typography: wrap the editor in a `prose` div
- * and the rendered elements will pick up typography styles automatically.
+ * Defines the CSS custom property contract and applies minimal defaults for
+ * the ne-* semantic classes and tok-* Lezer token classes.
  */
 
-/* ── Headings ───────────────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  /* Color */
+  --ne-color-text: #1a1a1a;
+  --ne-color-text-muted: #6b7280;
+  --ne-color-bg: transparent;
+  --ne-color-link: #2563eb;
+  --ne-color-link-hover: #1d4ed8;
+  --ne-color-code-fg: #1a1a1a;
+  --ne-color-code-bg: rgba(127, 127, 127, 0.12);
+  --ne-color-code-fence-bg: rgba(127, 127, 127, 0.08);
+  --ne-color-blockquote-border: rgba(127, 127, 127, 0.4);
+  --ne-color-blockquote-fg: #4b5563;
+  --ne-color-divider: rgba(127, 127, 127, 0.3);
+  --ne-color-table-border: rgba(127, 127, 127, 0.3);
+  --ne-color-checkbox-accent: #2563eb;
+  --ne-color-selection: rgba(37, 99, 235, 0.2);
+  --ne-color-caret: currentColor;
+  --ne-color-focus-ring: #2563eb;
 
-.ne-h1 { font-size: 2em; font-weight: bold; line-height: 1.2; }
-.ne-h2 { font-size: 1.5em; font-weight: bold; line-height: 1.3; }
-.ne-h3 { font-size: 1.25em; font-weight: bold; line-height: 1.4; }
-.ne-h4 { font-size: 1.1em; font-weight: bold; line-height: 1.4; }
-.ne-h5 { font-size: 1em; font-weight: bold; line-height: 1.4; }
-.ne-h6 { font-size: 0.9em; font-weight: bold; line-height: 1.4; }
+  /* Typography */
+  --ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ne-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --ne-font-size: 1rem;
+  --ne-line-height: 1.6;
+  --ne-h1-size: 2em;
+  --ne-h1-weight: 700;
+  --ne-h1-leading: 1.2;
+  --ne-h2-size: 1.5em;
+  --ne-h2-weight: 700;
+  --ne-h2-leading: 1.3;
+  --ne-h3-size: 1.25em;
+  --ne-h3-weight: 700;
+  --ne-h3-leading: 1.4;
+  --ne-h4-size: 1.1em;
+  --ne-h4-weight: 700;
+  --ne-h4-leading: 1.4;
+  --ne-h5-size: 1em;
+  --ne-h5-weight: 700;
+  --ne-h5-leading: 1.4;
+  --ne-h6-size: 0.9em;
+  --ne-h6-weight: 700;
+  --ne-h6-leading: 1.4;
 
-/* ── Inline formatting ──────────────────────────────────────────────────── */
+  /* Geometry */
+  --ne-radius-code: 3px;
+  --ne-spacing-block: 0.5em;
+  --ne-spacing-inline-padding: 0.125em 0.25em;
+  --ne-blockquote-indent: 1em;
 
-.ne-bold { font-weight: bold; }
-.ne-italic { font-style: italic; }
-.ne-strikethrough { text-decoration: line-through; }
-
-.ne-code-inline {
-  background-color: rgba(127, 127, 127, 0.12);
-  padding: 0.125em 0.25em;
-  border-radius: 3px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.9em;
+  /* Code */
+  --ne-code-font-size: 0.9em;
 }
 
-/* ── Links ──────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --ne-color-text: #e5e7eb;
+  --ne-color-text-muted: #9ca3af;
+  --ne-color-link: #60a5fa;
+  --ne-color-link-hover: #93c5fd;
+  --ne-color-blockquote-fg: #9ca3af;
+  --ne-color-checkbox-accent: #60a5fa;
+  --ne-color-selection: rgba(96, 165, 250, 0.3);
+  --ne-color-focus-ring: #60a5fa;
+}
+
+/* CodeMirror-adjacent defaults */
+
+.cm-editor {
+  background-color: var(--ne-color-bg);
+  color: var(--ne-color-text);
+}
+
+.cm-content {
+  font-family: var(--ne-font-body);
+  font-size: var(--ne-font-size);
+  line-height: var(--ne-line-height);
+}
+
+/* Headings */
+
+.ne-heading {
+  color: var(--ne-color-text);
+}
+
+.ne-h1 {
+  font-size: var(--ne-h1-size);
+  font-weight: var(--ne-h1-weight);
+  line-height: var(--ne-h1-leading);
+}
+
+.ne-h2 {
+  font-size: var(--ne-h2-size);
+  font-weight: var(--ne-h2-weight);
+  line-height: var(--ne-h2-leading);
+}
+
+.ne-h3 {
+  font-size: var(--ne-h3-size);
+  font-weight: var(--ne-h3-weight);
+  line-height: var(--ne-h3-leading);
+}
+
+.ne-h4 {
+  font-size: var(--ne-h4-size);
+  font-weight: var(--ne-h4-weight);
+  line-height: var(--ne-h4-leading);
+}
+
+.ne-h5 {
+  font-size: var(--ne-h5-size);
+  font-weight: var(--ne-h5-weight);
+  line-height: var(--ne-h5-leading);
+}
+
+.ne-h6 {
+  color: var(--ne-color-text-muted);
+  font-size: var(--ne-h6-size);
+  font-weight: var(--ne-h6-weight);
+  line-height: var(--ne-h6-leading);
+}
+
+/* Inline formatting */
+
+.ne-bold {
+  font-weight: var(--ne-h5-weight);
+}
+
+.ne-italic {
+  font-style: italic;
+}
+
+.ne-strikethrough {
+  text-decoration: line-through;
+}
+
+.ne-code-inline {
+  background-color: var(--ne-color-code-bg);
+  border-radius: var(--ne-radius-code);
+  color: var(--ne-color-code-fg);
+  font-family: var(--ne-font-mono);
+  font-size: var(--ne-code-font-size);
+  padding: var(--ne-spacing-inline-padding);
+}
+
+/* Links */
 
 .ne-link {
-  color: #2563eb;
+  color: var(--ne-color-link);
   text-decoration: underline;
 }
 
-@media (prefers-color-scheme: dark) {
-  .ne-link {
-    color: #60a5fa;
-  }
+.ne-link:hover {
+  color: var(--ne-color-link-hover);
 }
 
-/* ── Code fences ────────────────────────────────────────────────────────── */
+/* Code fences */
 
 .ne-code-fence {
-  background-color: rgba(127, 127, 127, 0.08);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.9em;
+  background-color: var(--ne-color-code-fence-bg);
+  color: var(--ne-color-code-fg);
+  font-family: var(--ne-font-mono);
+  font-size: var(--ne-code-font-size);
 }
 
-/* ── Blockquotes ────────────────────────────────────────────────────────── */
+/* Blockquotes */
 
 .ne-blockquote {
-  border-left: 3px solid rgba(127, 127, 127, 0.4);
-  padding-left: 1em;
-  color: rgba(127, 127, 127, 0.8);
+  border-left: 3px solid var(--ne-color-blockquote-border);
+  color: var(--ne-color-blockquote-fg);
+  padding-left: var(--ne-blockquote-indent);
 }
 
-/* ── Tables ─────────────────────────────────────────────────────────────── */
+/* Tables */
 
 .ne-table {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 0.9em;
+  box-shadow: inset 0 -1px 0 var(--ne-color-table-border);
+  font-family: var(--ne-font-mono);
+  font-size: var(--ne-code-font-size);
 }
 
-/* ── Dividers ───────────────────────────────────────────────────────────── */
+/* Dividers */
 
 .cm-line.ne-divider {
   display: flex;
@@ -76,27 +193,29 @@
 }
 
 .ne-divider-widget {
-  flex-grow: 1;
   border: none;
-  border-bottom: 2px solid rgba(127, 127, 127, 0.3);
-  margin: 0.5em 0;
+  border-bottom: 2px solid var(--ne-color-divider);
+  flex-grow: 1;
+  margin: var(--ne-spacing-block) 0;
 }
 
-/* ── Checkboxes ─────────────────────────────────────────────────────────── */
+/* Checkboxes */
 
 .ne-checkbox input {
-  width: 1.1em;
+  accent-color: var(--ne-color-checkbox-accent);
+  cursor: pointer;
   height: 1.1em;
   margin: 4px;
   vertical-align: middle;
-  cursor: pointer;
+  width: 1.1em;
 }
 
 .ne-completed-task {
+  color: var(--ne-color-text-muted);
   opacity: 0.6;
 }
 
-/* ── List markers ───────────────────────────────────────────────────────── */
+/* List markers */
 
 .ne-list-marker {
   pointer-events: none;
@@ -108,15 +227,15 @@
 }
 
 .ne-list-marker .ne-list-marker-dot {
-  position: absolute;
-  left: 0;
   --size: 5px;
+  background-color: currentcolor;
+  border-radius: var(--size);
+  box-sizing: border-box;
+  height: var(--size);
+  left: 0;
+  position: absolute;
   top: calc(50% - var(--size) / 2);
   width: var(--size);
-  height: var(--size);
-  border-radius: var(--size);
-  background-color: currentcolor;
-  box-sizing: border-box;
 }
 
 .ne-list-marker.ne-depth-0 .ne-list-marker-dot {
@@ -124,17 +243,41 @@
 }
 
 .ne-list-marker.ne-depth-2 .ne-list-marker-dot {
-  border: 1px solid currentcolor;
   background-color: transparent;
+  border: 1px solid currentcolor;
 }
 
-/* ── Lezer token classes (tok-*) — minimal defaults ─────────────────────── */
+/* Lezer token classes */
 
-.tok-heading { font-weight: bold; }
-.tok-strong { font-weight: bold; }
-.tok-emphasis { font-style: italic; }
-.tok-strikethrough { text-decoration: line-through; }
-.tok-link { text-decoration: underline; }
+.tok-heading {
+  font-weight: var(--ne-h5-weight);
+}
+
+.tok-strong {
+  font-weight: var(--ne-h5-weight);
+}
+
+.tok-emphasis {
+  font-style: italic;
+}
+
+.tok-strikethrough {
+  text-decoration: line-through;
+}
+
+.tok-link {
+  color: var(--ne-color-link);
+  text-decoration: underline;
+}
+
+.tok-url,
+.tok-meta,
+.tok-comment {
+  color: var(--ne-color-text-muted);
+}
+
 .tok-monospace {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  color: var(--ne-color-code-fg);
+  font-family: var(--ne-font-mono);
+  font-size: var(--ne-code-font-size);
 }

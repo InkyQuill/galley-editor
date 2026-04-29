@@ -1,8 +1,8 @@
 /**
  * Theme system for Neutrino Editor.
  *
- * Produces structural-only CM6 styles (no colors/fonts) and
- * uses classHighlighter for Lezer token CSS classes.
+ * Produces CM6 styles that consume the public --ne-* CSS variable contract
+ * and uses classHighlighter for Lezer token CSS classes.
  */
 
 import { EditorView } from '@codemirror/view';
@@ -55,8 +55,8 @@ export function watchColorScheme(
 
 /**
  * Build CM6 theme extensions.
- * Only structural styles are applied — no colors, fonts, or typography.
- * Visual styling is handled by consumer CSS targeting ne-* classes and tok-* classes.
+ * Structural layout stays fixed while visual values flow through --ne-* CSS
+ * variables defined by neutrino-base.css or consumer overrides.
  */
 export function buildCmTheme(scheme: ColorScheme): Extension[] {
   const isDark = resolveColorScheme(scheme) === 'dark';
@@ -68,25 +68,34 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
     EditorView.theme(
       {
         '&': {
+          backgroundColor: 'var(--ne-color-bg)',
           boxSizing: 'border-box',
-          width: '100%',
           height: 'auto',
+          width: '100%',
         },
         '.cm-content': {
+          caretColor: 'var(--ne-color-caret)',
+          color: 'var(--ne-color-text)',
+          fontFamily: 'var(--ne-font-body)',
+          fontSize: 'var(--ne-font-size)',
+          lineHeight: 'var(--ne-line-height)',
           padding: '12px',
-          lineHeight: '1.6',
         },
-        '.cm-focused': {
-          outline: 'none',
+        '&.cm-focused': {
+          outline: '1px solid var(--ne-color-focus-ring)',
+        },
+        '& .cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
+          backgroundColor: 'var(--ne-color-selection)',
         },
         '.cm-scroller': {
-          overflowY: 'auto',
           overflowX: 'hidden',
+          overflowY: 'auto',
         },
         '.cm-line': {
           padding: '0 4px',
         },
         '.cm-cursor': {
+          borderLeftColor: 'var(--ne-color-caret)',
           zIndex: '10',
         },
       },
