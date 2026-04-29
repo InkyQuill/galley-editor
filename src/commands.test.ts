@@ -198,6 +198,12 @@ describe('headings', () => {
     expect(docOf(view)).toBe('# hello');
   });
 
+  it('toggleHeading1 treats seven hashes as plain content', () => {
+    const view = tracked(createView('####### hello', 5));
+    BUILTIN_COMMANDS.toggleHeading1(view);
+    expect(docOf(view)).toBe('# ####### hello');
+  });
+
   it.each(
     Array.from({ length: 6 }, (_, sourceIndex) =>
       Array.from({ length: 6 }, (_, targetIndex) => [
