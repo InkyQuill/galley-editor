@@ -142,4 +142,26 @@ describe('autosizeExtension', () => {
     expect(view.scrollDOM.style.height).toBe('80px');
     expect(view.scrollDOM.style.overflowY).toBe('auto');
   });
+
+  it('updates overflowY when content shrinks to the clamped max height', () => {
+    vi.useFakeTimers();
+    const view = createAutosizeView({
+      minRows: 2,
+      maxRows: 4,
+      lineHeight: 20,
+      contentHeight: 120,
+    });
+
+    appendText(view, 'a');
+    flushMeasure();
+    expect(view.scrollDOM.style.height).toBe('80px');
+    expect(view.scrollDOM.style.overflowY).toBe('auto');
+
+    setContentHeight(view, 80);
+    appendText(view, 'b');
+    flushMeasure();
+
+    expect(view.scrollDOM.style.height).toBe('80px');
+    expect(view.scrollDOM.style.overflowY).toBe('hidden');
+  });
 });

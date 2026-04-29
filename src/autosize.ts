@@ -18,12 +18,20 @@ interface AutosizeMeasure {
   overflowY: 'auto' | 'hidden';
 }
 
+interface AppliedAutosizeState {
+  minHeight: string;
+  maxHeight: string;
+  height: string;
+  targetHeight: number;
+  overflowY: 'auto' | 'hidden';
+}
+
 export function autosizeExtension(
   minRows: number,
   maxRows?: number,
 ): Extension {
   return ViewPlugin.define((view) => {
-    let previousTargetHeight: number | null = null;
+    let applied: AppliedAutosizeState | null = null;
     const measureKey = {};
 
     function requestAutosize(measureView: EditorView): void {
@@ -48,18 +56,44 @@ export function autosizeExtension(
           };
         },
         write(measure, writeView) {
-          const targetChanged =
-            previousTargetHeight === null ||
-            Math.abs(measure.targetHeight - previousTargetHeight) > 1;
-
-          if (!targetChanged) return;
-
           const scroller = writeView.scrollDOM;
-          scroller.style.minHeight = `${measure.minHeight}px`;
-          scroller.style.maxHeight = maxRows ? `${measure.maxHeight}px` : '';
-          scroller.style.height = `${measure.targetHeight}px`;
-          scroller.style.overflowY = measure.overflowY;
-          previousTargetHeight = measure.targetHeight;
+          const next: AppliedAutosizeState = {
+            minHeight: `${measure.minHeight}px`,
+            maxHeight: maxRows ? `${measure.maxHeight}px` : '',
+            height: `${measure.targetHeight}px`,
+            targetHeight: measure.targetHeight,
+            overflowY: measure.overflowY,
+          };
+
+          if (applied === null) {
+            scroller.style.minHeight = next.minHeight;
+            scroller.style.maxHeight = next.maxHeight;
+            scroller.style.height = next.height;
+            scroller.style.overflowY = next.overflowY;
+            applied = next;
+            return;
+          }
+
+          if (applied.minHeight !== next.minHeight) {
+            scroller.style.minHeight = next.minHeight;
+            applied.minHeight = next.minHeight;
+          }
+
+          if (applied.maxHeight !== next.maxHeight) {
+            scroller.style.maxHeight = next.maxHeight;
+            applied.maxHeight = next.maxHeight;
+          }
+
+          if (Math.abs(measure.targetHeight - applied.targetHeight) > 1) {
+            scroller.style.height = next.height;
+            applied.height = next.height;
+            applied.targetHeight = next.targetHeight;
+          }
+
+          if (applied.overflowY !== next.overflowY) {
+            scroller.style.overflowY = next.overflowY;
+            applied.overflowY = next.overflowY;
+          }
         },
       });
     }
