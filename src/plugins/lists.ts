@@ -9,13 +9,11 @@ const DEPTH_STYLE_COUNT = 3;
 export class BulletMarkerWidget extends WidgetType {
   private depthClass: string;
   private markerClass: string;
-  private previousDepthClass: string;
 
   constructor(depth: number, markerClass: string) {
     super();
     this.markerClass = markerClass;
     this.depthClass = `ne-depth-${depth % DEPTH_STYLE_COUNT}`;
-    this.previousDepthClass = this.depthClass;
   }
 
   eq(other: BulletMarkerWidget) {
@@ -48,7 +46,6 @@ export class BulletMarkerWidget extends WidgetType {
       dom.classList.remove(from.markerClass);
       dom.classList.add(this.markerClass);
     }
-    this.previousDepthClass = this.depthClass;
     return true;
   }
 
