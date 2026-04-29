@@ -56,8 +56,9 @@ export class BulletMarkerWidget extends WidgetType {
 
 const listsPlugin: NeutrinoPlugin = {
   id: 'ne:lists',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const markerClass = classNames.listMarker ?? 'ne-list-marker';
+    const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     return [
       makeInlinePlugin({
@@ -75,7 +76,7 @@ const listsPlugin: NeutrinoPlugin = {
           }
           return null;
         },
-        getRevealStrategy: () => 'active',
+        getRevealStrategy: () => revealStrategy,
       }),
     ];
   },

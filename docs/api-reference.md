@@ -36,8 +36,11 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Override or extend the default CodeMirror keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
-| `toolbar` | `boolean` | `true` | Show the built-in command toolbar |
+| `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
 | `footer` | `boolean \| FooterOptions` | `true` | Show the built-in status footer with word count, character count, and logo |
+| `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
+| `onModeChange` | `(mode: NeutrinoMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |
+| `surface` | `NeutrinoSurfaceOptions` | `undefined` | Shell styling hooks for gradients, frosted glass, and padding overrides |
 | `plugins` | `NeutrinoPlugin[]` | `[]` | Additional plugins alongside built-ins |
 | `disabledPlugins` | `string[]` | `[]` | Built-in plugin IDs to disable |
 | `extensions` | `Extension[]` | `[]` | Additional CM6 extensions (appended last) |
@@ -194,9 +197,84 @@ Controls when raw markdown is shown instead of rendered decoration. See [Plugins
 ```typescript
 interface NeutrinoPlugin {
   id: string;
-  extensions(classNames: NeutrinoClassNames): Extension[];
+  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
 }
 ```
+
+### `NeutrinoRenderContext`
+
+```typescript
+interface NeutrinoRenderContext {
+  theme: 'light' | 'dark';
+  mode?: NeutrinoMode;
+  codeHighlighter?: CodeHighlighter;
+}
+```
+
+Built-in plugins use this to adapt rendering for preview mode and custom code highlighting. Third-party plugins can ignore the second argument.
+
+### `NeutrinoMode`
+
+```typescript
+type NeutrinoMode = 'live' | 'markdown' | 'preview';
+```
+
+- `live`: default half-WYSIWYG editing. Markdown syntax reveals around the cursor.
+- `markdown`: raw Markdown editing. Built-in render plugins are disabled.
+- `preview`: rendered Markdown view. Syntax stays hidden and blocks do not revert to Markdown on click or selection.
+
+`editable={false}` always uses `preview` mode, even if `mode` is set to another value.
+
+### `NeutrinoToolbarOptions`
+
+```typescript
+type ToolbarIconName =
+  | 'bold' | 'italic' | 'strikethrough' | 'inlineCode'
+  | 'bulletList' | 'orderedList' | 'taskList'
+  | 'link' | 'image' | 'codeBlock' | 'table' | 'divider'
+  | 'undo' | 'redo' | 'mode';
+
+type ToolbarIconRenderer = (input: {
+  name: ToolbarIconName;
+  label: string;
+  mode: NeutrinoMode;
+}) => ReactNode;
+
+interface NeutrinoToolbarOptions {
+  enabled?: boolean;
+  showModeToggle?: boolean;
+  icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
+}
+```
+
+Use `icons` to pass inline SVG elements, Lucide React components, or render functions:
+
+```tsx
+import { Bold, Italic } from 'lucide-react';
+
+<NeutrinoEditor
+  toolbar={{
+    icons: {
+      bold: <Bold size={16} />,
+      italic: ({ label }) => <Italic aria-label={label} size={16} />,
+    },
+  }}
+/>
+```
+
+### `NeutrinoSurfaceOptions`
+
+```typescript
+interface NeutrinoSurfaceOptions {
+  className?: string;
+  style?: React.CSSProperties;
+  contentPadding?: string;
+  toolbarPadding?: string;
+  footerPadding?: string;
+}
+```
+
+`surface.style` is applied to the editor shell, so consumers can set gradients, `backdropFilter`, box shadows, or custom CSS variables. Padding helpers map to `--ne-content-padding`, `--ne-toolbar-padding`, and `--ne-footer-padding`.
 
 ### `NeutrinoPluginSpec`
 

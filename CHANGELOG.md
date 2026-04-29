@@ -16,10 +16,15 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - Built-in editor toolbar, enabled by default and disableable with `toolbar={false}`.
 - Built-in footer with word count, character count, and logo tooltip, disableable with `footer={false}`.
 - Storybook image samples using local generated SVG assets.
+- `mode`, `onModeChange`, and the toolbar mode toggle for live, raw Markdown, and rendered preview modes.
+- Toolbar icon overrides for inline SVGs, icon components, and render functions.
+- `surface` prop and CSS variables for shell styling, frosted glass, gradients, and editor padding overrides.
 
 ### Changed
 - Default base stylesheet now skins the full editor shell, toolbar, editing surface, code blocks, tables, and footer in light and dark themes.
 - Link source reveal now expands the full `[label](url)` when the cursor is inside the link.
+- `editable={false}` now renders the editor in preview mode so rendered Markdown blocks do not revert to source on interaction.
+- The logo tooltip now reads `Neutrino Editor v.{version} by Inky Quill`.
 
 ## [0.4.0] — 2026-04-29
 

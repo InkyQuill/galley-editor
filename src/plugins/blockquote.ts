@@ -4,9 +4,10 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 const blockquotePlugin: NeutrinoPlugin = {
   id: 'ne:blockquote',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const blockClass = classNames.blockQuote ?? 'ne-blockquote';
     const lineDeco = Decoration.line({ class: blockClass });
+    const revealStrategy = context?.mode === 'preview' ? false : 'line';
 
     // Block-level: add line decorations to blockquote lines
     const blockExt = makeBlockPlugin({
@@ -29,7 +30,7 @@ const blockquotePlugin: NeutrinoPlugin = {
         }
         return null;
       },
-      getRevealStrategy: () => 'line',
+      getRevealStrategy: () => revealStrategy,
     });
 
     return [...blockExt, markExt];

@@ -4,7 +4,8 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 const emphasisPlugin: NeutrinoPlugin = {
   id: 'ne:emphasis',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
+    const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide emphasis marks (*, **, ~~) with 'active' reveal
     const markExt = makeInlinePlugin({
@@ -17,7 +18,7 @@ const emphasisPlugin: NeutrinoPlugin = {
         }
         return null;
       },
-      getRevealStrategy: () => 'active',
+      getRevealStrategy: () => revealStrategy,
     });
 
     // Add semantic classes to formatted spans

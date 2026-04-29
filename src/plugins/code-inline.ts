@@ -4,7 +4,8 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 const codeInlinePlugin: NeutrinoPlugin = {
   id: 'ne:code-inline',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
+    const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide backtick marks with 'active' reveal
     const markExt = makeInlinePlugin({
@@ -16,7 +17,7 @@ const codeInlinePlugin: NeutrinoPlugin = {
         }
         return null;
       },
-      getRevealStrategy: () => 'active',
+      getRevealStrategy: () => revealStrategy,
     });
 
     // Add semantic class to inline code spans

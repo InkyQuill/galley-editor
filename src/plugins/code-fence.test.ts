@@ -43,6 +43,23 @@ describe('codeFencePlugin', () => {
     expect(lineElement(view, 1).textContent).toBe('```ts');
   });
 
+  it('keeps the visual block rendered in preview mode when the cursor is inside the block', () => {
+    const doc = '```ts\nconst answer = 42;\n```\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('answer')),
+      extensions: codeFencePlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        mode: 'preview',
+      }),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ne-code-block')).toBeInstanceOf(HTMLElement);
+    expect(lineElement(view, 1).textContent).not.toContain('```');
+  });
+
+
   it('uses a consumer-provided highlighter when one is configured', () => {
     const doc = '```js\nconsole.log("hi");\n```\n\nplain';
     const view = createEditorView({

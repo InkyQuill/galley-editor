@@ -9,7 +9,9 @@ function selectionIntersects(from: number, to: number, state: EditorState): bool
 
 const linksPlugin: NeutrinoPlugin = {
   id: 'ne:links',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
+    const preview = context?.mode === 'preview';
+
     // Hide URL and link marks with 'select' reveal (only reveal when cursor overlaps)
     const markExt = makeInlinePlugin({
       createDecoration(node, state) {
@@ -33,6 +35,7 @@ const linksPlugin: NeutrinoPlugin = {
         return null;
       },
       getRevealStrategy: (node, state) => {
+        if (preview) return false;
         const parent = node.node.parent;
         if (!parent || parent.name !== 'Link') return 'select';
         return selectionIntersects(parent.from, parent.to, state);

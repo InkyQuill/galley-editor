@@ -41,6 +41,23 @@ describe('tablesPlugin', () => {
     expect(lineElement(view, 1).textContent).toBe('| A | B |');
   });
 
+  it('keeps the visual table rendered in preview mode when the cursor is inside the table', () => {
+    const doc = '| A | B |\n| - | - |\n| 1 | 2 |\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('1')),
+      extensions: tablesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        mode: 'preview',
+      }),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ne-table-widget table')).toBeInstanceOf(HTMLTableElement);
+    expect(lineElement(view, 1).textContent).not.toContain('| A | B |');
+  });
+
+
   it('applies separator alignment to rendered cells', () => {
     const doc = '| Left | Center | Right |\n| :--- | :---: | ---: |\n| a | b | c |\n\nplain';
     const view = createEditorView({

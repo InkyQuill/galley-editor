@@ -5,6 +5,8 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
+  type ReactNode,
 } from 'react';
 import {
   EditorController,
@@ -12,10 +14,27 @@ import {
   type EditorCallbacks,
 } from '../controller';
 import { resolveColorScheme, watchColorScheme } from '../theme';
-import { resolveClassNames, type NeutrinoEditorProps, type NeutrinoHandle } from '../types';
+import {
+  resolveClassNames,
+  type NeutrinoEditorProps,
+  type NeutrinoHandle,
+  type NeutrinoMode,
+  type ToolbarIconName,
+  type ToolbarIconRenderer,
+} from '../types';
 import { NEUTRINO_VERSION } from '../version';
 
 export type { NeutrinoEditorProps, NeutrinoHandle };
+
+const MODE_ORDER: NeutrinoMode[] = ['live', 'markdown', 'preview'];
+
+const MODE_LABELS: Record<NeutrinoMode, string> = {
+  live: 'Live',
+  markdown: 'Markdown',
+  preview: 'HTML',
+};
+
+const FOOTER_TOOLTIP = `Neutrino Editor v.${NEUTRINO_VERSION} by Inky Quill`;
 
 function wordCount(value: string): number {
   const words = value.trim().match(/\S+/g);
@@ -46,6 +65,10 @@ function NeutrinoLogo() {
   );
 }
 
+function isIconRenderer(icon: ReactNode | ToolbarIconRenderer): icon is ToolbarIconRenderer {
+  return typeof icon === 'function';
+}
+
 const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
   function NeutrinoEditor(props, ref) {
     const {
@@ -64,6 +87,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       codeHighlighter,
       toolbar = true,
       footer = true,
+      mode,
+      onModeChange,
+      surface,
       plugins = [],
       disabledPlugins = [],
       extensions = [],
@@ -80,15 +106,49 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<EditorController | null>(null);
     const [resolvedTheme, setResolvedTheme] = useState(() => resolveColorScheme(theme));
+    const [internalMode, setInternalMode] = useState<NeutrinoMode>('live');
+    const requestedMode = mode ?? internalMode;
+    const effectiveMode: NeutrinoMode = editable ? requestedMode : 'preview';
+    const canEditDocument = editable && effectiveMode !== 'preview';
+    const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
+    const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
+    const showModeToggle = toolbarOptions.showModeToggle !== false;
     const footerOptions = typeof footer === 'object'
       ? footer
       : { wordCount: true, characterCount: true, logo: true };
     const showFooter = footer !== false;
+    const shellClassName = ['ne-editor-shell', surface?.className].filter(Boolean).join(' ');
+    const shellStyle = {
+      ...surface?.style,
+      ...(surface?.contentPadding ? { '--ne-content-padding': surface.contentPadding } : {}),
+      ...(surface?.toolbarPadding ? { '--ne-toolbar-padding': surface.toolbarPadding } : {}),
+      ...(surface?.footerPadding ? { '--ne-footer-padding': surface.footerPadding } : {}),
+    } as CSSProperties & Record<string, string | number | undefined>;
+
+    const changeMode = (nextMode: NeutrinoMode) => {
+      if (!mode) setInternalMode(nextMode);
+      onModeChange?.(nextMode);
+    };
+    const cycleMode = () => {
+      const currentIndex = MODE_ORDER.indexOf(effectiveMode);
+      const nextMode = MODE_ORDER[(currentIndex + 1) % MODE_ORDER.length];
+      changeMode(nextMode);
+    };
     const runCommand = (command: string, ...args: unknown[]) => {
+      if (!canEditDocument) return;
       controllerRef.current?.execCommand(command, ...args);
       controllerRef.current?.focus();
     };
+    const renderIcon = (name: ToolbarIconName, fallback: ReactNode, label: string) => {
+      const configured = toolbarOptions.icons?.[name];
+      if (!configured) return fallback;
+      if (isIconRenderer(configured)) {
+        return configured({ name, label, mode: effectiveMode });
+      }
+      return configured;
+    };
     const toolbarButton = (
+      name: ToolbarIconName,
       label: string,
       ariaLabel: string,
       command: string,
@@ -99,11 +159,11 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
         className="ne-toolbar-button"
         aria-label={ariaLabel}
         title={ariaLabel}
-        disabled={!editable}
+        disabled={!canEditDocument}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => runCommand(command, ...args)}
       >
-        {label}
+        {renderIcon(name, label, ariaLabel)}
       </button>
     );
 
@@ -137,6 +197,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       tabIndents,
       keymap,
       codeHighlighter,
+      mode: effectiveMode,
       plugins,
       disabledPlugins,
       extraExtensions: extensions,
@@ -183,7 +244,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, plugins, disabledPlugins, extensions]);
+    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, effectiveMode, plugins, disabledPlugins, extensions]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {
@@ -230,15 +291,15 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     );
 
     return (
-      <div className={className} data-theme={resolvedTheme}>
-        <div className="ne-editor-shell">
-          {toolbar && (
+      <div className={className} data-theme={resolvedTheme} data-mode={effectiveMode}>
+        <div className={shellClassName} style={shellStyle}>
+          {showToolbar && (
             <div className="ne-toolbar" aria-label="Editor toolbar">
               <select
                 className="ne-toolbar-select"
                 aria-label="Text style"
                 defaultValue="normal"
-                disabled={!editable}
+                disabled={!canEditDocument}
                 onMouseDown={(event) => event.preventDefault()}
                 onChange={(event) => {
                   const value = event.currentTarget.value;
@@ -257,23 +318,39 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
                 <option value="h6">Heading 6</option>
               </select>
               <span className="ne-toolbar-separator" />
-              {toolbarButton('B', 'Bold', 'toggleBold')}
-              {toolbarButton('I', 'Italic', 'toggleItalic')}
-              {toolbarButton('S', 'Strikethrough', 'toggleStrikethrough')}
-              {toolbarButton('`', 'Inline code', 'toggleCode')}
+              {toolbarButton('bold', 'B', 'Bold', 'toggleBold')}
+              {toolbarButton('italic', 'I', 'Italic', 'toggleItalic')}
+              {toolbarButton('strikethrough', 'S', 'Strikethrough', 'toggleStrikethrough')}
+              {toolbarButton('inlineCode', '`', 'Inline code', 'toggleCode')}
               <span className="ne-toolbar-separator" />
-              {toolbarButton('UL', 'Bullet list', 'toggleBulletList')}
-              {toolbarButton('1.', 'Ordered list', 'toggleOrderedList')}
-              {toolbarButton('[ ]', 'Task list', 'toggleCheckList')}
+              {toolbarButton('bulletList', 'UL', 'Bullet list', 'toggleBulletList')}
+              {toolbarButton('orderedList', '1.', 'Ordered list', 'toggleOrderedList')}
+              {toolbarButton('taskList', '[ ]', 'Task list', 'toggleCheckList')}
               <span className="ne-toolbar-separator" />
-              {toolbarButton('[]', 'Insert link', 'insertLink')}
-              {toolbarButton('Img', 'Insert image', 'insertImage')}
-              {toolbarButton('</>', 'Insert code block', 'insertCodeBlock')}
-              {toolbarButton('Tbl', 'Insert table', 'insertTable')}
-              {toolbarButton('HR', 'Insert divider', 'insertHr')}
+              {toolbarButton('link', '[]', 'Insert link', 'insertLink')}
+              {toolbarButton('image', 'Img', 'Insert image', 'insertImage')}
+              {toolbarButton('codeBlock', '</>', 'Insert code block', 'insertCodeBlock')}
+              {toolbarButton('table', 'Tbl', 'Insert table', 'insertTable')}
+              {toolbarButton('divider', 'HR', 'Insert divider', 'insertHr')}
               <span className="ne-toolbar-separator" />
-              {toolbarButton('Undo', 'Undo', 'undo')}
-              {toolbarButton('Redo', 'Redo', 'redo')}
+              {toolbarButton('undo', 'Undo', 'Undo', 'undo')}
+              {toolbarButton('redo', 'Redo', 'Redo', 'redo')}
+              {showModeToggle && (
+                <>
+                  <span className="ne-toolbar-separator" />
+                  <button
+                    type="button"
+                    className="ne-toolbar-button ne-mode-toggle"
+                    aria-label="Switch editor mode"
+                    title="Switch editor mode"
+                    disabled={!editable}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={cycleMode}
+                  >
+                    {renderIcon('mode', MODE_LABELS[effectiveMode], 'Switch editor mode')}
+                  </button>
+                </>
+              )}
             </div>
           )}
           <div ref={containerRef} />
@@ -290,12 +367,12 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
               {footerOptions.logo !== false && (
                 <span
                   className="ne-footer-logo-wrap"
-                  aria-label={`Neutrino Editor v.${NEUTRINO_VERSION}`}
+                  aria-label={FOOTER_TOOLTIP}
                   tabIndex={0}
                 >
                   <NeutrinoLogo />
                   <span className="ne-footer-tooltip" role="tooltip">
-                    Neutrino Editor v.{NEUTRINO_VERSION}
+                    {FOOTER_TOOLTIP}
                   </span>
                 </span>
               )}

@@ -54,4 +54,20 @@ describe('imagesPlugin', () => {
     expect(view.dom.querySelector('.ne-image-widget')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('![Sample PNG](assets/img.png)');
   });
+
+  it('keeps the image rendered in preview mode when the cursor is inside the image syntax', () => {
+    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(3),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        mode: 'preview',
+      }),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeInstanceOf(HTMLImageElement);
+    expect(lineElement(view, 1).textContent).not.toContain('![Sample PNG]');
+  });
 });

@@ -66,6 +66,10 @@
   --ne-spacing-block: 0.5em;
   --ne-spacing-inline-padding: 0.125em 0.25em;
   --ne-blockquote-indent: 1em;
+  --ne-content-padding: 42px 56px;
+  --ne-toolbar-padding: 10px 14px;
+  --ne-footer-padding: 4px 10px;
+  --ne-backdrop-filter: none;
 
   /* Code */
   --ne-code-font-size: 0.9em;
@@ -103,6 +107,7 @@
   border: 1px solid var(--ne-color-border);
   border-radius: var(--ne-radius-editor);
   box-shadow: var(--ne-shadow-editor);
+  backdrop-filter: var(--ne-backdrop-filter);
   color: var(--ne-color-text);
   overflow: hidden;
 }
@@ -123,7 +128,7 @@
 .ne-editor-shell .cm-content {
   caret-color: var(--ne-color-caret);
   min-height: 260px;
-  padding: 42px 56px;
+  padding: var(--ne-content-padding);
 }
 
 .ne-editor-shell .cm-selectionBackground,
@@ -143,7 +148,7 @@
   flex-wrap: wrap;
   gap: 6px;
   min-height: 56px;
-  padding: 10px 14px;
+  padding: var(--ne-toolbar-padding);
 }
 
 .ne-toolbar-button,
@@ -534,7 +539,7 @@
   gap: 12px;
   justify-content: space-between;
   min-height: 30px;
-  padding: 4px 10px;
+  padding: var(--ne-footer-padding);
 }
 
 .ne-footer-stats {

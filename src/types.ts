@@ -1,6 +1,9 @@
+import type { CSSProperties, ReactNode } from 'react';
 import type { EditorState, Extension, Transaction } from '@codemirror/state';
 import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
+
+export type NeutrinoMode = 'live' | 'markdown' | 'preview';
 
 export type CodeHighlighter = (input: {
   code: string;
@@ -10,7 +13,51 @@ export type CodeHighlighter = (input: {
 
 export interface NeutrinoRenderContext {
   theme: 'light' | 'dark';
+  mode?: NeutrinoMode;
   codeHighlighter?: CodeHighlighter;
+}
+
+export type ToolbarIconName =
+  | 'bold'
+  | 'italic'
+  | 'strikethrough'
+  | 'inlineCode'
+  | 'bulletList'
+  | 'orderedList'
+  | 'taskList'
+  | 'link'
+  | 'image'
+  | 'codeBlock'
+  | 'table'
+  | 'divider'
+  | 'undo'
+  | 'redo'
+  | 'mode';
+
+export type ToolbarIconRenderer = (input: {
+  name: ToolbarIconName;
+  label: string;
+  mode: NeutrinoMode;
+}) => ReactNode;
+
+export interface NeutrinoToolbarOptions {
+  enabled?: boolean;
+  showModeToggle?: boolean;
+  icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
+}
+
+export interface NeutrinoFooterOptions {
+  wordCount?: boolean;
+  characterCount?: boolean;
+  logo?: boolean;
+}
+
+export interface NeutrinoSurfaceOptions {
+  className?: string;
+  style?: CSSProperties;
+  contentPadding?: string;
+  toolbarPadding?: string;
+  footerPadding?: string;
 }
 
 // ── Reveal strategy ─────────────────────────────────────────────────────────
@@ -212,13 +259,15 @@ export interface NeutrinoEditorProps {
   /** Optional code highlighter for inactive fenced code block rendering. */
   codeHighlighter?: CodeHighlighter;
   /** Optional default command toolbar. Default: true. */
-  toolbar?: boolean;
+  toolbar?: boolean | NeutrinoToolbarOptions;
   /** Optional status footer. Default: true. */
-  footer?: boolean | {
-    wordCount?: boolean;
-    characterCount?: boolean;
-    logo?: boolean;
-  };
+  footer?: boolean | NeutrinoFooterOptions;
+  /** Visual mode. Default: 'live'. `editable={false}` always renders as 'preview'. */
+  mode?: NeutrinoMode;
+  /** Called when the built-in mode toggle requests a mode change. */
+  onModeChange?: (mode: NeutrinoMode) => void;
+  /** Optional shell styling hooks for gradients, frosted glass, and paddings. */
+  surface?: NeutrinoSurfaceOptions;
 
   /** Additional plugins to register alongside built-ins. */
   plugins?: NeutrinoPlugin[];
@@ -227,7 +276,7 @@ export interface NeutrinoEditorProps {
   /** Additional CM6 extensions (appended after all internal extensions). */
   extensions?: Extension[];
 
-  // ── Events ────────────────────────���──────────────────���──────────────────
+  // ── Events ────────────────────────────────────────────────────────────────
   onFocus?: () => void;
   onBlur?: () => void;
   onSelectionChange?: (selection: { from: number; to: number; anchor: number; head: number }) => void;

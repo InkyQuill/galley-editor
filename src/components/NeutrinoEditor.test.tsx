@@ -197,8 +197,8 @@ describe('NeutrinoEditor React wrapper', () => {
     expect(footer).toBeInstanceOf(HTMLElement);
     expect(footer?.textContent).toContain('2 words');
     expect(footer?.textContent).toContain('11 characters');
-    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.4.0');
-    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.4.0');
+    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.4.0 by Inky Quill');
+    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.4.0 by Inky Quill');
     expect(footer?.querySelector('.ne-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
   });
 
@@ -232,5 +232,124 @@ describe('NeutrinoEditor React wrapper', () => {
     const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" toolbar={false} />);
 
     expect(container.querySelector('.ne-toolbar')).toBeNull();
+  });
+
+  it('accepts custom toolbar icons as React nodes', () => {
+    const { container } = mount(
+      <NeutrinoEditor
+        value="Hello world"
+        theme="light"
+        toolbar={{
+          icons: {
+            bold: <svg data-testid="custom-bold" viewBox="0 0 16 16" />,
+          },
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="custom-bold"]')).toBeInstanceOf(SVGElement);
+    expect(container.querySelector('[aria-label="Bold"]')?.textContent).toBe('');
+  });
+
+  it('accepts custom toolbar icons as render functions', () => {
+    const { container } = mount(
+      <NeutrinoEditor
+        value="Hello world"
+        theme="light"
+        toolbar={{
+          icons: {
+            italic: ({ label }) => <span data-testid="custom-italic">{label}</span>,
+          },
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="custom-italic"]')?.textContent).toBe('Italic');
+  });
+
+  it('applies surface class names, styles, and padding variables to the shell', () => {
+    const { container } = mount(
+      <NeutrinoEditor
+        value="Hello world"
+        theme="light"
+        surface={{
+          className: 'glass-editor',
+          contentPadding: '24px',
+          toolbarPadding: '8px',
+          footerPadding: '6px',
+          style: {
+            background: 'linear-gradient(135deg, red, blue)',
+            backdropFilter: 'blur(18px)',
+          },
+        }}
+      />,
+    );
+    const shell = container.querySelector('.ne-editor-shell') as HTMLElement | null;
+
+    expect(shell).toBeInstanceOf(HTMLElement);
+    expect(shell?.classList.contains('glass-editor')).toBe(true);
+    expect(shell?.style.getPropertyValue('--ne-content-padding')).toBe('24px');
+    expect(shell?.style.getPropertyValue('--ne-toolbar-padding')).toBe('8px');
+    expect(shell?.style.getPropertyValue('--ne-footer-padding')).toBe('6px');
+    expect(shell?.style.background).toContain('linear-gradient');
+    expect(shell?.style.backdropFilter).toBe('blur(18px)');
+  });
+
+  it('renders raw markdown in markdown mode', () => {
+    const { container } = mount(<NeutrinoEditor value="# Title\n\n**Bold**" theme="light" mode="markdown" />);
+
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('markdown');
+    expect(container.querySelector('.ne-h1')).toBeNull();
+    expect(container.querySelector('.ne-bold')).toBeNull();
+    expect(container.querySelector('.cm-content')?.textContent).toContain('# Title');
+    expect(container.querySelector('.cm-content')?.textContent).toContain('**Bold**');
+  });
+
+  it('renders preview mode without revealing markdown syntax at the cursor', () => {
+    const { container } = mount(<NeutrinoEditor value="# Title\n\n**Bold**" theme="light" mode="preview" />);
+
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('preview');
+    expect(container.querySelector('.ne-h1')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.ne-bold')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.cm-content')?.textContent).toContain('Title');
+    expect(container.querySelector('.cm-content')?.textContent).toContain('Bold');
+    expect(container.querySelector('.cm-content')?.textContent).not.toContain('#');
+    expect(container.querySelector('.cm-content')?.textContent).not.toContain('**');
+  });
+
+  it('forces preview mode when editable=false', () => {
+    const { container } = mount(
+      <NeutrinoEditor value="# Title" theme="light" editable={false} mode="markdown" />,
+    );
+
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('preview');
+    expect(container.querySelector('.cm-content')?.textContent).toContain('Title');
+    expect(container.querySelector('.cm-content')?.textContent).not.toContain('#');
+  });
+
+  it('cycles editor modes from the toolbar button', () => {
+    const changes: string[] = [];
+    const { container } = mount(
+      <NeutrinoEditor
+        value="# Title"
+        theme="light"
+        onModeChange={(mode) => changes.push(mode)}
+      />,
+    );
+    const modeButton = container.querySelector('.ne-mode-toggle') as HTMLButtonElement | null;
+
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('live');
+    expect(modeButton).toBeInstanceOf(HTMLButtonElement);
+
+    act(() => {
+      modeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('markdown');
+
+    act(() => {
+      modeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(container.firstElementChild?.getAttribute('data-mode')).toBe('preview');
+    expect(changes).toEqual(['markdown', 'preview']);
   });
 });

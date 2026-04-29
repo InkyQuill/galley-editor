@@ -175,7 +175,7 @@ function buildCodeFenceDecorations(
         (sel.from >= node.from && sel.from <= node.to) ||
         (sel.to >= node.from && sel.to <= node.to);
 
-      if (isNear || isInside) return;
+      if (context.mode !== 'preview' && (isNear || isInside)) return;
 
       const raw = state.sliceDoc(node.from, node.to);
       const parsed = parseFence(raw);
@@ -191,7 +191,7 @@ function buildCodeFenceDecorations(
 
 const codeFencePlugin: NeutrinoPlugin = {
   id: 'ne:code-fence',
-  extensions(classNames: NeutrinoClassNames, context = { theme: 'light' as const }) {
+  extensions(classNames: NeutrinoClassNames, context = { theme: 'light' as const, mode: 'live' as const }) {
     const blockClass = classNames.blockCode ?? 'ne-code-fence';
 
     const field = StateField.define<DecorationSet>({

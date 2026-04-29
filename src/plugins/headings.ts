@@ -4,7 +4,8 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 const headingsPlugin: NeutrinoPlugin = {
   id: 'ne:headings',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
+    const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide header marks (##) with 'active' reveal
     const headerMarkExt = makeInlinePlugin({
@@ -19,7 +20,7 @@ const headingsPlugin: NeutrinoPlugin = {
         }
         return null;
       },
-      getRevealStrategy: () => 'active',
+      getRevealStrategy: () => revealStrategy,
     });
 
     // Add heading line classes

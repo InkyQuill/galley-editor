@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState, useCallback } from 'react';
 import NeutrinoEditor from './NeutrinoEditor';
 import ErrorBoundary from './ErrorBoundary';
-import type { NeutrinoHandle } from '../types';
+import type { NeutrinoHandle, NeutrinoMode } from '../types';
 import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
@@ -502,6 +502,109 @@ function FooterDisabledStory() {
  */
 export const FooterDisabled: Story = {
   render: FooterDisabledStory,
+};
+
+// ── Mode Switching ─────────────────────────────────────────────────────────
+
+function ModeSwitchingStory() {
+  const [value, setValue] = useState(allFeaturesMarkdown);
+  const [mode, setMode] = useState<NeutrinoMode>('live');
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <NeutrinoEditor
+        value={value}
+        onChange={setValue}
+        mode={mode}
+        onModeChange={setMode}
+        minRows={12}
+      />
+    </div>
+  );
+}
+
+/**
+ * Uses the built-in mode toggle to switch between live editing, raw Markdown,
+ * and rendered preview. Preview keeps blocks rendered even when clicked.
+ */
+export const ModeSwitching: Story = {
+  render: ModeSwitchingStory,
+};
+
+// ── Custom Toolbar Icons ───────────────────────────────────────────────────
+
+function CustomToolbarIconsStory() {
+  const [value, setValue] = useState(sampleMarkdown);
+  const icon = (path: string) => (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+      <path d={path} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <NeutrinoEditor
+        value={value}
+        onChange={setValue}
+        minRows={10}
+        toolbar={{
+          icons: {
+            bold: icon('M6 4h8a4 4 0 0 1 0 8H6zM6 12h9a4 4 0 0 1 0 8H6z'),
+            italic: icon('M19 4h-9M14 20H5M15 4 9 20'),
+            link: icon('M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'),
+            mode: ({ mode }) => <span>{mode === 'preview' ? 'HTML' : mode === 'markdown' ? 'MD' : 'Live'}</span>,
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates icon overrides with inline SVG nodes and a render function.
+ * The same API accepts React icon pack components such as Lucide icons.
+ */
+export const CustomToolbarIcons: Story = {
+  render: CustomToolbarIconsStory,
+};
+
+// ── Frosted Surface ────────────────────────────────────────────────────────
+
+function FrostedSurfaceStory() {
+  const [value, setValue] = useState(sampleMarkdown);
+  return (
+    <div style={{
+      maxWidth: '860px',
+      margin: '0 auto',
+      padding: '32px',
+      borderRadius: '18px',
+      background: 'linear-gradient(135deg, #dbeafe 0%, #fce7f3 45%, #dcfce7 100%)',
+    }}>
+      <NeutrinoEditor
+        value={value}
+        onChange={setValue}
+        minRows={10}
+        surface={{
+          className: 'recipe-frosted-surface',
+          contentPadding: '36px 48px',
+          toolbarPadding: '10px 16px',
+          footerPadding: '7px 12px',
+          style: {
+            background: 'rgba(255, 255, 255, 0.72)',
+            backdropFilter: 'blur(22px) saturate(1.35)',
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Uses the `surface` prop to apply a frosted shell, custom paddings, and
+ * parent gradient background without replacing the base theme.
+ */
+export const FrostedSurface: Story = {
+  render: FrostedSurfaceStory,
 };
 
 // ── With Placeholder ────────────────────────────────────────────────────────

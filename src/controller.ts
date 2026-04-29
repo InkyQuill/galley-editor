@@ -47,6 +47,7 @@ import {
   type CodeHighlighter,
   type NeutrinoClassNames,
   type NeutrinoHandle,
+  type NeutrinoMode,
   type NeutrinoPlugin,
 } from './types';
 
@@ -82,6 +83,7 @@ export interface ControllerSettings {
   tabIndents: boolean;
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
+  mode: NeutrinoMode;
   plugins: NeutrinoPlugin[];
   disabledPlugins: string[];
   extraExtensions: Extension[];
@@ -380,22 +382,26 @@ export class EditorController implements NeutrinoHandle {
     const { settings } = this;
     const resolved = resolveClassNames(settings.classNames);
     const disabledSet = new Set(settings.disabledPlugins);
+    const canEditDocument = settings.editable && settings.mode !== 'preview';
 
     const allPlugins = [...BUILT_IN_PLUGINS, ...settings.plugins];
     const renderContext = {
       theme: settings.theme === 'dark' ? 'dark' as const : 'light' as const,
+      mode: settings.mode,
       codeHighlighter: settings.codeHighlighter,
     };
-    const pluginExtensions = allPlugins
-      .filter((p) => !disabledSet.has(p.id))
-      .flatMap((p) => p.extensions(resolved, renderContext));
+    const pluginExtensions = settings.mode === 'markdown'
+      ? []
+      : allPlugins
+        .filter((p) => !disabledSet.has(p.id))
+        .flatMap((p) => p.extensions(resolved, renderContext));
 
     return [
       // Theme
       ...buildCmTheme(settings.theme),
       // Editability
-      EditorView.editable.of(settings.editable),
-      EditorState.readOnly.of(!settings.editable),
+      EditorView.editable.of(canEditDocument),
+      EditorState.readOnly.of(!canEditDocument),
       // Placeholder
       ...(settings.placeholder ? [cmPlaceholder(settings.placeholder)] : []),
       // All plugin extensions

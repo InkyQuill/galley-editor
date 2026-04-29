@@ -73,10 +73,11 @@ export class CheckboxWidget extends WidgetType {
 
 const checkboxesPlugin: NeutrinoPlugin = {
   id: 'ne:checkboxes',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const checkboxClass = classNames.checkbox ?? 'ne-checkbox';
     const completedClass = classNames.completedTask ?? 'ne-completed-task';
     const completedLineDeco = Decoration.line({ class: completedClass });
+    const preview = context?.mode === 'preview';
 
     return [
       // Allow clicking checkboxes
@@ -131,6 +132,7 @@ const checkboxesPlugin: NeutrinoPlugin = {
           return null;
         },
         getRevealStrategy(node, state) {
+          if (preview) return false;
           if (node.name === 'TaskMarker') {
             const container = node.node.parent?.parent;
             const listMarker = container?.getChild('ListMark');

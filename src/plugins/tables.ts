@@ -111,6 +111,7 @@ class TableWidget extends WidgetType {
 function buildTableDecorations(
   state: EditorState,
   tableClass: string,
+  preview: boolean,
 ): DecorationSet {
   const doc = state.doc;
   const cursorLine = doc.lineAt(state.selection.main.anchor);
@@ -130,7 +131,7 @@ function buildTableDecorations(
         (sel.from >= node.from && sel.from <= node.to) ||
         (sel.to >= node.from && sel.to <= node.to);
 
-      if (isNear || isInside) return;
+      if (!preview && (isNear || isInside)) return;
 
       const parsed = parseTable(state.sliceDoc(node.from, node.to));
       if (!parsed) return;
@@ -149,19 +150,20 @@ function buildTableDecorations(
 
 const tablesPlugin: NeutrinoPlugin = {
   id: 'ne:tables',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const tableClass = classNames.table ?? 'ne-table';
+    const preview = context?.mode === 'preview';
 
     const field = StateField.define<DecorationSet>({
       create(state) {
-        return buildTableDecorations(state, tableClass);
+        return buildTableDecorations(state, tableClass, preview);
       },
       update(decos, tr) {
         decos = decos.map(tr.changes);
         const selectionChanged = !tr.newSelection.eq(tr.startState.selection);
         const treeChanged = syntaxTree(tr.state) !== syntaxTree(tr.startState);
         if (tr.docChanged || selectionChanged || treeChanged) {
-          decos = buildTableDecorations(tr.state, tableClass);
+          decos = buildTableDecorations(tr.state, tableClass, preview);
         }
         return decos;
       },

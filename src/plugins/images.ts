@@ -55,8 +55,9 @@ function parseImage(raw: string): ParsedImage | null {
 
 const imagesPlugin: NeutrinoPlugin = {
   id: 'ne:images',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const imageClass = classNames.image ?? 'ne-image-frame';
+    const preview = context?.mode === 'preview';
 
     return [
       makeInlinePlugin({
@@ -67,7 +68,9 @@ const imagesPlugin: NeutrinoPlugin = {
           return new ImageWidget(parsed, imageClass);
         },
         getRevealStrategy: (node, state) =>
-          state.selection.ranges.some((range) => range.from <= node.to && range.to >= node.from),
+          preview
+            ? false
+            : state.selection.ranges.some((range) => range.from <= node.to && range.to >= node.from),
       }),
     ];
   },

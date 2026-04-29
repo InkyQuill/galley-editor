@@ -60,6 +60,10 @@ const lightVariables = {
   '--ne-spacing-block': '0.5em',
   '--ne-spacing-inline-padding': '0.125em 0.25em',
   '--ne-blockquote-indent': '1em',
+  '--ne-content-padding': '42px 56px',
+  '--ne-toolbar-padding': '10px 14px',
+  '--ne-footer-padding': '4px 10px',
+  '--ne-backdrop-filter': 'none',
   '--ne-code-font-size': '0.9em',
   '--ne-shadow-editor': '0 12px 30px rgba(15, 23, 42, 0.06)',
 };

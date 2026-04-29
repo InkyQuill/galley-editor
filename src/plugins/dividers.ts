@@ -28,10 +28,11 @@ class DividerWidget extends WidgetType {
 
 const dividersPlugin: NeutrinoPlugin = {
   id: 'ne:dividers',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: NeutrinoClassNames, context) {
     const widgetClass = classNames.dividerWidget ?? 'ne-divider-widget';
     const lineClass = classNames.divider ?? 'ne-divider';
     const lineDeco = Decoration.line({ class: lineClass });
+    const revealStrategy = context?.mode === 'preview' ? false : 'line';
 
     return [
       // Replace horizontal rule with widget
@@ -42,6 +43,7 @@ const dividersPlugin: NeutrinoPlugin = {
           }
           return null;
         },
+        getRevealStrategy: () => revealStrategy,
       }),
       // Add line decoration
       makeInlinePlugin({
