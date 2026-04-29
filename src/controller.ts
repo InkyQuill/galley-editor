@@ -53,7 +53,7 @@ export interface EditorCallbacks {
   onScroll?: (fraction: number) => void;
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   onEnter?: (mod: boolean, shift: boolean) => boolean;
-  onEscape?: () => void;
+  onEscape?: () => boolean | void;
   onSubmit?: () => void;
 }
 
@@ -77,6 +77,21 @@ function getScrollFraction(view: EditorView): number {
   return max > 0 ? scrollTop / max : 0;
 }
 
+function rafCoalesce<T extends unknown[]>(fn: (...args: T) => void) {
+  let frame: number | null = null;
+  let latest: T | null = null;
+  return (...args: T) => {
+    latest = args;
+    if (frame !== null) return;
+    frame = requestAnimationFrame(() => {
+      frame = null;
+      const value = latest;
+      latest = null;
+      if (value) fn(...value);
+    });
+  };
+}
+
 // ── EditorController ────────────────────────────────────────────────────────
 
 export class EditorController implements NeutrinoHandle {
@@ -85,10 +100,19 @@ export class EditorController implements NeutrinoHandle {
   private readonly dynamicCompartment = new Compartment();
   private readonly autosizeCompartment = new Compartment();
   private readonly historyCompartment = new Compartment();
+  private readonly runtimeExtensionsCompartment = new Compartment();
+  private readonly runtimeExtensions = new Map<symbol, Extension>();
 
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
   private callbacks: EditorCallbacks;
+  private readonly dispatchSelectionChange: (sel: {
+    from: number;
+    to: number;
+    anchor: number;
+    head: number;
+  }) => void;
+  private readonly dispatchScroll: (fraction: number) => void;
 
   constructor(
     parent: HTMLElement,
@@ -98,6 +122,12 @@ export class EditorController implements NeutrinoHandle {
   ) {
     this.settings = settings;
     this.callbacks = callbacks;
+    this.dispatchSelectionChange = rafCoalesce((sel) => {
+      this.callbacks.onSelectionChange?.(sel);
+    });
+    this.dispatchScroll = rafCoalesce((fraction) => {
+      this.callbacks.onScroll?.(fraction);
+    });
 
     const state = EditorState.create({
       doc: initialValue,
@@ -112,6 +142,8 @@ export class EditorController implements NeutrinoHandle {
         ),
         // History (separate so it can be cleared independently)
         this.historyCompartment.of(history()),
+        // Runtime extensions added through the imperative handle
+        this.runtimeExtensionsCompartment.of([]),
       ],
     });
 
@@ -134,9 +166,6 @@ export class EditorController implements NeutrinoHandle {
 
       // Keymaps
       keymap.of([
-        ...standardKeymap,
-        ...historyKeymap,
-        indentWithTab,
         {
           key: 'Enter',
           run: (cm) => this.handleEnter(cm, false, false),
@@ -150,10 +179,13 @@ export class EditorController implements NeutrinoHandle {
         {
           key: 'Escape',
           run: () => {
-            this.callbacks.onEscape?.();
-            return true;
+            const handled = this.callbacks.onEscape?.();
+            return handled === true;
           },
         },
+        ...standardKeymap,
+        ...historyKeymap,
+        indentWithTab,
       ]),
 
       // Event listeners (use callback refs so they never go stale)
@@ -163,7 +195,7 @@ export class EditorController implements NeutrinoHandle {
         }
         if (update.selectionSet) {
           const sel = update.state.selection.main;
-          this.callbacks.onSelectionChange?.({
+          this.dispatchSelectionChange({
             from: sel.from,
             to: sel.to,
             anchor: sel.anchor,
@@ -181,7 +213,7 @@ export class EditorController implements NeutrinoHandle {
 
       EditorView.domEventHandlers({
         scroll: (_e, view) => {
-          this.callbacks.onScroll?.(getScrollFraction(view));
+          this.dispatchScroll(getScrollFraction(view));
         },
         paste: (e, view) => {
           this.callbacks.onPaste?.(e, view);
@@ -192,7 +224,7 @@ export class EditorController implements NeutrinoHandle {
 
   private handleEnter(cm: EditorView, mod: boolean, shift: boolean): boolean {
     // Mod+Enter triggers submit (Cmd/Ctrl+Enter)
-    if (mod && this.callbacks.onSubmit) {
+    if (mod && !shift && this.callbacks.onSubmit) {
       this.callbacks.onSubmit();
       return true;
     }
@@ -203,12 +235,14 @@ export class EditorController implements NeutrinoHandle {
     // Default: insert newline
     cm.dispatch(
       cm.state.update({
-        changes: {
-          from: cm.state.selection.main.from,
-          to: cm.state.selection.main.to,
-          insert: '\n',
-        },
-        selection: EditorSelection.cursor(cm.state.selection.main.from + 1),
+        ...cm.state.changeByRange((range) => ({
+          changes: {
+            from: range.from,
+            to: range.to,
+            insert: '\n',
+          },
+          range: EditorSelection.cursor(range.from + 1),
+        })),
         scrollIntoView: true,
       }),
     );
@@ -271,11 +305,6 @@ export class EditorController implements NeutrinoHandle {
     }
   }
 
-  /** Update callback refs without reconfiguring extensions. */
-  updateCallbacks(callbacks: EditorCallbacks) {
-    this.callbacks = callbacks;
-  }
-
   // ── NeutrinoHandle implementation ─────────────────────────────────────
 
   getContent(): string {
@@ -287,10 +316,13 @@ export class EditorController implements NeutrinoHandle {
     if (value === current) return;
 
     const { state } = this.view;
-    const cursorPos = Math.min(state.selection.main.anchor, value.length);
+    const clamp = (pos: number) => Math.max(0, Math.min(pos, value.length));
+    const nextRanges = state.selection.ranges.map((range) =>
+      EditorSelection.range(clamp(range.anchor), clamp(range.head)),
+    );
     this.view.dispatch({
       changes: { from: 0, to: state.doc.length, insert: value },
-      selection: EditorSelection.cursor(cursorPos),
+      selection: EditorSelection.create(nextRanges, state.selection.mainIndex),
     });
   }
 
@@ -355,17 +387,23 @@ export class EditorController implements NeutrinoHandle {
   }
 
   addExtension(ext: Extension): { remove: () => void } {
-    const compartment = new Compartment();
-    this.view.dispatch({
-      effects: StateEffect.appendConfig.of(compartment.of(ext)),
-    });
+    const id = Symbol('runtimeExtension');
+    this.runtimeExtensions.set(id, ext);
+    this.reconfigureRuntimeExtensions();
     return {
       remove: () => {
-        this.view.dispatch({
-          effects: compartment.reconfigure([]),
-        });
+        if (!this.runtimeExtensions.delete(id)) return;
+        this.reconfigureRuntimeExtensions();
       },
     };
+  }
+
+  private reconfigureRuntimeExtensions(): void {
+    this.view.dispatch({
+      effects: this.runtimeExtensionsCompartment.reconfigure(
+        Array.from(this.runtimeExtensions.values()),
+      ),
+    });
   }
 
   /** Clean up the editor view. */

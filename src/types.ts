@@ -213,7 +213,7 @@ export interface NeutrinoEditorProps {
   /** Handle Enter key. Return true to suppress default behavior. */
   onEnter?: (mod: boolean, shift: boolean) => boolean;
   /** Handle Escape key. */
-  onEscape?: () => void;
+  onEscape?: () => boolean | void;
   /** Handle paste events. */
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   /** Handle Cmd/Ctrl+Enter. */
