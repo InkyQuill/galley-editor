@@ -46,7 +46,7 @@ import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
 | `onSelectionChange` | `(sel: { from, to, anchor, head }) => void` | Selection changed |
 | `onScroll` | `(fraction: number) => void` | Scroll position changed (0-1) |
 | `onEnter` | `(mod: boolean, shift: boolean) => boolean` | Enter key pressed. Return `true` to suppress default newline |
-| `onEscape` | `() => void` | Escape key pressed |
+| `onEscape` | `() => boolean \| void` | Escape key pressed. Return `true` to consume the event; return `false` or `void` to let it pass through |
 | `onPaste` | `(event: ClipboardEvent, view: EditorView) => void` | Paste event |
 | `onSubmit` | `() => void` | Cmd/Ctrl+Enter pressed |
 
@@ -168,9 +168,9 @@ handle.remove();
 
 ### Escape Hatch
 
-#### `view: EditorView` (readonly)
+#### `view: EditorView | null` (readonly)
 
-Direct access to the underlying CodeMirror `EditorView`. Use for advanced operations not covered by the handle API.
+Direct access to the underlying CodeMirror `EditorView`, or `null` before the editor has mounted. Use for advanced operations not covered by the handle API.
 
 ---
 

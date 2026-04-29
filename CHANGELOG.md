@@ -8,8 +8,6 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-04-29
-
 ### Added
 - CSS variable theming contract for Neutrino's base styles.
 - Live auto theme subscription so `theme="auto"` updates when the OS color scheme changes.
@@ -70,6 +68,5 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.3.0...HEAD
-[0.3.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.3.0
+[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.2.0...HEAD
 [0.2.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.2.0
