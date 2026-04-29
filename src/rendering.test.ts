@@ -390,6 +390,36 @@ describe('makeBlockPlugin', () => {
     expect(lines.item(2).classList.contains('test-blockquote')).toBe(true);
   });
 
+  it('uses the full block when getDecorationRange returns null', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node) {
+        if (node.name === 'Blockquote') {
+          return null;
+        }
+        return [node.from, node.to];
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const doc = '> one\n> two\n> three\n\nplain';
+    const view = tracked(createView(
+      doc,
+      doc.indexOf('plain'),
+      makeBlockPlugin(spec),
+    ));
+    const lines = view.dom.querySelectorAll('.cm-line');
+
+    expect(lines.item(0).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(1).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(2).classList.contains('test-blockquote')).toBe(true);
+  });
+
   it('hides decorations when cursor is near the block', () => {
     const decorationCreated: boolean[] = [];
     const spec: NeutrinoPluginSpec = {

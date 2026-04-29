@@ -27,6 +27,7 @@ export const HIDE_DECORATION = Decoration.replace({});
 /** How many lines away from the cursor a block node must be to remain decorated. */
 export const BLOCK_CURSOR_LINE_PROXIMITY = 1;
 
+// CodeMirror does not expose a public line-decoration predicate.
 const LINE_DECORATION_CONSTRUCTOR = Decoration.line({}).constructor;
 
 // ── Shared utility ──────────────────────────────────────────────────────────
@@ -212,30 +213,25 @@ function buildBlockDecorations(
 
       let rangeFrom = nodeLineFrom.from;
       let rangeTo = nodeLineTo.to;
-      let skip = false;
 
       if (spec.getDecorationRange) {
         const range = spec.getDecorationRange(node, state);
         if (range) {
           rangeFrom = range[0];
           rangeTo = range.length === 1 ? range[0] : range[1];
-        } else {
-          skip = true;
         }
       }
 
-      if (!skip) {
-        if (!isWidget && isLineDecoration(decoration)) {
-          for (
-            let lineNumber = nodeLineFrom.number;
-            lineNumber <= nodeLineTo.number;
-            lineNumber++
-          ) {
-            widgets.push(decoration.range(doc.line(lineNumber).from));
-          }
-        } else {
-          widgets.push(decoration.range(rangeFrom, rangeTo));
+      if (!isWidget && isLineDecoration(decoration)) {
+        for (
+          let lineNumber = nodeLineFrom.number;
+          lineNumber <= nodeLineTo.number;
+          lineNumber++
+        ) {
+          widgets.push(decoration.range(doc.line(lineNumber).from));
         }
+      } else {
+        widgets.push(decoration.range(rangeFrom, rangeTo));
       }
     },
     leave: (node) => {
