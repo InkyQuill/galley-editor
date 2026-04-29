@@ -122,7 +122,7 @@ Best for: multi-line blocks (blockquotes, tables).
 
 #### Exception: Code Fences
 
-The `code-fence.ts` plugin uses a custom `StateField` directly instead of `makeBlockPlugin`. This is because it needs to emit **one line decoration per line** within a fenced code block, while `makeBlockPlugin` returns one decoration per node.
+The `code-fence.ts` plugin uses a custom `StateField` directly instead of `makeBlockPlugin`. `makeBlockPlugin` expands line decorations across every line in a block; code fences stay custom so their code-fence-specific cursor proximity and inside-block hiding behavior remains localized.
 
 ### Reveal Strategies
 
