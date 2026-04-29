@@ -77,10 +77,16 @@ function getScrollFraction(view: EditorView): number {
   return max > 0 ? scrollTop / max : 0;
 }
 
-function rafCoalesce<T extends unknown[]>(fn: (...args: T) => void) {
+interface CoalescedCallback<T extends unknown[]> {
+  (...args: T): void;
+  cancel(): void;
+}
+
+function rafCoalesce<T extends unknown[]>(fn: (...args: T) => void): CoalescedCallback<T> {
   let frame: number | null = null;
   let latest: T | null = null;
-  return (...args: T) => {
+
+  const coalesced = ((...args: T) => {
     latest = args;
     if (frame !== null) return;
     frame = requestAnimationFrame(() => {
@@ -89,7 +95,17 @@ function rafCoalesce<T extends unknown[]>(fn: (...args: T) => void) {
       latest = null;
       if (value) fn(...value);
     });
+  }) as CoalescedCallback<T>;
+
+  coalesced.cancel = () => {
+    if (frame !== null) {
+      cancelAnimationFrame(frame);
+      frame = null;
+    }
+    latest = null;
   };
+
+  return coalesced;
 }
 
 // ── EditorController ────────────────────────────────────────────────────────
@@ -106,13 +122,13 @@ export class EditorController implements NeutrinoHandle {
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
   private callbacks: EditorCallbacks;
-  private readonly dispatchSelectionChange: (sel: {
+  private readonly dispatchSelectionChange: CoalescedCallback<[{
     from: number;
     to: number;
     anchor: number;
     head: number;
-  }) => void;
-  private readonly dispatchScroll: (fraction: number) => void;
+  }]>;
+  private readonly dispatchScroll: CoalescedCallback<[number]>;
 
   constructor(
     parent: HTMLElement,
@@ -408,6 +424,8 @@ export class EditorController implements NeutrinoHandle {
 
   /** Clean up the editor view. */
   destroy(): void {
+    this.dispatchSelectionChange.cancel();
+    this.dispatchScroll.cancel();
     this.view.destroy();
   }
 }

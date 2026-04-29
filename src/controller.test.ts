@@ -43,6 +43,12 @@ function createController(
   return controller;
 }
 
+function destroyController(controller: EditorController): void {
+  controller.destroy();
+  const index = controllers.indexOf(controller);
+  if (index >= 0) controllers.splice(index, 1);
+}
+
 function dispatchKey(view: EditorView, init: KeyboardEventInit & { key: string }): KeyboardEvent {
   const event = new KeyboardEvent('keydown', {
     bubbles: true,
@@ -50,6 +56,23 @@ function dispatchKey(view: EditorView, init: KeyboardEventInit & { key: string }
     ...init,
   });
   view.contentDOM.dispatchEvent(event);
+  return event;
+}
+
+function setScrollMetrics(view: EditorView, scrollTop: number): void {
+  Object.defineProperties(view.scrollDOM, {
+    clientHeight: { configurable: true, value: 100 },
+    scrollHeight: { configurable: true, value: 500 },
+  });
+  view.scrollDOM.scrollTop = scrollTop;
+}
+
+function dispatchScroll(view: EditorView): Event {
+  const event = new Event('scroll', {
+    bubbles: true,
+    cancelable: false,
+  });
+  view.scrollDOM.dispatchEvent(event);
   return event;
 }
 
@@ -67,6 +90,12 @@ function inertExtension(): Extension {
   return StateField.define<number>({
     create: () => 0,
     update: (value) => value,
+  });
+}
+
+function docChangedListener(fn: () => void): Extension {
+  return EditorView.updateListener.of((update) => {
+    if (update.docChanged) fn();
   });
 }
 
@@ -195,6 +224,21 @@ describe('EditorController runtime state', () => {
     expect(configBaseLength(controller.view.state)).toBe(initialLength);
   });
 
+  it('activates runtime extensions until removal and treats double remove as idempotent', () => {
+    const onDocChanged = vi.fn();
+    const controller = createController('hello');
+    const handle = controller.addExtension(docChangedListener(onDocChanged));
+
+    controller.insertText('!');
+    expect(onDocChanged).toHaveBeenCalledOnce();
+
+    handle.remove();
+    handle.remove();
+    controller.insertText('?');
+
+    expect(onDocChanged).toHaveBeenCalledOnce();
+  });
+
   it('coalesces synchronous selection changes to one animation-frame callback', () => {
     vi.useFakeTimers();
     const onSelectionChange = vi.fn();
@@ -215,5 +259,48 @@ describe('EditorController runtime state', () => {
       anchor: 9,
       head: 9,
     });
+  });
+
+  it('does not call pending selection callbacks after destroy', () => {
+    vi.useFakeTimers();
+    const onSelectionChange = vi.fn();
+    const controller = createController('0123456789', { onSelectionChange });
+
+    controller.select(5);
+    destroyController(controller);
+    vi.advanceTimersByTime(16);
+
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('coalesces synchronous scroll events to one animation-frame callback', () => {
+    vi.useFakeTimers();
+    const onScroll = vi.fn();
+    const controller = createController('hello', { onScroll });
+
+    setScrollMetrics(controller.view, 100);
+    dispatchScroll(controller.view);
+    setScrollMetrics(controller.view, 300);
+    dispatchScroll(controller.view);
+
+    expect(onScroll).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(16);
+
+    expect(onScroll).toHaveBeenCalledOnce();
+    expect(onScroll).toHaveBeenCalledWith(0.75);
+  });
+
+  it('does not call pending scroll callbacks after destroy', () => {
+    vi.useFakeTimers();
+    const onScroll = vi.fn();
+    const controller = createController('hello', { onScroll });
+
+    setScrollMetrics(controller.view, 100);
+    dispatchScroll(controller.view);
+    destroyController(controller);
+    vi.advanceTimersByTime(16);
+
+    expect(onScroll).not.toHaveBeenCalled();
   });
 });
