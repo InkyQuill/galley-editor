@@ -195,12 +195,38 @@ describe('headings', () => {
   it('toggleHeading1 replaces ## with # (downgrades heading level)', () => {
     const view = tracked(createView('## hello', 5));
     BUILTIN_COMMANDS.toggleHeading1(view);
-    // toggleHeading1 only removes its own level, doesn't handle other levels
-    // Level 1 has no "remove other levels" step, so ## stays and # is added
-    // Actually, level 1 skips the removeOtherLevels step (level > 1 guard)
-    // So it just toggles # on/off. ## hello doesn't match ^#{1} so it adds #
-    expect(docOf(view)).toBe('# ## hello');
+    expect(docOf(view)).toBe('# hello');
   });
+
+  it('toggleHeading1 treats seven hashes as plain content', () => {
+    const view = tracked(createView('####### hello', 5));
+    BUILTIN_COMMANDS.toggleHeading1(view);
+    expect(docOf(view)).toBe('# ####### hello');
+  });
+
+  it.each(
+    Array.from({ length: 6 }, (_, sourceIndex) =>
+      Array.from({ length: 6 }, (_, targetIndex) => [
+        sourceIndex + 1,
+        targetIndex + 1,
+      ] as const),
+    ).flat().filter(([sourceLevel, targetLevel]) => sourceLevel !== targetLevel),
+  )(
+    'toggleHeading%s to heading%s replaces the source prefix',
+    (sourceLevel, targetLevel) => {
+      const sourcePrefix = '#'.repeat(sourceLevel);
+      const targetPrefix = '#'.repeat(targetLevel);
+      const view = tracked(createView(`${sourcePrefix} hello`, sourcePrefix.length + 2));
+      const command =
+        BUILTIN_COMMANDS[
+          `toggleHeading${targetLevel}` as keyof typeof BUILTIN_COMMANDS
+        ];
+
+      command(view);
+
+      expect(docOf(view)).toBe(`${targetPrefix} hello`);
+    },
+  );
 
   it('toggleHeading4 adds #### prefix', () => {
     const view = tracked(createView('hello'));

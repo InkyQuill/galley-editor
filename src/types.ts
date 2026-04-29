@@ -166,8 +166,8 @@ export interface NeutrinoHandle {
   /** Add a CM6 extension at runtime. Returns a handle to remove it. */
   addExtension(ext: Extension): { remove(): void };
 
-  /** The underlying CodeMirror EditorView (escape hatch). */
-  readonly view: EditorView;
+  /** The underlying CodeMirror EditorView (escape hatch), or null before mount. */
+  readonly view: EditorView | null;
 }
 
 // ── Editor props ────────────────────────────────────────────────────────────
@@ -212,8 +212,8 @@ export interface NeutrinoEditorProps {
   onScroll?: (fraction: number) => void;
   /** Handle Enter key. Return true to suppress default behavior. */
   onEnter?: (mod: boolean, shift: boolean) => boolean;
-  /** Handle Escape key. */
-  onEscape?: () => void;
+  /** Handle Escape key. Return true to consume the key. */
+  onEscape?: () => boolean | void;
   /** Handle paste events. */
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   /** Handle Cmd/Ctrl+Enter. */

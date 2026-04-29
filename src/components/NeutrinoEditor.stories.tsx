@@ -20,6 +20,7 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+type ThemeChoice = 'light' | 'dark' | 'auto';
 
 // ── Sample content ──────────────────────────────────────────────────────────
 
@@ -245,12 +246,188 @@ function DarkThemeStory() {
 }
 
 /**
- * The editor with `theme="dark"`. The editor applies dark-mode structural
- * styles and the `neutrino-base.css` includes dark mode overrides for
- * element colors.
+ * The editor with `theme="dark"`. The wrapper resolves to
+ * `data-theme="dark"`, so `neutrino-base.css` applies its dark variable
+ * overrides.
  */
 export const DarkTheme: Story = {
   render: DarkThemeStory,
+};
+
+// ── CSS Variable Overrides ─────────────────────────────────────────────────
+
+function CssVariableOverridesStory() {
+  const [value, setValue] = useState(sampleMarkdown);
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <style>{`
+        .recipe-css-vars {
+          --ne-color-text: #18202f;
+          --ne-color-text-muted: #657089;
+          --ne-color-bg: #fbfcff;
+          --ne-color-link: #0f766e;
+          --ne-color-link-hover: #115e59;
+          --ne-color-code-fg: #18202f;
+          --ne-color-code-bg: rgba(15, 118, 110, 0.12);
+          --ne-color-code-fence-bg: rgba(15, 118, 110, 0.08);
+          --ne-color-blockquote-border: rgba(15, 118, 110, 0.45);
+          --ne-color-blockquote-fg: #475569;
+          --ne-color-divider: rgba(15, 118, 110, 0.28);
+          --ne-color-table-border: rgba(15, 118, 110, 0.24);
+          --ne-color-checkbox-accent: #0f766e;
+          --ne-color-selection: rgba(15, 118, 110, 0.2);
+          --ne-color-focus-ring: #0f766e;
+          --ne-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+          --ne-font-size: 0.975rem;
+          border: 1px solid rgba(15, 118, 110, 0.2);
+          border-radius: 8px;
+        }
+        .recipe-css-vars[data-theme="dark"] {
+          --ne-color-text: #e6edf7;
+          --ne-color-text-muted: #9fb0c7;
+          --ne-color-bg: #101820;
+          --ne-color-code-fg: #e6edf7;
+          --ne-color-link: #5eead4;
+          --ne-color-link-hover: #99f6e4;
+          --ne-color-blockquote-fg: #b6c3d4;
+          --ne-color-checkbox-accent: #5eead4;
+          --ne-color-selection: rgba(94, 234, 212, 0.26);
+          --ne-color-focus-ring: #5eead4;
+        }
+      `}</style>
+      <NeutrinoEditor
+        className="recipe-css-vars"
+        value={value}
+        onChange={setValue}
+        theme="auto"
+        minRows={10}
+      />
+    </div>
+  );
+}
+
+/**
+ * A scoped plain-CSS recipe: pass `className` to the wrapper and override
+ * `--ne-*` variables there. Dark overrides target the same wrapper when its
+ * resolved `data-theme` is `dark`.
+ */
+export const CssVariableOverrides: Story = {
+  render: CssVariableOverridesStory,
+};
+
+// ── Tailwind Token Mapping ─────────────────────────────────────────────────
+
+function TailwindTokenMappingStory() {
+  const [value, setValue] = useState(allFeaturesMarkdown);
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <style>{`
+        .recipe-tailwind-tokens {
+          --color-editor-text: #111827;
+          --color-editor-muted: #6b7280;
+          --color-editor-link: #2563eb;
+          --color-editor-link-hover: #1d4ed8;
+          --color-editor-code-bg: #f1f5f9;
+          --color-editor-code-fence-bg: #f8fafc;
+          --color-editor-ring: #2563eb;
+          --font-editor-body: ui-sans-serif, system-ui, sans-serif;
+          --font-editor-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+          --ne-color-text: var(--color-editor-text);
+          --ne-color-text-muted: var(--color-editor-muted);
+          --ne-color-link: var(--color-editor-link);
+          --ne-color-link-hover: var(--color-editor-link-hover);
+          --ne-color-code-bg: var(--color-editor-code-bg);
+          --ne-color-code-fence-bg: var(--color-editor-code-fence-bg);
+          --ne-color-checkbox-accent: var(--color-editor-link);
+          --ne-color-focus-ring: var(--color-editor-ring);
+          --ne-font-body: var(--font-editor-body);
+          --ne-font-mono: var(--font-editor-mono);
+          border: 1px solid #dbe4f0;
+          border-radius: 8px;
+        }
+        .recipe-tailwind-tokens[data-theme="dark"] {
+          --color-editor-text: #f1f5f9;
+          --color-editor-muted: #94a3b8;
+          --color-editor-link: #38bdf8;
+          --color-editor-link-hover: #7dd3fc;
+          --color-editor-code-bg: rgba(148, 163, 184, 0.18);
+          --color-editor-code-fence-bg: rgba(148, 163, 184, 0.12);
+          --color-editor-ring: #38bdf8;
+        }
+      `}</style>
+      <NeutrinoEditor
+        className="recipe-tailwind-tokens"
+        value={value}
+        onChange={setValue}
+        theme="auto"
+        minRows={12}
+      />
+    </div>
+  );
+}
+
+/**
+ * Runtime equivalent of the Tailwind v4 recipe: app tokens such as
+ * `--color-editor-link` map into Neutrino's `--ne-*` variables.
+ */
+export const TailwindTokenMapping: Story = {
+  render: TailwindTokenMappingStory,
+};
+
+// ── Theme Selector ──────────────────────────────────────────────────────────
+
+function ThemeSelectorStory() {
+  const [value, setValue] = useState(sampleMarkdown);
+  const [theme, setTheme] = useState<ThemeChoice>('auto');
+  const choices: ThemeChoice[] = ['light', 'dark', 'auto'];
+
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <style>{`
+        .recipe-theme-selector {
+          border: 1px solid rgba(127, 127, 127, 0.24);
+          border-radius: 8px;
+        }
+      `}</style>
+      <div style={{ display: 'inline-flex', gap: '4px', marginBottom: '12px' }}>
+        {choices.map((choice) => (
+          <button
+            key={choice}
+            type="button"
+            onClick={() => setTheme(choice)}
+            style={{
+              padding: '6px 10px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              background: theme === choice ? '#0f172a' : '#ffffff',
+              color: theme === choice ? '#ffffff' : '#0f172a',
+              cursor: 'pointer',
+              textTransform: 'capitalize',
+            }}
+          >
+            {choice}
+          </button>
+        ))}
+      </div>
+      <NeutrinoEditor
+        className="recipe-theme-selector"
+        value={value}
+        onChange={setValue}
+        theme={theme}
+        minRows={10}
+      />
+    </div>
+  );
+}
+
+/**
+ * Switches the editor through `theme="light"`, `theme="dark"`, and
+ * `theme="auto"` so the wrapper `data-theme` behavior is visible.
+ */
+export const ThemeSelector: Story = {
+  render: ThemeSelectorStory,
 };
 
 // ── With Placeholder ────────────────────────────────────────────────────────
@@ -640,6 +817,13 @@ function CustomClassNamesStory() {
  * system that has its own class naming conventions.
  */
 export const CustomClassNames: Story = {
+  render: CustomClassNamesStory,
+};
+
+/**
+ * Recipe-focused alias for the `classNames` escape hatch.
+ */
+export const ClassNamesOverrides: Story = {
   render: CustomClassNamesStory,
 };
 

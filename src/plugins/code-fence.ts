@@ -6,8 +6,7 @@ import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 /**
  * Code fence plugin using a custom StateField to emit per-line decorations
- * for every line in a FencedCode block. This is needed because makeBlockPlugin
- * can only return one decoration per node, but we need one line decoration per line.
+ * for every line in a FencedCode block.
  */
 
 function buildCodeFenceDecorations(state: EditorState, blockClass: string): DecorationSet {

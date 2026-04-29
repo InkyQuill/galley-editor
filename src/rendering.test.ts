@@ -7,6 +7,7 @@ import {
   HIDE_DECORATION,
   BLOCK_CURSOR_LINE_PROXIMITY,
   nodeIntersectsSelection,
+  buildInlineDecorationsForRanges,
   makeInlinePlugin,
   makeBlockPlugin,
 } from './rendering';
@@ -257,6 +258,50 @@ describe('makeInlinePlugin', () => {
     const view = tracked(createView('hello *world*', 7, [plugin]));
     expect(view.state.doc.toString()).toBe('hello *world*');
   });
+
+  it('resets parentDepths for each visible range', () => {
+    const doc = '- a\n  - b\n\n- c\n  - d';
+    const secondRangeStart = doc.indexOf('- c');
+    const observations: Array<{
+      from: number;
+      depth: number | undefined;
+      map: ReadonlyMap<string, number>;
+    }> = [];
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node, _state, parentDepths) {
+        if (node.name === 'ListMark') {
+          observations.push({
+            from: node.from,
+            depth: parentDepths.get('BulletList'),
+            map: parentDepths,
+          });
+        }
+        return null;
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const view = tracked(createView(doc));
+
+    buildInlineDecorationsForRanges(view, spec, [
+      { from: 0, to: doc.indexOf('\n\n') },
+      { from: secondRangeStart, to: doc.length },
+    ]);
+
+    const secondRangeDepths = observations
+      .filter((observation) => observation.from >= secondRangeStart)
+      .map((observation) => observation.depth);
+    const firstRangeMap = observations.find(
+      (observation) => observation.from < secondRangeStart,
+    )?.map;
+    const secondRangeMap = observations.find(
+      (observation) => observation.from >= secondRangeStart,
+    )?.map;
+
+    expect(secondRangeMap).not.toBe(firstRangeMap);
+    expect(secondRangeDepths[0]).toBe(1);
+    expect(secondRangeDepths).toEqual([1, 2]);
+  });
 });
 
 // ── makeBlockPlugin ────────────────────────────────────────────────────────
@@ -312,6 +357,67 @@ describe('makeBlockPlugin', () => {
     // The field should exist and contain decorations
     // We verify by checking the view doesn't throw and state is accessible
     expect(view.state.doc.line(1).text).toBe('> quote');
+  });
+
+  it('expands line decorations across the full block when getDecorationRange returns a 2-tuple', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node, state) {
+        if (node.name === 'Blockquote') {
+          const firstLine = state.doc.lineAt(node.from);
+          return [firstLine.from, firstLine.to];
+        }
+        return null;
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const doc = '> one\n> two\n> three\n\nplain';
+    const view = tracked(createView(
+      doc,
+      doc.indexOf('plain'),
+      makeBlockPlugin(spec),
+    ));
+    const lines = view.dom.querySelectorAll('.cm-line');
+
+    expect(lines.item(0).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(1).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(2).classList.contains('test-blockquote')).toBe(true);
+  });
+
+  it('uses the full block when getDecorationRange returns null', () => {
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'Blockquote') {
+          return Decoration.line({ class: 'test-blockquote' });
+        }
+        return null;
+      },
+      getDecorationRange(node) {
+        if (node.name === 'Blockquote') {
+          return null;
+        }
+        return [node.from, node.to];
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const doc = '> one\n> two\n> three\n\nplain';
+    const view = tracked(createView(
+      doc,
+      doc.indexOf('plain'),
+      makeBlockPlugin(spec),
+    ));
+    const lines = view.dom.querySelectorAll('.cm-line');
+
+    expect(lines.item(0).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(1).classList.contains('test-blockquote')).toBe(true);
+    expect(lines.item(2).classList.contains('test-blockquote')).toBe(true);
   });
 
   it('hides decorations when cursor is near the block', () => {

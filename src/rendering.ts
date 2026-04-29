@@ -27,6 +27,9 @@ export const HIDE_DECORATION = Decoration.replace({});
 /** How many lines away from the cursor a block node must be to remain decorated. */
 export const BLOCK_CURSOR_LINE_PROXIMITY = 1;
 
+// CodeMirror does not expose a public line-decoration predicate.
+const LINE_DECORATION_CONSTRUCTOR = Decoration.line({}).constructor;
+
 // ── Shared utility ──────────────────────────────────────────────────────────
 
 export function nodeIntersectsSelection(
@@ -44,7 +47,95 @@ export function nodeIntersectsSelection(
   );
 }
 
+function isLineDecoration(decoration: Decoration): boolean {
+  return decoration.constructor === LINE_DECORATION_CONSTRUCTOR;
+}
+
 // ── Inline plugin (ViewPlugin, viewport-only) ──────────────────────────────
+
+export function buildInlineDecorationsForRanges(
+  view: EditorView,
+  spec: NeutrinoPluginSpec,
+  ranges: readonly { from: number; to: number }[],
+): DecorationSet {
+  const { state } = view;
+  const doc = state.doc;
+  const cursorLine = doc.lineAt(state.selection.main.anchor);
+  const selection = state.selection;
+  const widgets: Range<Decoration>[] = [];
+
+  for (const { from, to } of ranges) {
+    const parentDepths = new Map<string, number>();
+
+    syntaxTree(state).iterate({
+      from,
+      to,
+      enter: (node) => {
+        parentDepths.set(
+          node.name,
+          (parentDepths.get(node.name) ?? 0) + 1,
+        );
+
+        const strategy: RevealStrategy =
+          spec.getRevealStrategy?.(node, state) ?? 'line';
+
+        let isSelected = false;
+        if (typeof strategy === 'boolean') {
+          isSelected = strategy;
+        } else if (strategy === 'line') {
+          const nodeLine = doc.lineAt(node.from);
+          isSelected =
+            cursorLine.number === nodeLine.number ||
+            nodeIntersectsSelection(selection, node);
+        } else if (strategy === 'select') {
+          isSelected = nodeIntersectsSelection(selection, node);
+        } else if (strategy === 'active') {
+          const parent = node.node.parent;
+          isSelected =
+            nodeIntersectsSelection(selection, node) ||
+            (!!parent && nodeIntersectsSelection(selection, parent));
+        }
+
+        const shouldHide =
+          (spec.hideWhenNearCursor ?? true) && isSelected;
+        if (shouldHide) return;
+
+        const result = spec.createDecoration(node, state, parentDepths);
+        if (!result) return;
+
+        let decoration: Decoration;
+        if (result instanceof WidgetType) {
+          decoration = Decoration.replace({ widget: result });
+        } else {
+          decoration = result;
+        }
+
+        const range =
+          spec.getDecorationRange?.(node, state) ?? [node.from, node.to];
+        const rangeLineFrom = doc.lineAt(range[0]);
+        const rangeLineTo =
+          range.length === 2 ? doc.lineAt(range[1]) : rangeLineFrom;
+
+        // Only apply inline decorations within a single line
+        if (rangeLineFrom.number === rangeLineTo.number) {
+          if (range.length === 1) {
+            widgets.push(decoration.range(range[0]));
+          } else {
+            widgets.push(decoration.range(range[0], range[1]));
+          }
+        }
+      },
+      leave: (node) => {
+        parentDepths.set(
+          node.name,
+          (parentDepths.get(node.name) ?? 0) - 1,
+        );
+      },
+    });
+  }
+
+  return Decoration.set(widgets, true);
+}
 
 export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
   return ViewPlugin.fromClass(
@@ -52,7 +143,11 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
       decorations: DecorationSet;
 
       constructor(view: EditorView) {
-        this.decorations = this._buildDecorations(view);
+        this.decorations = buildInlineDecorationsForRanges(
+          view,
+          spec,
+          view.visibleRanges,
+        );
       }
 
       update(update: ViewUpdate) {
@@ -61,87 +156,12 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
           update.viewportChanged ||
           update.selectionSet
         ) {
-          this.decorations = this._buildDecorations(update.view);
+          this.decorations = buildInlineDecorationsForRanges(
+            update.view,
+            spec,
+            update.view.visibleRanges,
+          );
         }
-      }
-
-      _buildDecorations(view: EditorView): DecorationSet {
-        const { state } = view;
-        const doc = state.doc;
-        const cursorLine = doc.lineAt(state.selection.main.anchor);
-        const selection = state.selection;
-        const parentDepths = new Map<string, number>();
-        const widgets: Range<Decoration>[] = [];
-
-        for (const { from, to } of view.visibleRanges) {
-          syntaxTree(state).iterate({
-            from,
-            to,
-            enter: (node) => {
-              parentDepths.set(
-                node.name,
-                (parentDepths.get(node.name) ?? 0) + 1,
-              );
-
-              const strategy: RevealStrategy =
-                spec.getRevealStrategy?.(node, state) ?? 'line';
-
-              let isSelected = false;
-              if (typeof strategy === 'boolean') {
-                isSelected = strategy;
-              } else if (strategy === 'line') {
-                const nodeLine = doc.lineAt(node.from);
-                isSelected =
-                  cursorLine.number === nodeLine.number ||
-                  nodeIntersectsSelection(selection, node);
-              } else if (strategy === 'select') {
-                isSelected = nodeIntersectsSelection(selection, node);
-              } else if (strategy === 'active') {
-                const parent = node.node.parent;
-                isSelected =
-                  nodeIntersectsSelection(selection, node) ||
-                  (!!parent && nodeIntersectsSelection(selection, parent));
-              }
-
-              const shouldHide =
-                (spec.hideWhenNearCursor ?? true) && isSelected;
-              if (shouldHide) return;
-
-              const result = spec.createDecoration(node, state, parentDepths);
-              if (!result) return;
-
-              let decoration: Decoration;
-              if (result instanceof WidgetType) {
-                decoration = Decoration.replace({ widget: result });
-              } else {
-                decoration = result;
-              }
-
-              const range =
-                spec.getDecorationRange?.(node, state) ?? [node.from, node.to];
-              const rangeLineFrom = doc.lineAt(range[0]);
-              const rangeLineTo =
-                range.length === 2 ? doc.lineAt(range[1]) : rangeLineFrom;
-
-              // Only apply inline decorations within a single line
-              if (rangeLineFrom.number === rangeLineTo.number) {
-                if (range.length === 1) {
-                  widgets.push(decoration.range(range[0]));
-                } else {
-                  widgets.push(decoration.range(range[0], range[1]));
-                }
-              }
-            },
-            leave: (node) => {
-              parentDepths.set(
-                node.name,
-                (parentDepths.get(node.name) ?? 0) - 1,
-              );
-            },
-          });
-        }
-
-        return Decoration.set(widgets, true);
       }
     },
     {
@@ -183,27 +203,34 @@ function buildBlockDecorations(
       if (!result) return;
 
       let decoration: Decoration;
+      let isWidget = false;
       if (result instanceof WidgetType) {
         decoration = Decoration.replace({ widget: result, block: true });
+        isWidget = true;
       } else {
         decoration = result;
       }
 
       let rangeFrom = nodeLineFrom.from;
       let rangeTo = nodeLineTo.to;
-      let skip = false;
 
       if (spec.getDecorationRange) {
         const range = spec.getDecorationRange(node, state);
         if (range) {
           rangeFrom = range[0];
           rangeTo = range.length === 1 ? range[0] : range[1];
-        } else {
-          skip = true;
         }
       }
 
-      if (!skip) {
+      if (!isWidget && isLineDecoration(decoration)) {
+        for (
+          let lineNumber = nodeLineFrom.number;
+          lineNumber <= nodeLineTo.number;
+          lineNumber++
+        ) {
+          widgets.push(decoration.range(doc.line(lineNumber).from));
+        }
+      } else {
         widgets.push(decoration.range(rangeFrom, rangeTo));
       }
     },

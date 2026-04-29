@@ -1,11 +1,12 @@
-import { WidgetType } from '@codemirror/view';
+import { type EditorView, WidgetType } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
 
 /** Number of distinct visual bullet styles that cycle with nesting depth. */
 const DEPTH_STYLE_COUNT = 3;
 
-class BulletMarkerWidget extends WidgetType {
+/** @internal */
+export class BulletMarkerWidget extends WidgetType {
   private depthClass: string;
   private markerClass: string;
 
@@ -22,8 +23,7 @@ class BulletMarkerWidget extends WidgetType {
   toDOM() {
     const span = document.createElement('span');
     span.className = `${this.markerClass} ${this.depthClass}`;
-    span.setAttribute('aria-label', 'bullet');
-    span.role = 'img';
+    span.setAttribute('aria-hidden', 'true');
 
     // Sizing element preserves the width of the original marker
     const sizing = document.createElement('span');
@@ -39,9 +39,13 @@ class BulletMarkerWidget extends WidgetType {
     return span;
   }
 
-  updateDOM(dom: HTMLElement) {
-    dom.classList.remove('ne-depth-0', 'ne-depth-1', 'ne-depth-2');
+  updateDOM(dom: HTMLElement, _view: EditorView, from: BulletMarkerWidget) {
+    dom.classList.remove(from.depthClass);
     dom.classList.add(this.depthClass);
+    if (from.markerClass !== this.markerClass) {
+      dom.classList.remove(from.markerClass);
+      dom.classList.add(this.markerClass);
+    }
     return true;
   }
 

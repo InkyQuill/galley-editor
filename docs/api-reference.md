@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all public exports from `@inkyquill/neutrino-editor`.
+Complete reference for all public exports from `@inky/neutrino-editor`.
 
 ## Components
 
@@ -9,7 +9,7 @@ Complete reference for all public exports from `@inkyquill/neutrino-editor`.
 The main editor component. A React `forwardRef` wrapper around `EditorController`.
 
 ```tsx
-import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
+import { NeutrinoEditor } from '@inky/neutrino-editor';
 
 <NeutrinoEditor
   ref={editorRef}
@@ -46,7 +46,7 @@ import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
 | `onSelectionChange` | `(sel: { from, to, anchor, head }) => void` | Selection changed |
 | `onScroll` | `(fraction: number) => void` | Scroll position changed (0-1) |
 | `onEnter` | `(mod: boolean, shift: boolean) => boolean` | Enter key pressed. Return `true` to suppress default newline |
-| `onEscape` | `() => void` | Escape key pressed |
+| `onEscape` | `() => boolean \| void` | Escape key pressed. Return `true` to consume the event; return `false` or `void` to let it pass through |
 | `onPaste` | `(event: ClipboardEvent, view: EditorView) => void` | Paste event |
 | `onSubmit` | `() => void` | Cmd/Ctrl+Enter pressed |
 
@@ -55,7 +55,7 @@ import { NeutrinoEditor } from '@inkyquill/neutrino-editor';
 React error boundary for graceful error handling.
 
 ```tsx
-import { ErrorBoundary } from '@inkyquill/neutrino-editor';
+import { ErrorBoundary } from '@inky/neutrino-editor';
 
 <ErrorBoundary fallback={<div>Editor failed to load</div>}>
   <NeutrinoEditor value={value} onChange={setValue} />
@@ -168,9 +168,9 @@ handle.remove();
 
 ### Escape Hatch
 
-#### `view: EditorView` (readonly)
+#### `view: EditorView | null` (readonly)
 
-Direct access to the underlying CodeMirror `EditorView`. Use for advanced operations not covered by the handle API.
+Direct access to the underlying CodeMirror `EditorView`, or `null` before the editor has mounted. Use for advanced operations not covered by the handle API.
 
 ---
 
@@ -355,12 +355,12 @@ Each plugin is also exported individually for selective inclusion.
 
 ## CSS
 
-### `neutrino-base.css`
+### `style.css`
 
 Optional stylesheet with minimal visual defaults. Import it for quick setup:
 
 ```typescript
-import '@inkyquill/neutrino-editor/dist/neutrino-base.css';
+import '@inky/neutrino-editor/style.css';
 ```
 
 See [Styling Guide](./styling.md) for details on all classes and customization.

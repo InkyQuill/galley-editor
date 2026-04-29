@@ -1,6 +1,6 @@
 # Neutrino Editor
 
-> ⚠️ **In active development.** v0.2.0 is the first publishable build. The full feature set lands across v0.3 → v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+> ⚠️ **In active development.** v0.3.0 is the current private-registry build, with correctness fixes and CSS-variable theming included. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
@@ -9,7 +9,7 @@ A React component that provides a half-WYSIWYG markdown editing experience. Buil
 - 🎨 Half-WYSIWYG editing — markdown blocks render as HTML when the cursor is not on that line
 - 🚀 Real-time markdown rendering powered by Lezer's incremental parser
 - 🎯 Lightweight (~12 kB gzipped, no markdown-to-HTML step)
-- 🌙 Theme prop API for `light` / `dark` / `auto` (styling implementation lands in v0.3)
+- 🌙 Theme prop API for `light` / `dark` / `auto`, backed by CSS-variable styling
 - ⌨️ Imperative ref API for programmatic control
 - 🔧 Full TypeScript types
 

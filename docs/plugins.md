@@ -56,7 +56,7 @@ During tree iteration, the factory tracks how many times each node name has been
 By default, the decoration covers the full node span `[node.from, node.to]`. Override this to:
 - Return `[pos]` for a **point decoration** (line decorations, widgets placed at a position)
 - Return `[from, to]` for a **range decoration** that differs from the node span
-- Return `null` to skip this node (in `makeBlockPlugin`) or use the default (in `makeInlinePlugin`)
+- Return `null` to use the default full node/block range
 
 ### Reveal Strategies
 
@@ -129,7 +129,7 @@ Two extensions:
 
 Custom `StateField` (not `makeBlockPlugin`). Iterates `FencedCode` nodes and applies `ne-code-fence` line decoration to **every line** in the block. Hides when cursor is within 1 line or inside the block.
 
-This plugin needs a custom StateField because `makeBlockPlugin` produces one decoration per node, but code fences need one line decoration per line for proper styling.
+`makeBlockPlugin` also expands line decorations across every line in a block in v0.3. This plugin remains a custom StateField to keep the code-fence-specific cursor proximity and inside-block hiding behavior localized.
 
 ### Blockquotes (`ne:blockquote`)
 
@@ -195,8 +195,8 @@ The simplest built-in plugin. Uses `makeBlockPlugin` to add `ne-table` line deco
 
 ```typescript
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin } from '@inkyquill/neutrino-editor';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '@inkyquill/neutrino-editor';
+import { makeInlinePlugin } from '@inky/neutrino-editor';
+import type { NeutrinoPlugin, NeutrinoClassNames } from '@inky/neutrino-editor';
 
 const todoHighlightPlugin: NeutrinoPlugin = {
   id: 'custom:todo-highlight',
@@ -222,8 +222,8 @@ const todoHighlightPlugin: NeutrinoPlugin = {
 
 ```typescript
 import { WidgetType } from '@codemirror/view';
-import { makeInlinePlugin } from '@inkyquill/neutrino-editor';
-import type { NeutrinoPlugin } from '@inkyquill/neutrino-editor';
+import { makeInlinePlugin } from '@inky/neutrino-editor';
+import type { NeutrinoPlugin } from '@inky/neutrino-editor';
 
 class EmojiWidget extends WidgetType {
   constructor(private emoji: string) { super(); }

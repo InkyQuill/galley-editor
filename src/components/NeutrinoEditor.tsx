@@ -4,12 +4,14 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react';
 import {
   EditorController,
   type ControllerSettings,
   type EditorCallbacks,
 } from '../controller';
+import { resolveColorScheme, watchColorScheme } from '../theme';
 import { resolveClassNames, type NeutrinoEditorProps, type NeutrinoHandle } from '../types';
 
 export type { NeutrinoEditorProps, NeutrinoHandle };
@@ -42,6 +44,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<EditorController | null>(null);
+    const [resolvedTheme, setResolvedTheme] = useState(() => resolveColorScheme(theme));
 
     // Stable callback refs — updated every render, never cause re-init
     const callbacksRef = useRef<EditorCallbacks>({});
@@ -66,6 +69,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       editable,
       placeholder,
       theme,
+      editorClassName,
       classNames: resolveClassNames(classNames),
       minRows,
       maxRows,
@@ -73,10 +77,14 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       disabledPlugins,
       extraExtensions: extensions,
     });
+    const settingsRef = useRef<ControllerSettings | null>(null);
+    settingsRef.current = buildSettings();
 
     // ── Create EditorView ONCE on mount ─────────────────────────────────
     useEffect(() => {
       if (!containerRef.current) return;
+      const initialSettings = settingsRef.current;
+      if (!initialSettings) return;
 
       // Proxy callbacks through the ref so they're always fresh
       const callbackProxy: EditorCallbacks = {
@@ -94,14 +102,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       const controller = new EditorController(
         containerRef.current,
         initialValueRef.current,
-        buildSettings(),
+        initialSettings,
         callbackProxy,
       );
-
-      // Apply editor class name if provided
-      if (editorClassName) {
-        controller.view.dom.classList.add(...editorClassName.split(/\s+/).filter(Boolean));
-      }
 
       controllerRef.current = controller;
 
@@ -109,16 +112,24 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
         controller.destroy();
         controllerRef.current = null;
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Intentionally empty — view created once
 
     // ── Sync settings changes via Compartment reconfiguration ───────────
     useEffect(() => {
-      if (!controllerRef.current) return;
+      if (!controllerRef.current || !settingsRef.current) return;
 
-      controllerRef.current.updateSettings(buildSettings());
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deps are the individual settings props, not the builder function
-    }, [editable, placeholder, theme, classNames, minRows, maxRows, plugins, disabledPlugins, extensions]);
+      controllerRef.current.updateSettings(settingsRef.current);
+    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, plugins, disabledPlugins, extensions]);
+
+    // ── Resolve wrapper theme and watch system preference changes ────────
+    useEffect(() => {
+      setResolvedTheme(resolveColorScheme(theme));
+      return watchColorScheme(theme, (nextTheme) => {
+        setResolvedTheme(nextTheme);
+        if (!controllerRef.current || !settingsRef.current) return;
+        controllerRef.current.updateSettings(settingsRef.current);
+      });
+    }, [theme]);
 
     // ── Sync controlled value ───────────────────────────────────────────
     useEffect(() => {
@@ -135,27 +146,27 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     useImperativeHandle(
       ref,
       () => ({
-        get view() { return controllerRef.current!.view; },
-        getContent: () => controllerRef.current!.getContent(),
-        setContent: (v: string) => controllerRef.current!.setContent(v),
-        insertText: (t: string) => controllerRef.current!.insertText(t),
-        focus: () => controllerRef.current!.focus(),
-        blur: () => controllerRef.current!.blur(),
-        select: (a: number, h?: number) => controllerRef.current!.select(a, h),
-        getSelection: () => controllerRef.current!.getSelection(),
-        execCommand: (name: string, ...args: unknown[]) => controllerRef.current!.execCommand(name, ...args),
-        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerRef.current!.registerCommand(name, fn),
-        undo: () => controllerRef.current!.undo(),
-        redo: () => controllerRef.current!.redo(),
-        scrollTo: (f: number) => controllerRef.current!.scrollTo(f),
-        scrollSelectionIntoView: () => controllerRef.current!.scrollSelectionIntoView(),
-        addExtension: (ext: import('@codemirror/state').Extension) => controllerRef.current!.addExtension(ext),
+        get view() { return controllerRef.current?.view ?? null; },
+        getContent: () => controllerRef.current?.getContent() ?? '',
+        setContent: (v: string) => controllerRef.current?.setContent(v),
+        insertText: (t: string) => controllerRef.current?.insertText(t),
+        focus: () => controllerRef.current?.focus(),
+        blur: () => controllerRef.current?.blur(),
+        select: (a: number, h?: number) => controllerRef.current?.select(a, h),
+        getSelection: () => controllerRef.current?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
+        execCommand: (name: string, ...args: unknown[]) => controllerRef.current?.execCommand(name, ...args),
+        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerRef.current?.registerCommand(name, fn),
+        undo: () => controllerRef.current?.undo(),
+        redo: () => controllerRef.current?.redo(),
+        scrollTo: (f: number) => controllerRef.current?.scrollTo(f),
+        scrollSelectionIntoView: () => controllerRef.current?.scrollSelectionIntoView(),
+        addExtension: (ext: import('@codemirror/state').Extension) => controllerRef.current?.addExtension(ext) ?? { remove() {} },
       }),
       [],
     );
 
     return (
-      <div className={className}>
+      <div className={className} data-theme={resolvedTheme}>
         <div ref={containerRef} />
       </div>
     );
