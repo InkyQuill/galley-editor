@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480" role="img" aria-labelledby="title desc">
+  <title id="title">Generated sample diagram</title>
+  <desc id="desc">A neat abstract editor workflow diagram for markdown image testing.</desc>
+  <rect width="960" height="480" rx="32" fill="#f8fafc"/>
+  <g fill="none" stroke="#94a3b8" stroke-width="4">
+    <path d="M270 240 H430"/>
+    <path d="M530 240 H690"/>
+    <path d="M421 224 l20 16 -20 16"/>
+    <path d="M681 224 l20 16 -20 16"/>
+  </g>
+  <g>
+    <rect x="94" y="142" width="176" height="196" rx="18" fill="#dbeafe" stroke="#2563eb" stroke-width="4"/>
+    <rect x="392" y="142" width="176" height="196" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="4"/>
+    <rect x="690" y="142" width="176" height="196" rx="18" fill="#fae8ff" stroke="#a855f7" stroke-width="4"/>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-weight="700" text-anchor="middle">
+    <text x="182" y="218" fill="#1e40af" font-size="30">Write</text>
+    <text x="480" y="218" fill="#166534" font-size="30">Preview</text>
+    <text x="778" y="218" fill="#7e22ce" font-size="30">Polish</text>
+  </g>
+  <g fill="#334155" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" text-anchor="middle">
+    <text x="182" y="262">Markdown source</text>
+    <text x="480" y="262">Live rendering</text>
+    <text x="778" y="262">Clean output</text>
+  </g>
+</svg>

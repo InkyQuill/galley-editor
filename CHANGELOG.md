@@ -8,6 +8,19 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+### Added
+- Visual rendering for inactive fenced code blocks with language badges, copy buttons, and dependency-free default highlighting.
+- `codeHighlighter` prop so consumers can integrate highlight.js, Shiki, Prism, or a custom highlighter without Neutrino depending on one.
+- Visual rendering for inactive GFM pipe tables.
+- Visual rendering for inactive markdown images, including SVG and PNG URLs.
+- Built-in editor toolbar, enabled by default and disableable with `toolbar={false}`.
+- Built-in footer with word count, character count, and logo tooltip, disableable with `footer={false}`.
+- Storybook image samples using local generated SVG assets.
+
+### Changed
+- Default base stylesheet now skins the full editor shell, toolbar, editing surface, code blocks, tables, and footer in light and dark themes.
+- Link source reveal now expands the full `[label](url)` when the cursor is inside the link.
+
 ## [0.4.0] — 2026-04-29
 
 ### Added

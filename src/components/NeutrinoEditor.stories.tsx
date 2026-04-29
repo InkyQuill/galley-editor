@@ -8,6 +8,9 @@ import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import { EditorView } from '@codemirror/view';
 import '../neutrino-base.css';
+import samplePng from '../../assets/img.png';
+import sampleDiagram from '../stories/assets/sample-diagram.svg';
+import sampleLandscape from '../stories/assets/sample-landscape.svg';
 
 const meta = {
   title: 'Components/NeutrinoEditor',
@@ -35,6 +38,14 @@ A **half-WYSIWYG** markdown editor that renders blocks as HTML when you're not e
 - \`Inline code\` formatting
 - [Links](https://example.com) support
 - ~~Strikethrough~~ text
+
+### Images
+
+![Generated landscape sample](${sampleLandscape})
+
+![Generated workflow diagram](${sampleDiagram})
+
+![Generated PNG sample](${samplePng})
 
 ### Task Lists
 
@@ -109,6 +120,10 @@ interface NeutrinoPlugin {
 | Bold | Done | Uses \`**\` |
 | Italic | Done | Uses \`*\` |
 | Links | Done | \`[text](url)\` |
+
+![Generated landscape sample](${sampleLandscape})
+
+![Generated PNG sample](${samplePng})
 `;
 
 // ── Default ─────────────────────────────────────────────────────────────────
@@ -466,6 +481,29 @@ export const ThemeSelector: Story = {
   render: ThemeSelectorStory,
 };
 
+// ── Footer Disabled ────────────────────────────────────────────────────────
+
+function FooterDisabledStory() {
+  const [value, setValue] = useState(sampleMarkdown);
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <NeutrinoEditor
+        value={value}
+        onChange={setValue}
+        footer={false}
+        minRows={10}
+      />
+    </div>
+  );
+}
+
+/**
+ * The editor with its built-in status footer disabled via `footer={false}`.
+ */
+export const FooterDisabled: Story = {
+  render: FooterDisabledStory,
+};
+
 // ── With Placeholder ────────────────────────────────────────────────────────
 
 function WithPlaceholderStory() {
@@ -753,7 +791,7 @@ function DisabledPluginsStory() {
 
   const pluginIds = [
     'ne:headings', 'ne:emphasis', 'ne:code-inline', 'ne:code-fence',
-    'ne:blockquote', 'ne:links', 'ne:lists', 'ne:checkboxes',
+    'ne:blockquote', 'ne:links', 'ne:images', 'ne:lists', 'ne:checkboxes',
     'ne:dividers', 'ne:tables',
   ];
 

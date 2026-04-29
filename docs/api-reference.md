@@ -35,6 +35,9 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme |
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Override or extend the default CodeMirror keymap |
+| `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
+| `toolbar` | `boolean` | `true` | Show the built-in command toolbar |
+| `footer` | `boolean \| FooterOptions` | `true` | Show the built-in status footer with word count, character count, and logo |
 | `plugins` | `NeutrinoPlugin[]` | `[]` | Additional plugins alongside built-ins |
 | `disabledPlugins` | `string[]` | `[]` | Built-in plugin IDs to disable |
 | `extensions` | `Extension[]` | `[]` | Additional CM6 extensions (appended last) |
@@ -228,6 +231,7 @@ interface NeutrinoClassNames {
   blockCode?: string;     // default: 'ne-code-fence'
   blockQuote?: string;    // default: 'ne-blockquote'
   table?: string;         // default: 'ne-table'
+  image?: string;         // default: 'ne-image-frame'
   divider?: string;       // default: 'ne-divider'
   dividerWidget?: string; // default: 'ne-divider-widget'
   checkbox?: string;      // default: 'ne-checkbox'
@@ -255,6 +259,18 @@ type BuiltinCommand =
 ```typescript
 type CommandFn = (view: EditorView, ...args: unknown[]) => unknown;
 ```
+
+### `CodeHighlighter`
+
+```typescript
+type CodeHighlighter = (input: {
+  code: string;
+  language: string;
+  theme: 'light' | 'dark';
+}) => string | HTMLElement;
+```
+
+Used by inactive fenced code blocks. String results are treated as highlighted HTML; consumers are responsible for sanitizing output from third-party highlighters.
 
 ---
 
@@ -345,10 +361,11 @@ Array of all 10 built-in plugins, in registration order:
 4. `codeFencePlugin` (`ne:code-fence`)
 5. `blockquotePlugin` (`ne:blockquote`)
 6. `linksPlugin` (`ne:links`)
-7. `listsPlugin` (`ne:lists`)
-8. `checkboxesPlugin` (`ne:checkboxes`)
-9. `dividersPlugin` (`ne:dividers`)
-10. `tablesPlugin` (`ne:tables`)
+7. `imagesPlugin` (`ne:images`)
+8. `listsPlugin` (`ne:lists`)
+9. `checkboxesPlugin` (`ne:checkboxes`)
+10. `dividersPlugin` (`ne:dividers`)
+11. `tablesPlugin` (`ne:tables`)
 
 Each plugin is also exported individually for selective inclusion.
 

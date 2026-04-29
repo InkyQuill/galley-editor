@@ -5,6 +5,7 @@ import codeInlinePlugin from './code-inline';
 import codeFencePlugin from './code-fence';
 import blockquotePlugin from './blockquote';
 import linksPlugin from './links';
+import imagesPlugin from './images';
 import listsPlugin from './lists';
 import checkboxesPlugin from './checkboxes';
 import dividersPlugin from './dividers';
@@ -17,6 +18,7 @@ export const BUILT_IN_PLUGINS: NeutrinoPlugin[] = [
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  imagesPlugin,
   listsPlugin,
   checkboxesPlugin,
   dividersPlugin,
@@ -30,6 +32,7 @@ export {
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  imagesPlugin,
   listsPlugin,
   checkboxesPlugin,
   dividersPlugin,

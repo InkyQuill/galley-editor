@@ -1,11 +1,15 @@
 import { Decoration } from '@codemirror/view';
+import type { EditorState } from '@codemirror/state';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
 import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+
+function selectionIntersects(from: number, to: number, state: EditorState): boolean {
+  return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
+}
 
 const linksPlugin: NeutrinoPlugin = {
   id: 'ne:links',
   extensions(classNames: NeutrinoClassNames) {
-
     // Hide URL and link marks with 'select' reveal (only reveal when cursor overlaps)
     const markExt = makeInlinePlugin({
       createDecoration(node, state) {
@@ -28,7 +32,11 @@ const linksPlugin: NeutrinoPlugin = {
 
         return null;
       },
-      getRevealStrategy: () => 'select',
+      getRevealStrategy: (node, state) => {
+        const parent = node.node.parent;
+        if (!parent || parent.name !== 'Link') return 'select';
+        return selectionIntersects(parent.from, parent.to, state);
+      },
     });
 
     // Add semantic class to the link span

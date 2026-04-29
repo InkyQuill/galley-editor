@@ -2,6 +2,17 @@ import type { EditorState, Extension, Transaction } from '@codemirror/state';
 import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
+export type CodeHighlighter = (input: {
+  code: string;
+  language: string;
+  theme: 'light' | 'dark';
+}) => string | HTMLElement;
+
+export interface NeutrinoRenderContext {
+  theme: 'light' | 'dark';
+  codeHighlighter?: CodeHighlighter;
+}
+
 // ── Reveal strategy ─────────────────────────────────────────────────────────
 
 /** Controls when raw markdown is shown instead of the rendered decoration. */
@@ -45,10 +56,10 @@ export interface NeutrinoPlugin {
   /** Stable identifier. Built-ins use 'ne:headings', 'ne:emphasis', etc. */
   id: string;
   /** Return CM6 extensions that implement this plugin's behavior. */
-  extensions(classNames: NeutrinoClassNames): Extension[];
+  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
 }
 
-// ── Semantic CSS class overrides ───────────────────────────────────��────────
+// ── Semantic CSS class overrides ────────────────────────────────────────────
 
 export interface NeutrinoClassNames {
   bold?: string;
@@ -66,6 +77,7 @@ export interface NeutrinoClassNames {
   blockCode?: string;
   blockQuote?: string;
   table?: string;
+  image?: string;
   divider?: string;
   dividerWidget?: string;
   checkbox?: string;
@@ -89,6 +101,7 @@ export const DEFAULT_CLASS_NAMES: Required<NeutrinoClassNames> = {
   blockCode: 'ne-code-fence',
   blockQuote: 'ne-blockquote',
   table: 'ne-table',
+  image: 'ne-image-frame',
   divider: 'ne-divider',
   dividerWidget: 'ne-divider-widget',
   checkbox: 'ne-checkbox',
@@ -196,6 +209,16 @@ export interface NeutrinoEditorProps {
   tabIndents?: boolean;
   /** Override or extend the default keymap. */
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
+  /** Optional code highlighter for inactive fenced code block rendering. */
+  codeHighlighter?: CodeHighlighter;
+  /** Optional default command toolbar. Default: true. */
+  toolbar?: boolean;
+  /** Optional status footer. Default: true. */
+  footer?: boolean | {
+    wordCount?: boolean;
+    characterCount?: boolean;
+    logo?: boolean;
+  };
 
   /** Additional plugins to register alongside built-ins. */
   plugins?: NeutrinoPlugin[];

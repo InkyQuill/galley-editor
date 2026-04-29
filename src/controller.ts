@@ -44,6 +44,7 @@ import { parseListLine } from './commands/list-syntax';
 import {
   resolveClassNames,
   type CommandFn,
+  type CodeHighlighter,
   type NeutrinoClassNames,
   type NeutrinoHandle,
   type NeutrinoPlugin,
@@ -80,6 +81,7 @@ export interface ControllerSettings {
   maxRows?: number;
   tabIndents: boolean;
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
+  codeHighlighter?: CodeHighlighter;
   plugins: NeutrinoPlugin[];
   disabledPlugins: string[];
   extraExtensions: Extension[];
@@ -380,9 +382,13 @@ export class EditorController implements NeutrinoHandle {
     const disabledSet = new Set(settings.disabledPlugins);
 
     const allPlugins = [...BUILT_IN_PLUGINS, ...settings.plugins];
+    const renderContext = {
+      theme: settings.theme === 'dark' ? 'dark' as const : 'light' as const,
+      codeHighlighter: settings.codeHighlighter,
+    };
     const pluginExtensions = allPlugins
       .filter((p) => !disabledSet.has(p.id))
-      .flatMap((p) => p.extensions(resolved));
+      .flatMap((p) => p.extensions(resolved, renderContext));
 
     return [
       // Theme

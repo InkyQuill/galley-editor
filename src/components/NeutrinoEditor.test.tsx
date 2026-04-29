@@ -189,4 +189,48 @@ describe('NeutrinoEditor React wrapper', () => {
       expect.any(Function),
     );
   });
+
+  it('renders the default footer with word count, character count, and logo tooltip', () => {
+    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" />);
+    const footer = container.querySelector('.ne-footer');
+
+    expect(footer).toBeInstanceOf(HTMLElement);
+    expect(footer?.textContent).toContain('2 words');
+    expect(footer?.textContent).toContain('11 characters');
+    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.4.0');
+    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.4.0');
+    expect(footer?.querySelector('.ne-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
+  });
+
+  it('updates footer counts when controlled value changes', () => {
+    const { container, root } = mount(<NeutrinoEditor value="One" theme="light" />);
+
+    expect(container.querySelector('.ne-footer')?.textContent).toContain('1 word');
+    expect(container.querySelector('.ne-footer')?.textContent).toContain('3 characters');
+
+    rerender(root, <NeutrinoEditor value="One two three" theme="light" />);
+
+    expect(container.querySelector('.ne-footer')?.textContent).toContain('3 words');
+    expect(container.querySelector('.ne-footer')?.textContent).toContain('13 characters');
+  });
+
+  it('does not render the footer when footer=false', () => {
+    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" footer={false} />);
+
+    expect(container.querySelector('.ne-footer')).toBeNull();
+  });
+
+  it('renders the default toolbar', () => {
+    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" />);
+
+    expect(container.querySelector('.ne-toolbar')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
+    expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
+  });
+
+  it('does not render the toolbar when toolbar=false', () => {
+    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" toolbar={false} />);
+
+    expect(container.querySelector('.ne-toolbar')).toBeNull();
+  });
 });
