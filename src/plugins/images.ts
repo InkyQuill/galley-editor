@@ -18,8 +18,8 @@ import {
   imageRangeIntersectsSelection,
   imageTrailingAttrsLength,
   parseImageMarkdown,
+  serializeImageMarkdown,
 } from '../image-markdown';
-import { updateImageMetadata } from '../commands/imageMetadata';
 import type {
   ImageRenderer,
   MissingImageRenderer,
@@ -75,6 +75,7 @@ class ImageWidget extends WidgetType {
   renderer: ImageRenderer;
   missingRenderer: MissingImageRenderer | undefined;
   selected: boolean;
+  activeResizeCleanup: (() => void) | undefined;
 
   constructor(
     image: ParsedImage,
@@ -159,6 +160,9 @@ class ImageWidget extends WidgetType {
       handle.addEventListener('pointerdown', (event) => {
         this.startResize(event, view, corner, 'pointer');
       });
+      handle.addEventListener('keydown', (event) => {
+        this.resizeFromKeyboard(event, view, corner);
+      });
       wrapper.append(handle);
     }
   }
@@ -172,11 +176,14 @@ class ImageWidget extends WidgetType {
     event.preventDefault();
     event.stopPropagation();
 
+    if (this.activeResizeCleanup) return;
+
     const startX = event.clientX;
     const startY = event.clientY;
     const freeAtStart = event.shiftKey;
     const moveEvent = eventSource === 'pointer' ? 'pointermove' : 'mousemove';
     const upEvent = eventSource === 'pointer' ? 'pointerup' : 'mouseup';
+    const cancelEvent = eventSource === 'pointer' ? 'pointercancel' : 'mouseleave';
 
     const onMove = (moveEvent: MouseEvent | PointerEvent) => {
       moveEvent.preventDefault();
@@ -185,26 +192,68 @@ class ImageWidget extends WidgetType {
       upEvent.preventDefault();
       removeListeners();
 
-      const metadata = resizeImageMetadata(this.image, {
+      this.updateImageDimensions(view, resizeImageMetadata(this.image, {
         corner,
         deltaX: upEvent.clientX - startX,
         deltaY: upEvent.clientY - startY,
         free: freeAtStart || upEvent.shiftKey,
-      });
-
-      view.dispatch({
-        selection: EditorSelection.cursor(Math.min(this.image.from + 1, this.image.to)),
-        effects: selectImage.of({ from: this.image.from, to: this.image.to }),
-      });
-      updateImageMetadata(view, metadata);
+      }));
+    };
+    const onCancel = (cancelEvent: Event) => {
+      cancelEvent.preventDefault();
+      removeListeners();
     };
     const removeListeners = () => {
       document.removeEventListener(moveEvent, onMove);
       document.removeEventListener(upEvent, onUp);
+      document.removeEventListener(cancelEvent, onCancel);
+      window.removeEventListener('blur', removeListeners);
+      this.activeResizeCleanup = undefined;
     };
 
+    this.activeResizeCleanup = removeListeners;
     document.addEventListener(moveEvent, onMove);
     document.addEventListener(upEvent, onUp);
+    document.addEventListener(cancelEvent, onCancel);
+    window.addEventListener('blur', removeListeners);
+  }
+
+  private resizeFromKeyboard(
+    event: KeyboardEvent,
+    view: EditorView,
+    corner: ResizeCorner,
+  ): void {
+    const delta = keyboardResizeDelta(event, corner);
+    if (!delta) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.updateImageDimensions(view, resizeImageMetadata(this.image, {
+      corner,
+      deltaX: delta.deltaX,
+      deltaY: delta.deltaY,
+      free: event.shiftKey,
+    }));
+  }
+
+  private updateImageDimensions(
+    view: EditorView,
+    metadata: ReturnType<typeof resizeImageMetadata>,
+  ): void {
+    const next = serializeImageMarkdown(this.image, metadata);
+    if (next === this.image.raw) return;
+
+    const nextRange = { from: this.image.from, to: this.image.from + next.length };
+    view.dispatch({
+      changes: { from: this.image.from, to: this.image.to, insert: next },
+      effects: selectImage.of(nextRange),
+      scrollIntoView: true,
+    });
+  }
+
+  destroy(): void {
+    this.activeResizeCleanup?.();
   }
 
   private attachSelectionHandler(wrapper: HTMLElement, view: EditorView): void {
@@ -247,6 +296,23 @@ class ImageWidget extends WidgetType {
     const image = { ...this.image, reason };
     return this.missingRenderer?.(image) ?? defaultMissingImageRenderer(image);
   }
+}
+
+function keyboardResizeDelta(
+  event: KeyboardEvent,
+  corner: ResizeCorner,
+): { deltaX: number; deltaY: number } | null {
+  const step = 10;
+  if (event.key === 'ArrowRight') return { deltaX: step, deltaY: 0 };
+  if (event.key === 'ArrowLeft') return { deltaX: -step, deltaY: 0 };
+  if (event.key === 'ArrowDown') return { deltaX: 0, deltaY: step };
+  if (event.key === 'ArrowUp') return { deltaX: 0, deltaY: -step };
+  if (event.key !== 'Enter' && event.key !== ' ') return null;
+
+  return {
+    deltaX: corner.endsWith('e') ? step : -step,
+    deltaY: corner.startsWith('s') ? step : -step,
+  };
 }
 
 function selectedImageMatchesImage(

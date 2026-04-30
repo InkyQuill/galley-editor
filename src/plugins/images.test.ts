@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorSelection } from '@codemirror/state';
-import type { EditorView } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
 import { resolveClassNames, type GalleyImageInfo, type GalleyMissingImageInfo } from '../types';
 import imagesPlugin from './images';
@@ -24,6 +24,27 @@ function selectImageWidget(view: EditorView): HTMLElement {
   const widget = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-widget'));
   widget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
   return widget;
+}
+
+function resizeWithMouse(handle: HTMLElement, options: {
+  startX?: number;
+  startY?: number;
+  endX: number;
+  endY: number;
+  shiftKey?: boolean;
+}): void {
+  handle.dispatchEvent(new MouseEvent('mousedown', {
+    bubbles: true,
+    clientX: options.startX ?? 0,
+    clientY: options.startY ?? 0,
+    shiftKey: options.shiftKey,
+  }));
+  document.dispatchEvent(new MouseEvent('mouseup', {
+    bubbles: true,
+    clientX: options.endX,
+    clientY: options.endY,
+    shiftKey: options.shiftKey,
+  }));
 }
 
 describe('imagesPlugin', () => {
@@ -87,18 +108,12 @@ describe('imagesPlugin', () => {
     selectImageWidget(view);
     const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
 
-    handle.dispatchEvent(new MouseEvent('mousedown', {
-      bubbles: true,
-      clientX: 0,
-      clientY: 0,
-    }));
-    document.dispatchEvent(new MouseEvent('mouseup', {
-      bubbles: true,
-      clientX: 160,
-      clientY: 0,
-    }));
+    resizeWithMouse(handle, { endX: 160, endY: 0 });
 
     expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
+    expect(view.dom.querySelector('.ge-image-widget.ge-image-selected img')).toBeInstanceOf(HTMLImageElement);
+    expect(view.dom.querySelectorAll('.ge-image-resize-handle')).toHaveLength(4);
+    expect(lineElement(view, 1).textContent).not.toBe('![Galley mark](assets/galley.png){width=800 height=450}');
   });
 
   it('shift-dragging the southeast resize handle changes dimensions independently', () => {
@@ -113,20 +128,105 @@ describe('imagesPlugin', () => {
     selectImageWidget(view);
     const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
 
+    resizeWithMouse(handle, { endX: 160, endY: 40, shiftKey: true });
+
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=400}\n\nplain');
+  });
+
+  it('ignores a compatibility mousedown after pointer resize starts', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    let docChanges = 0;
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: [
+        ...imagesPlugin.extensions(resolveClassNames()),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) docChanges += 1;
+        }),
+      ],
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('pointerdown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+    }));
     handle.dispatchEvent(new MouseEvent('mousedown', {
       bubbles: true,
       clientX: 0,
       clientY: 0,
-      shiftKey: true,
+    }));
+    document.dispatchEvent(new MouseEvent('pointerup', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
     }));
     document.dispatchEvent(new MouseEvent('mouseup', {
       bubbles: true,
-      clientX: 160,
-      clientY: 40,
-      shiftKey: true,
+      clientX: 320,
+      clientY: 0,
     }));
 
-    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=400}\n\nplain');
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
+    expect(docChanges).toBe(1);
+  });
+
+  it('resizes from the keyboard when a handle is focused', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'ArrowRight',
+    }));
+
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=650 height=366}\n\nplain');
+    expect(view.dom.querySelector('.ge-image-widget.ge-image-selected img')).toBeInstanceOf(HTMLImageElement);
+    expect(view.dom.querySelectorAll('.ge-image-resize-handle')).toHaveLength(4);
+  });
+
+  it('cleans up pointer resize listeners on cancel', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('pointerdown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+    }));
+    document.dispatchEvent(new MouseEvent('pointercancel', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+    document.dispatchEvent(new MouseEvent('pointerup', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+
+    expect(docOf(view)).toBe(doc);
   });
 
   it('ctrl-click reveals raw image markdown', () => {
