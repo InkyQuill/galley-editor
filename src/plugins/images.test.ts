@@ -13,7 +13,7 @@ afterEach(() => {
 
 describe('imagesPlugin', () => {
   it('renders inactive markdown images as image widgets by default', () => {
-    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(doc.indexOf('plain')),
@@ -23,12 +23,12 @@ describe('imagesPlugin', () => {
 
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample PNG');
-    expect(image?.getAttribute('src')).toBe('assets/img.png');
+    expect(image?.getAttribute('alt')).toBe('Galley mark');
+    expect(image?.getAttribute('src')).toBe('assets/galley.png');
   });
 
-  it('renders svg markdown images as image widgets by default', () => {
-    const doc = '![Sample SVG](sample-diagram.svg)\n\nplain';
+  it('renders color logo markdown images as image widgets by default', () => {
+    const doc = '![Galley logo](assets/galley-color.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(doc.indexOf('plain')),
@@ -38,8 +38,8 @@ describe('imagesPlugin', () => {
 
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample SVG');
-    expect(image?.getAttribute('src')).toBe('sample-diagram.svg');
+    expect(image?.getAttribute('alt')).toBe('Galley logo');
+    expect(image?.getAttribute('src')).toBe('assets/galley-color.png');
   });
 
   it('renders data-uri svg markdown images with parentheses in urls', () => {
@@ -50,7 +50,7 @@ describe('imagesPlugin', () => {
       return image;
     });
     const dataUrl = "data:image/svg+xml,%3csvg%3e%3crect%20fill='url(%23sky)'/%3e%3c/svg%3e";
-    const doc = `![Sample SVG](${dataUrl})\n\nplain`;
+    const doc = `![Galley logo](${dataUrl})\n\nplain`;
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(doc.indexOf('plain')),
@@ -63,12 +63,12 @@ describe('imagesPlugin', () => {
 
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample SVG');
-    expect(renderer).toHaveBeenCalledWith({ alt: 'Sample SVG', url: dataUrl });
+    expect(image?.getAttribute('alt')).toBe('Galley logo');
+    expect(renderer).toHaveBeenCalledWith({ alt: 'Galley logo', url: dataUrl });
   });
 
   it('shows raw image markdown when the cursor is inside the image syntax', () => {
-    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(3),
@@ -77,11 +77,11 @@ describe('imagesPlugin', () => {
     views.push(view);
 
     expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
-    expect(lineElement(view, 1).textContent).toBe('![Sample PNG](assets/img.png)');
+    expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png)');
   });
 
   it('keeps image widgets in preview mode when the cursor is inside image syntax', () => {
-    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(3),
@@ -94,7 +94,7 @@ describe('imagesPlugin', () => {
 
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('src')).toBe('assets/img.png');
+    expect(image?.getAttribute('src')).toBe('assets/galley.png');
   });
 
   it('uses a custom imageRenderer widget when provided', () => {
@@ -104,7 +104,7 @@ describe('imagesPlugin', () => {
       image.src = url;
       return image;
     });
-    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(doc.indexOf('plain')),
@@ -117,12 +117,12 @@ describe('imagesPlugin', () => {
 
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample PNG');
-    expect(image?.getAttribute('src')).toBe('assets/img.png');
+    expect(image?.getAttribute('alt')).toBe('Galley mark');
+    expect(image?.getAttribute('src')).toBe('assets/galley.png');
   });
 
   it('falls back to safe alt text when imageRenderer returns null', () => {
-    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
       doc,
       selection: EditorSelection.cursor(doc.indexOf('plain')),
@@ -134,6 +134,6 @@ describe('imagesPlugin', () => {
     views.push(view);
 
     expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
-    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
+    expect(lineElement(view, 1).textContent).toBe('Galley mark');
   });
 });

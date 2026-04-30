@@ -84,15 +84,15 @@
 ### Task 6: Storybook and Docs
 
 **Files:**
-- Create: `src/stories/assets/sample-landscape.svg`
-- Create: `src/stories/assets/sample-diagram.svg`
+- Use: `assets/galley.png`
+- Use: `assets/galley-color.png`
 - Modify: `src/components/GalleyEditor.stories.tsx`
 - Modify: `docs/api-reference.md`
 - Modify: `CHANGELOG.md`
 
 - [ ] Add deterministic local SVG sample image assets.
 - [x] Add deterministic local SVG sample image assets.
-- [x] Add markdown image rendering for SVG and PNG URLs, including `assets/img.png`.
+- [x] Add markdown image rendering for image URLs, using Galley brand PNG assets in Storybook.
 - [x] Update Storybook markdown samples to include image syntax, code fences, tables, and footer variations.
 - [x] Document `codeHighlighter`, `toolbar`, and `footer` props.
 - [x] Add changelog notes under `Unreleased`.

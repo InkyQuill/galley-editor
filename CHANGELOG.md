@@ -12,14 +12,17 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ### Added
 - `docs/specs/editor-reference-audit.md` documenting implemented editor parity, out-of-scope reference features, and Galley-specific UX backlog.
+- `assets/galley.png` and `assets/galley-color.png` as the Storybook markdown image examples.
 
 ### Changed
 - Public clean-room guidance now reflects that external editor reference source has been audited and removed from the repository.
 - CI leak check now scans built output for external editor source markers instead of an internal `3rdparty/` path.
+- Storybook image demos now use Galley brand artwork instead of generated fixture images.
 
 ### Removed
 - Removed the local `3rdparty/editor/` reference source tree from the public repository.
 - Removed remaining pre-rebrand image leftovers from the workspace.
+- Removed the old generated Storybook image fixture assets.
 
 ## [0.6.0] — 2026-04-30
 

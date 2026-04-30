@@ -49,8 +49,8 @@ This is intentionally a small GFM pipe-table renderer, not a full markdown table
 Inactive markdown images render as image widgets for normal URL targets, including SVG and PNG files:
 
 ```md
-![Alt text](assets/img.png)
-![Diagram](sample-diagram.svg)
+![Galley mark](assets/galley.png)
+![Galley color logo](assets/galley-color.png)
 ```
 
 When the cursor is inside the image syntax, the raw markdown is shown for editing. The image widget uses `alt`, lazy loading, and the default theme's bordered media frame.
@@ -97,7 +97,7 @@ The palette stays restrained and editor-like. Consumers can still override all c
 
 ### Storybook Images
 
-Storybook gains image examples using deterministic local SVG assets committed under `src/stories/assets/` and the provided `assets/img.png`. These are sample markdown image targets for demos, not product branding.
+Storybook gains image examples using the Galley brand assets at the repository root. These are sample markdown image targets for demos and keep the public repository free of throwaway generated image fixtures.
 
 ## Architecture
 

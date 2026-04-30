@@ -8,9 +8,8 @@ import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import { EditorView } from '@codemirror/view';
 import '../galley-base.css';
-import samplePng from '../../assets/img.png';
-import sampleDiagram from '../stories/assets/sample-diagram.svg';
-import sampleLandscape from '../stories/assets/sample-landscape.svg';
+import galleyMark from '../../assets/galley.png';
+import galleyLogo from '../../assets/galley-color.png';
 
 const meta = {
   title: 'Components/GalleyEditor',
@@ -41,11 +40,9 @@ A **half-WYSIWYG** markdown editor that renders blocks as HTML when you're not e
 
 ### Images
 
-![Generated landscape sample](${sampleLandscape})
+![Galley project logo](${galleyLogo})
 
-![Generated workflow diagram](${sampleDiagram})
-
-![Generated PNG sample](${samplePng})
+![Galley monochrome mark](${galleyMark})
 
 ### Task Lists
 
@@ -121,9 +118,9 @@ interface GalleyPlugin {
 | Italic | Done | Uses \`*\` |
 | Links | Done | \`[text](url)\` |
 
-![Generated landscape sample](${sampleLandscape})
+![Galley project logo](${galleyLogo})
 
-![Generated PNG sample](${samplePng})
+![Galley monochrome mark](${galleyMark})
 `;
 
 // ── Default ─────────────────────────────────────────────────────────────────
@@ -179,9 +176,9 @@ export const AllFeatures: Story = {
 function ImageRenderingStory() {
   const [value, setValue] = useState(`## Default image widgets
 
-![Generated landscape sample](${sampleLandscape})
+![Galley project logo](${galleyLogo})
 
-![Generated PNG sample](${samplePng})
+![Galley monochrome mark](${galleyMark})
 
 ## Custom renderer
 
