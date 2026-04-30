@@ -13,6 +13,8 @@ export interface GalleyTableCell extends TableCellRef {
   text: string;
   sourceFrom: number;
   sourceTo: number;
+  cellFrom: number;
+  cellTo: number;
   header: boolean;
 }
 
@@ -57,7 +59,30 @@ function trimmedRange(text: string, from: number, to: number): { from: number; t
   return { from: start, to: end };
 }
 
-function splitRow(line: SourceLine, row: number, header: boolean): GalleyTableCell[] {
+function createEmptyCell(
+  row: number,
+  column: number,
+  pos: number,
+  header: boolean,
+): GalleyTableCell {
+  return {
+    row,
+    column,
+    text: '',
+    sourceFrom: pos,
+    sourceTo: pos,
+    cellFrom: pos,
+    cellTo: pos,
+    header,
+  };
+}
+
+function splitRow(
+  line: SourceLine,
+  row: number,
+  header: boolean,
+  columnCount?: number,
+): GalleyTableCell[] {
   const cells: GalleyTableCell[] = [];
   let from = line.text.startsWith('|') ? 1 : 0;
   const to = line.text.endsWith('|') ? line.text.length - 1 : line.text.length;
@@ -73,10 +98,16 @@ function splitRow(line: SourceLine, row: number, header: boolean): GalleyTableCe
       text: line.text.slice(range.from, range.to),
       sourceFrom: line.from + range.from,
       sourceTo: line.from + range.to,
+      cellFrom: line.from + from,
+      cellTo: line.from + index,
       header,
     });
     column += 1;
     from = index + 1;
+  }
+
+  while (columnCount !== undefined && cells.length < columnCount) {
+    cells.push(createEmptyCell(row, cells.length, line.from + to, header));
   }
 
   return cells;
@@ -139,7 +170,7 @@ export function parseMarkdownTable(source: string, from = 0): GalleyTable | null
   const columnCount = header.length;
   const rows = [
     header,
-    ...lines.slice(2).map((line, index) => splitRow(line, index + 1, false)),
+    ...lines.slice(2).map((line, index) => splitRow(line, index + 1, false, columnCount)),
   ];
 
   return {
@@ -203,7 +234,7 @@ export function tablesAtSelections(state: EditorState): GalleyTable[] {
 export function tableCellAtPosition(table: GalleyTable, pos: number): GalleyTableCell {
   for (const row of table.rows) {
     for (const cell of row) {
-      if (pos >= cell.sourceFrom && pos < cell.sourceTo) return cell;
+      if (pos >= cell.cellFrom && pos < cell.cellTo) return cell;
     }
   }
 
@@ -213,6 +244,8 @@ export function tableCellAtPosition(table: GalleyTable, pos: number): GalleyTabl
     text: '',
     sourceFrom: table.from,
     sourceTo: table.from,
+    cellFrom: table.from,
+    cellTo: table.from,
     header: true,
   };
 }

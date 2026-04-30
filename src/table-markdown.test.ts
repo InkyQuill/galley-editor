@@ -33,7 +33,7 @@ describe('parseMarkdownTable', () => {
     ].join('\n');
     const from = 10;
 
-    expect(parseMarkdownTable(source, from)).toEqual({
+    expect(parseMarkdownTable(source, from)).toMatchObject({
       from,
       to: from + source.length,
       columnCount: 3,
@@ -140,6 +140,23 @@ describe('serializeMarkdownTable', () => {
     expect(table).not.toBeNull();
     expect(serializeMarkdownTable(table!)).toBe('| A | B | C |\n| --- | --- | --- |\n| 1 | 2 |  |\n');
   });
+
+  it('serializes updates to parsed ragged row cells across the full rendered grid', () => {
+    const table = parseMarkdownTable('| A | B | C |\n| --- | --- | --- |\n| 1 | 2 |\n');
+
+    expect(table).not.toBeNull();
+    expect(tableCell(table!, { row: 1, column: 2 })).toMatchObject({
+      row: 1,
+      column: 2,
+      text: '',
+      header: false,
+    });
+
+    const updated = updateTableCell(table!, { row: 1, column: 2 }, 'new');
+
+    expect(tableCell(updated, { row: 1, column: 2 })?.text).toBe('new');
+    expect(serializeMarkdownTable(updated)).toBe('| A | B | C |\n| --- | --- | --- |\n| 1 | 2 | new |\n');
+  });
 });
 
 describe('table selection helpers', () => {
@@ -186,14 +203,36 @@ describe('table selection helpers', () => {
 });
 
 describe('table model helpers', () => {
-  it('does not match a cell when the position equals its exclusive source end', () => {
+  it('falls back to the first cell when the position is outside any cell bounds', () => {
     const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| 1 | 2 |\n');
 
     expect(table).not.toBeNull();
     const bodyCell = tableCell(table!, { row: 1, column: 1 });
 
     expect(bodyCell).not.toBeNull();
-    expect(tableCellAtPosition(table!, bodyCell!.sourceTo)).toBe(table!.rows[0]![0]);
+    expect(tableCellAtPosition(table!, bodyCell!.cellTo)).toBe(table!.rows[0]![0]);
+  });
+
+  it('matches a cell when the position is inside padding around trimmed text', () => {
+    const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| one |  two  |\n');
+    const two = tableCell(table!, { row: 1, column: 1 });
+
+    expect(two).not.toBeNull();
+    expect(tableCellAtPosition(table!, two!.sourceFrom - 1)).toBe(two);
+    expect(tableCellAtPosition(table!, two!.sourceTo)).toBe(two);
+  });
+
+  it('matches an explicit empty source cell by its cell bounds', () => {
+    const table = parseMarkdownTable('| A | B | C |\n| --- | --- | --- |\n| 1 |  | 3 |\n');
+    const empty = tableCell(table!, { row: 1, column: 1 });
+
+    expect(empty).toMatchObject({
+      row: 1,
+      column: 1,
+      text: '',
+      header: false,
+    });
+    expect(tableCellAtPosition(table!, empty!.cellFrom)).toBe(empty);
   });
 
   it('updates one cell and preserves table shape', () => {
