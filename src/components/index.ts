@@ -50,6 +50,12 @@ export type {
   UseGalleyOptions,
   UseGalleyResult,
 } from '../types';
+export type {
+  GalleyTable,
+  GalleyTableCell,
+  TableAlignment,
+  TableCellRef,
+} from '../table-markdown';
 
 // Rendering engine (for building custom plugins)
 export { makeInlinePlugin, makeBlockPlugin, nodeIntersectsSelection, HIDE_DECORATION, BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
@@ -83,9 +89,21 @@ export {
   insertLineBefore,
   updateImageMetadata,
   clearImageDimensions,
+  commitTableCell,
+  deleteTableColumn,
+  deleteTableRow,
   jumpToHash,
   slugifyHeading,
   findInDocument,
+  insertTableColumnAfter,
+  insertTableColumnBefore,
+  insertTableRowAfter,
+  insertTableRowBefore,
+  normalizeTable,
+  replaceTable,
+  replaceTables,
+  revealTableSource,
+  setTableColumnAlignment,
 } from '../commands';
 export type {
   GalleyKeyBinding,

@@ -15,6 +15,18 @@ import {
   insertTable,
 } from './insert';
 import { clearImageDimensions, updateImageMetadata } from './imageMetadata';
+import {
+  commitTableCell,
+  deleteTableColumn,
+  deleteTableRow,
+  insertTableColumnAfter,
+  insertTableColumnBefore,
+  insertTableRowAfter,
+  insertTableRowBefore,
+  normalizeTable,
+  revealTableSource,
+  setTableColumnAlignment,
+} from './tableEditing';
 import { indent, outdent, redoCommand, selectAllCommand, undoCommand } from './editing';
 import { duplicateLine } from './editing/duplicateLine';
 import { insertLineAfter, insertLineBefore } from './editing/insertLine';
@@ -33,6 +45,20 @@ export { swapLineDown, swapLineUp } from './editing/swapLine';
 export { findInDocument } from './navigation/findInDocument';
 export { jumpToHash, slugifyHeading } from './navigation/jumpToHash';
 export { clearImageDimensions, updateImageMetadata } from './imageMetadata';
+export {
+  commitTableCell,
+  deleteTableColumn,
+  deleteTableRow,
+  insertTableColumnAfter,
+  insertTableColumnBefore,
+  insertTableRowAfter,
+  insertTableRowBefore,
+  normalizeTable,
+  replaceTable,
+  replaceTables,
+  revealTableSource,
+  setTableColumnAlignment,
+} from './tableEditing';
 
 export type GalleyKeyBinding = KeyBinding & {
   command?: BuiltinCommand;
@@ -115,6 +141,16 @@ export const BUILTIN_COMMANDS: Record<BuiltinCommand, CommandFn> = {
   clearImageDimensions,
   insertCodeBlock,
   insertTable,
+  normalizeTable,
+  commitTableCell,
+  insertTableRowBefore,
+  insertTableRowAfter,
+  deleteTableRow,
+  insertTableColumnBefore,
+  insertTableColumnAfter,
+  deleteTableColumn,
+  setTableColumnAlignment,
+  revealTableSource,
   insertHr,
   indent,
   outdent,
