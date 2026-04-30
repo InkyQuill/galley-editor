@@ -111,6 +111,18 @@ describe('tablesPlugin', () => {
     expect(link?.getAttribute('href')).toBe('https://example.com/path?q=1');
   });
 
+  it('omits unsafe hrefs from inactive table cell links', () => {
+    const doc = '| A |\n| - |\n| [x](javascript:alert(1)) |\n\nplain';
+    const view = tableEditor(doc);
+
+    const link = cell(view, '1:0').querySelector('.ge-table-cell-link');
+
+    expect(link).toBeInstanceOf(HTMLAnchorElement);
+    expect(link?.textContent).toBe('x');
+    expect(link?.hasAttribute('href')).toBe(false);
+    expect(cell(view, '1:0').querySelector('[href^="javascript:"]')).toBeNull();
+  });
+
   it('escapes raw HTML in inactive table cells', () => {
     const doc = '| A |\n| - |\n| <img src=x onerror=alert(1)> |\n\nplain';
     const view = tableEditor(doc);

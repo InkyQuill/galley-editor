@@ -566,9 +566,25 @@ function createInlineTokenNode(token: InlineToken): HTMLElement {
 
   const link = document.createElement('a');
   link.className = 'ge-table-cell-link';
-  link.setAttribute('href', token.href ?? '');
+  const href = safeTableCellHref(token.href ?? '');
+  if (href) link.setAttribute('href', href);
   link.textContent = token.text;
   return link;
+}
+
+function safeTableCellHref(rawHref: string): string | null {
+  const href = rawHref.trim();
+  if (!href) return null;
+  if (href.startsWith('#') || href.startsWith('/') || href.startsWith('./') || href.startsWith('../')) {
+    return href;
+  }
+
+  const schemeMatch = /^([a-z][a-z\d+.-]*):/i.exec(href);
+  if (!schemeMatch) return href;
+
+  const scheme = schemeMatch[1]?.toLowerCase();
+  if (scheme === 'http' || scheme === 'https' || scheme === 'mailto') return href;
+  return null;
 }
 
 function selectCellAtCurrentTableSelection(view: EditorView): void {

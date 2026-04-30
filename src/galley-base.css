@@ -496,6 +496,7 @@
 .ge-table-control:focus-visible {
   background: var(--ge-color-surface);
   border-color: var(--ge-color-focus-ring);
+  box-shadow: 0 0 0 2px var(--ge-color-selection);
   outline: none;
 }
 
