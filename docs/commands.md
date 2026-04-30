@@ -146,6 +146,54 @@ Arguments: `alt?: string`, `url?: string`
 editorRef.current?.execCommand('insertImage', 'Screenshot', '/image.png');
 ```
 
+### `updateImageMetadata`
+
+Updates the markdown image at the current cursor or selection. Use this for asset inspectors, image detail forms, and custom `imageRenderer` controls.
+
+Arguments: `{ alt?: string; url?: string; title?: string | null; width?: number | null; height?: number | null }`
+
+```ts
+editorRef.current?.execCommand('updateImageMetadata', {
+  alt: 'Alt',
+  url: 'image.png',
+  title: 'Title',
+  width: 640,
+  height: 360,
+});
+```
+
+Galley's image metadata syntax is:
+
+```md
+![Alt](image.png "Title"){width=640 height=360}
+```
+
+Use `null` for `title`, `width`, or `height` to remove that field.
+
+Named export:
+
+```ts
+import { updateImageMetadata } from '@inky/galley-editor';
+
+updateImageMetadata(view, { width: 640, height: 360 });
+```
+
+### `clearImageDimensions`
+
+Removes `width` and `height` metadata from the image at the current cursor or selection.
+
+```ts
+editorRef.current?.execCommand('clearImageDimensions');
+```
+
+Named export:
+
+```ts
+import { clearImageDimensions } from '@inky/galley-editor';
+
+clearImageDimensions(view);
+```
+
 ### `insertCodeBlock`
 
 Inserts a fenced code block.

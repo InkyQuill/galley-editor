@@ -216,6 +216,49 @@ By default, markdown images render as built-in image widgets. The plugin replace
 
 With `imageRenderer`, consumers can replace the built-in image element with a custom widget. Returning `null` falls back to rendered alt text without an image element.
 
+```tsx
+<GalleyEditor
+  imageRenderer={({ alt, url, title, width, height, raw, from, to }) => {
+    const figure = document.createElement('figure');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = alt;
+    if (title) img.title = title;
+    if (width) img.width = width;
+    if (height) img.height = height;
+    figure.dataset.source = raw;
+    figure.dataset.from = String(from);
+    figure.dataset.to = String(to);
+    figure.append(img);
+    return figure;
+  }}
+/>
+```
+
+`imageRenderer` receives `GalleyImageInfo`:
+
+```typescript
+interface GalleyImageInfo {
+  alt: string;
+  url: string;
+  title?: string;
+  width?: number;
+  height?: number;
+  attrs?: string[];
+  raw: string;
+  from: number;
+  to: number;
+}
+```
+
+Galley parses and preserves image metadata using this syntax:
+
+```md
+![Alt](image.png "Title"){width=640 height=360}
+```
+
+Consumers can pair custom renderers with the `updateImageMetadata` and `clearImageDimensions` commands to build captions, asset inspectors, or resize controls.
+
 ## Building Custom Plugins
 
 ### Basic Example: Highlight `TODO` Comments

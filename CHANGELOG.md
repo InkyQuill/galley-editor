@@ -8,6 +8,18 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-04-30
+
+### Added
+- File paste/drop workflows through `onFiles` and `onFileError`, with consumer-returned markdown inserted at the original paste selection or drop position.
+- Upload status/progress reporting through `onFileStatus` and the per-operation `input.report()` progress channel.
+- Expanded `imageRenderer` metadata with `url`, `title`, `width`, `height`, raw source, preserved attrs, and source positions.
+- Image metadata commands: `updateImageMetadata` and `clearImageDimensions`, available as named exports and built-in commands.
+- Markdown image metadata syntax support: `![Alt](image.png "Title"){width=640 height=360}`.
+
+### Changed
+- Image renderer integrations should read `url` instead of the stale `src` field and can now use image source positions for command-backed editing controls.
+
 ## [0.7.0] — 2026-04-30
 
 ### Added
@@ -144,7 +156,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.7.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.8.0...HEAD
+[0.8.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.8.0
 [0.7.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.7.0
 [0.6.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.6.0
 [0.5.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.5.0
