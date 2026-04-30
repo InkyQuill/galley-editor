@@ -119,6 +119,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       onPaste,
       onFiles,
       onFileError,
+      onFileStatus,
       onSubmit,
     } = props;
 
@@ -258,6 +259,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         onPaste,
         onFiles,
         onFileError,
+        onFileStatus,
         onEnter,
         onEscape,
         onSubmit,
@@ -305,6 +307,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         get onPaste() { return callbacksRef.current.onPaste; },
         get onFiles() { return callbacksRef.current.onFiles; },
         get onFileError() { return callbacksRef.current.onFileError; },
+        get onFileStatus() { return callbacksRef.current.onFileStatus; },
         get onEnter() { return callbacksRef.current.onEnter; },
         get onEscape() { return callbacksRef.current.onEscape; },
         get onSubmit() { return callbacksRef.current.onSubmit; },

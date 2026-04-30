@@ -7,6 +7,7 @@ import {
   type EditorCallbacks,
 } from './controller';
 import { DEFAULT_KEYMAP } from './commands';
+import type { GalleyFileInput, GalleyFileStatus } from './types';
 
 const controllers: EditorController[] = [];
 const parents: HTMLElement[] = [];
@@ -423,6 +424,48 @@ describe('EditorController runtime state', () => {
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
   });
 
+  it('emits paste file status from start through consumer progress to complete', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const statuses: GalleyFileStatus[] = [];
+    const onFiles = vi.fn((input: GalleyFileInput) => {
+      input.report({ phase: 'progress', progress: 0.5, message: 'Uploading...' });
+      return '![upload](uploaded.png)';
+    });
+    const callbacks = {
+      onFiles,
+      onFileStatus: (status: (typeof statuses)[number]) => statuses.push(status),
+    };
+    const controller = createController('before ', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(statuses.map((status) => status.phase)).toEqual(['start', 'progress', 'complete']);
+    expect(new Set(statuses.map((status) => status.id)).size).toBe(1);
+    expect(statuses).toEqual([
+      expect.objectContaining({
+        phase: 'start',
+        files: [file],
+        source: 'paste',
+        progress: 0,
+      }),
+      expect.objectContaining({
+        phase: 'progress',
+        files: [file],
+        source: 'paste',
+        progress: 0.5,
+        message: 'Uploading...',
+      }),
+      expect.objectContaining({
+        phase: 'complete',
+        files: [file],
+        source: 'paste',
+        progress: 1,
+      }),
+    ]);
+  });
+
   it('maps async paste insertion through document changes before handler resolution', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     let resolveUpload!: (markdown: string) => void;
@@ -485,6 +528,43 @@ describe('EditorController runtime state', () => {
       view: controller.view,
     }));
     expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('emits paste file error status and calls onFileError when handler rejects', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const error = new Error('upload failed');
+    const statuses: GalleyFileStatus[] = [];
+    const onFiles = vi.fn(async () => {
+      throw error;
+    });
+    const onFileError = vi.fn();
+    const callbacks = {
+      onFiles,
+      onFileError,
+      onFileStatus: (status: (typeof statuses)[number]) => statuses.push(status),
+    };
+    const controller = createController('unchanged', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(statuses.map((status) => status.phase)).toEqual(['start', 'error']);
+    expect(new Set(statuses.map((status) => status.id)).size).toBe(1);
+    expect(statuses).toEqual([
+      expect.objectContaining({
+        phase: 'start',
+        files: [file],
+        source: 'paste',
+      }),
+      expect.objectContaining({
+        phase: 'error',
+        files: [file],
+        source: 'paste',
+        error,
+      }),
+    ]);
+    expect(onFileError).toHaveBeenCalledOnce();
   });
 
   it('inserts markdown returned from a drop file handler', async () => {

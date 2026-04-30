@@ -128,6 +128,7 @@ describe('GalleyEditor React wrapper', () => {
     const plugins: GalleyPlugin[] = [];
     const disabledPlugins: string[] = [];
     const extensions: Extension[] = [];
+    const onFiles = () => 'upload';
 
     try {
       const { root } = mount(
@@ -138,7 +139,8 @@ describe('GalleyEditor React wrapper', () => {
           plugins={plugins}
           disabledPlugins={disabledPlugins}
           extensions={extensions}
-          onFiles={() => 'first'}
+          onFiles={onFiles}
+          onFileStatus={() => undefined}
         />,
       );
       const callsAfterMount = updateSettingsSpy.mock.calls.length;
@@ -152,7 +154,8 @@ describe('GalleyEditor React wrapper', () => {
           plugins={plugins}
           disabledPlugins={disabledPlugins}
           extensions={extensions}
-          onFiles={() => 'second'}
+          onFiles={onFiles}
+          onFileStatus={() => undefined}
         />,
       );
 

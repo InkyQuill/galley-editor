@@ -50,7 +50,9 @@ import {
   type CodeHighlighter,
   type GalleyFileHandler,
   type GalleyFileInput,
+  type GalleyFileReporter,
   type GalleyFileSource,
+  type GalleyFileStatus,
   type ImageRenderer,
   type LinkClickHandler,
   type GalleyClassNames,
@@ -75,6 +77,7 @@ export interface EditorCallbacks {
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   onFiles?: GalleyFileHandler;
   onFileError?: (error: unknown, input: GalleyFileInput) => void;
+  onFileStatus?: (status: GalleyFileStatus) => void;
   onEnter?: (mod: boolean, shift: boolean) => boolean;
   onEscape?: () => boolean | void;
   onSubmit?: () => void;
@@ -190,6 +193,7 @@ export class EditorController implements GalleyHandle {
   private readonly runtimeExtensions = new Map<symbol, Extension>();
   private readonly pendingFileRanges = new Set<{ from: number; to: number }>();
 
+  private fileOperationSeq = 0;
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
   private callbacks: EditorCallbacks;
@@ -360,20 +364,37 @@ export class EditorController implements GalleyHandle {
     if (!handler || files.length === 0) return;
     const pendingRange = { from, to };
     this.pendingFileRanges.add(pendingRange);
+    const id = `galley-file-${++this.fileOperationSeq}`;
+    const selection = this.getSelectionInfo();
+    const report: GalleyFileReporter = (update) => {
+      this.callbacks.onFileStatus?.({
+        id,
+        files,
+        source,
+        selection,
+        ...update,
+      });
+    };
 
-    const input = {
+    const input: GalleyFileInput = {
+      id,
       files,
       source,
       event,
       view: this.view,
-      selection: this.getSelectionInfo(),
+      selection,
+      report,
     };
 
     try {
+      report({ phase: 'start', progress: 0 });
       const result = await handler(input);
-      if (result === false || result === null) return;
-      this.insertFileHandlerMarkdown(result, pendingRange.from, pendingRange.to);
+      if (result !== false && result !== null) {
+        this.insertFileHandlerMarkdown(result, pendingRange.from, pendingRange.to);
+      }
+      report({ phase: 'complete', progress: 1 });
     } catch (error) {
+      report({ phase: 'error', error });
       this.callbacks.onFileError?.(error, input);
       if (!this.callbacks.onFileError) {
         console.error('Galley file handler failed', error);

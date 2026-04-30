@@ -28,12 +28,32 @@ export interface GalleySelectionInfo {
   head: number;
 }
 
+export type GalleyFileStatusPhase = 'start' | 'progress' | 'complete' | 'error';
+
+export interface GalleyFileStatusUpdate {
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+}
+
+export interface GalleyFileStatus extends GalleyFileStatusUpdate {
+  id: string;
+  files: File[];
+  source: GalleyFileSource;
+  selection: GalleySelectionInfo;
+}
+
+export type GalleyFileReporter = (update: GalleyFileStatusUpdate) => void;
+
 export interface GalleyFileInput {
+  id: string;
   files: File[];
   source: GalleyFileSource;
   event: ClipboardEvent | DragEvent;
   view: EditorView;
   selection: GalleySelectionInfo;
+  report: GalleyFileReporter;
 }
 
 export type GalleyFileHandlerResult = string | string[] | null | false;
@@ -416,6 +436,8 @@ export interface GalleyEditorProps {
   onFiles?: GalleyFileHandler;
   /** Handle errors raised while processing pasted or dropped files. */
   onFileError?: (error: unknown, input: GalleyFileInput) => void;
+  /** Observe consumer-owned file handling status and progress. */
+  onFileStatus?: (status: GalleyFileStatus) => void;
   /** Handle Cmd/Ctrl+Enter. */
   onSubmit?: () => void;
 }
