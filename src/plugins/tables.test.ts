@@ -191,6 +191,65 @@ describe('tablesPlugin', () => {
     expect(view.state.doc.toString()).toContain('| one | tXwo |');
   });
 
+  it('keeps active input printable keydown from reaching CodeMirror', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+    let reachedCodeMirror = false;
+
+    clickCell(view, '1:1');
+    keydown(view.contentDOM, 'Enter');
+    const input = activeInput(view);
+    view.contentDOM.addEventListener('keydown', () => {
+      reachedCodeMirror = true;
+    });
+    keydown(input, 'x');
+
+    expect(reachedCodeMirror).toBe(false);
+    expect(activeInput(view)).toBe(input);
+  });
+
+  it('keeps non-edge arrow keydown inside the active input', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+    let reachedCodeMirror = false;
+
+    clickCell(view, '1:0');
+    keydown(view.contentDOM, 'Enter');
+    const input = activeInput(view);
+    input.value = 'first';
+    input.setSelectionRange(2, 2);
+    view.contentDOM.addEventListener('keydown', () => {
+      reachedCodeMirror = true;
+    });
+    keydown(input, 'ArrowRight');
+
+    expect(reachedCodeMirror).toBe(false);
+    expect(view.state.doc.toString()).toBe(doc);
+    expect(activeInput(view)).toBe(input);
+    expect(input.selectionStart).toBe(2);
+    expect(input.selectionEnd).toBe(2);
+  });
+
+  it('pastes plain text into the active input selection', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    keydown(view.contentDOM, 'Enter');
+    const input = activeInput(view);
+    input.value = 'hello world';
+    input.setSelectionRange(6, 11);
+    input.dispatchEvent(pasteEvent('table'));
+
+    expect(input.value).toBe('hello table');
+    expect(input.selectionStart).toBe(11);
+    expect(input.selectionEnd).toBe(11);
+
+    keydown(input, 'Enter');
+
+    expect(view.state.doc.toString()).toContain('| one | hello table |');
+  });
+
   it('defocuses a selected cell with Escape without revealing source', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc);
@@ -249,7 +308,9 @@ describe('tablesPlugin', () => {
 
     clickCell(view, '1:1');
     keydown(view.contentDOM, 'Enter');
-    activeInput(view).dispatchEvent(pasteEvent('pasted text'));
+    const input = activeInput(view);
+    input.setSelectionRange(0, input.value.length);
+    input.dispatchEvent(pasteEvent('pasted text'));
     keydown(activeInput(view), 'Enter');
 
     expect(view.state.doc.toString()).toContain('| one | pasted text |');

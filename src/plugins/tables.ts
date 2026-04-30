@@ -230,7 +230,12 @@ class TableWidget extends WidgetType {
     input.addEventListener('paste', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      input.value = event.clipboardData?.getData('text/plain') ?? '';
+      const text = event.clipboardData?.getData('text/plain') ?? '';
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? start;
+      input.value = `${input.value.slice(0, start)}${text}${input.value.slice(end)}`;
+      const caret = start + text.length;
+      input.setSelectionRange(caret, caret);
     });
 
     queueMicrotask(() => {
@@ -288,23 +293,22 @@ class TableWidget extends WidgetType {
     input: HTMLInputElement,
     view: EditorView,
   ): void {
+    event.stopPropagation();
+
     if (event.key === 'Escape') {
       event.preventDefault();
-      event.stopPropagation();
       this.cancelEditing(view);
       return;
     }
 
     if (event.key === 'Enter') {
       event.preventDefault();
-      event.stopPropagation();
       this.commitAndMove(view, input.value, 'down');
       return;
     }
 
     if (event.key === 'Tab') {
       event.preventDefault();
-      event.stopPropagation();
       this.commitAndMove(view, input.value, event.shiftKey ? 'left' : 'right');
       return;
     }
@@ -313,7 +317,6 @@ class TableWidget extends WidgetType {
     if (!direction) return;
 
     event.preventDefault();
-    event.stopPropagation();
     this.commitAndMove(view, input.value, direction);
   }
 
