@@ -1,0 +1,119 @@
+<div class="galley-home">
+  <div class="galley-home-titlebar">
+    <div>
+      <p class="galley-home-kicker">React Markdown Editing</p>
+      <h2>Live-preview docs for builders</h2>
+      <p>
+        Everything you need to install, style, extend, and ship Galley Editor
+        inside production React apps.
+      </p>
+    </div>
+    <span class="galley-version">v0.7.0</span>
+  </div>
+
+  <section class="galley-feature-panel" aria-labelledby="feature-title">
+    <div class="galley-orb" aria-hidden="true">
+      <span></span>
+    </div>
+    <div>
+      <span class="galley-pill">Featured</span>
+      <h3 id="feature-title">Build a Markdown surface that feels native</h3>
+      <p>
+        Galley keeps Markdown as source text while hiding syntax when the cursor
+        leaves a node. Use the default chrome, bring your own toolbar, or wire
+        directly into CodeMirror.
+      </p>
+      <div class="galley-actions">
+        <a class="galley-primary" href="guides/quick-start/">Get Started</a>
+        <a class="galley-secondary" href="guides/complete-guide/">Complete Guide</a>
+      </div>
+    </div>
+    <div class="galley-visual" aria-hidden="true">
+      <div class="galley-window window-a"></div>
+      <div class="galley-window window-b"></div>
+      <div class="galley-window window-c"></div>
+      <div class="galley-chip chip-a">Aa</div>
+      <div class="galley-chip chip-b"></div>
+      <div class="galley-chip chip-c"></div>
+    </div>
+  </section>
+
+  <div class="galley-card-grid">
+    <a class="galley-card" href="guides/quick-start/">
+      <span class="galley-card-icon icon-blue">↗</span>
+      <strong>Quickstart</strong>
+      <span>Install, import CSS, and render a controlled editor.</span>
+      <em>Start building</em>
+    </a>
+    <a class="galley-card" href="guides/complete-guide/">
+      <span class="galley-card-icon icon-cyan">◇</span>
+      <strong>Component Guide</strong>
+      <span>Commands, renderers, toolbar slots, themes, and uploads.</span>
+      <em>Read the guide</em>
+    </a>
+    <a class="galley-card" href="reference/api/">
+      <span class="galley-card-icon icon-violet">&lt;/&gt;</span>
+      <strong>API Reference</strong>
+      <span>Props, handles, command types, plugin specs, and exports.</span>
+      <em>View API docs</em>
+    </a>
+    <a class="galley-card" href="guides/customization/">
+      <span class="galley-card-icon icon-amber">▦</span>
+      <strong>Styling</strong>
+      <span>CSS variables, semantic classes, surfaces, and themes.</span>
+      <em>Customize Galley</em>
+    </a>
+    <a class="galley-card" href="guides/plugins-renderers/">
+      <span class="galley-card-icon icon-green">◌</span>
+      <strong>Renderers</strong>
+      <span>Code highlighters, image renderers, and custom plugins.</span>
+      <em>Extend rendering</em>
+    </a>
+    <a class="galley-card" href="guides/storybook/">
+      <span class="galley-card-icon icon-purple">□</span>
+      <strong>Storybook</strong>
+      <span>Explore live examples, controls, commands, and upload flows.</span>
+      <em>Open examples</em>
+    </a>
+  </div>
+
+  <div class="galley-lower-grid">
+    <section class="galley-code-panel" aria-labelledby="code-title">
+      <div class="galley-panel-head">
+        <h3 id="code-title">Editor component</h3>
+        <div class="galley-tabs" aria-hidden="true">
+          <span class="active">React</span>
+          <span>CSS</span>
+          <span>API</span>
+        </div>
+      </div>
+      <pre><code>{`import { GalleyEditor } from '@inky/galley-editor';
+import '@inky/galley-editor/style.css';
+
+export function Editor() {
+  return (
+    <GalleyEditor
+      value={markdown}
+      onChange={setMarkdown}
+      toolbar
+      theme="auto"
+    />
+  );
+}`}</code></pre>
+      <a class="galley-primary compact" href="guides/installation/">Install Galley</a>
+    </section>
+
+    <section class="galley-list-panel" aria-labelledby="articles-title">
+      <div class="galley-panel-head">
+        <h3 id="articles-title">Popular Articles</h3>
+        <span>What’s New</span>
+      </div>
+      <a href="guides/complete-guide/">Creating custom commands <time>Guide</time></a>
+      <a href="guides/customization/">Writing a custom theme <time>Guide</time></a>
+      <a href="guides/plugins-renderers/">Building custom renderers <time>Guide</time></a>
+      <a href="reference/api/">Using the imperative handle <time>API</time></a>
+      <a href="guides/complete-guide/#register-and-track-file-uploads">Tracking file uploads <time>Workflow</time></a>
+      <a class="galley-view-all" href="guides/complete-guide/">View all guides</a>
+    </section>
+  </div>
+</div>

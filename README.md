@@ -70,6 +70,8 @@ function App() {
 
 Public documentation website sources live in [`docs-site/`](docs-site/). The site is built with Astro Starlight and published together with Storybook in one GitLab Pages instance.
 
+The docs site includes a complete guide covering custom commands, renderers, toolbar buttons, icons, styling, themes, built-in commands, and upload workflows. Static LLM-readable entry points are published at `/llms.txt` and `/llms/complete-guide.md`.
+
 ## Development
 
 ```bash

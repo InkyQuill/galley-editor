@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useRef, useState, useCallback } from 'react';
+import { useArgs } from 'storybook/preview-api';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import GalleyEditor from './GalleyEditor';
 import ErrorBoundary from './ErrorBoundary';
-import type { GalleyHandle, GalleyMode } from '../types';
+import type { GalleyEditorProps, GalleyHandle, GalleyMode } from '../types';
 import type { GalleyPlugin, GalleyClassNames } from '../types';
 import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
@@ -18,6 +19,26 @@ const meta = {
     layout: 'padded',
   },
   tags: ['autodocs'],
+  argTypes: {
+    value: { control: 'text' },
+    placeholder: { control: 'text' },
+    editable: { control: 'boolean' },
+    minRows: { control: { type: 'number', min: 1, max: 24, step: 1 } },
+    maxRows: { control: { type: 'number', min: 1, max: 30, step: 1 } },
+    theme: { control: 'inline-radio', options: ['light', 'dark', 'auto'] },
+    mode: { control: 'inline-radio', options: ['live', 'markdown', 'preview'] },
+    toolbar: { control: 'boolean' },
+    footer: { control: 'boolean' },
+    tabIndents: { control: 'boolean' },
+    bidi: { control: 'boolean' },
+    onChange: { table: { disable: true } },
+    plugins: { table: { disable: true } },
+    extensions: { table: { disable: true } },
+    keymap: { table: { disable: true } },
+    imageRenderer: { table: { disable: true } },
+    codeHighlighter: { table: { disable: true } },
+    onPaste: { table: { disable: true } },
+  },
 } satisfies Meta<typeof GalleyEditor>;
 
 export default meta;
@@ -145,6 +166,44 @@ function DefaultStory() {
  */
 export const Default: Story = {
   render: DefaultStory,
+};
+
+// ── Controls Playground ────────────────────────────────────────────────────
+
+function ControlsStory(args: GalleyEditorProps) {
+  const [, updateArgs] = useArgs<GalleyEditorProps>();
+
+  return (
+    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <GalleyEditor
+        {...args}
+        value={args.value ?? ''}
+        onChange={(nextValue) => updateArgs({ value: nextValue })}
+      />
+    </div>
+  );
+}
+
+/**
+ * Storybook controls for the public component props that are useful to tune
+ * interactively: theme, mode, editability, sizing, toolbar/footer visibility,
+ * placeholder text, bidi support, and Tab behavior.
+ */
+export const Controls: Story = {
+  args: {
+    value: sampleMarkdown,
+    placeholder: 'Start typing your markdown here...',
+    editable: true,
+    minRows: 10,
+    maxRows: undefined,
+    theme: 'auto',
+    mode: 'live',
+    toolbar: true,
+    footer: true,
+    tabIndents: true,
+    bidi: false,
+  },
+  render: ControlsStory,
 };
 
 // ── All Markdown Features ───────────────────────────────────────────────────
@@ -985,39 +1044,84 @@ function CustomCommandsStory() {
   const ref = useRef<GalleyHandle>(null);
   const [registered, setRegistered] = useState(false);
 
-  const registerCommands = () => {
-    if (!ref.current || registered) return;
-    ref.current.registerCommand('insertTimestamp', (view) => {
-      view.dispatch(view.state.replaceSelection(`[${new Date().toLocaleString()}]`));
-      return true;
+  useEffect(() => {
+    if (registered) return;
+
+    const frame = requestAnimationFrame(() => {
+      if (!ref.current) return;
+      ref.current.registerCommand('insertTimestamp', (view) => {
+        view.dispatch(view.state.replaceSelection(`[${new Date().toLocaleString()}]`));
+        return true;
+      });
+      ref.current.registerCommand('wrapInCallout', (view) => {
+        const sel = view.state.selection.main;
+        const text = view.state.sliceDoc(sel.from, sel.to) || 'Your text here';
+        view.dispatch(view.state.replaceSelection(`> [!note]\n> ${text}\n`));
+        return true;
+      });
+      ref.current.registerCommand('uppercaseSelection', (view) => {
+        const sel = view.state.selection.main;
+        const text = view.state.sliceDoc(sel.from, sel.to).toUpperCase();
+        if (text) {
+          view.dispatch({ changes: { from: sel.from, to: sel.to, insert: text } });
+        }
+        return true;
+      });
+      setRegistered(true);
     });
-    ref.current.registerCommand('wrapInCallout', (view) => {
-      const sel = view.state.selection.main;
-      const text = view.state.sliceDoc(sel.from, sel.to) || 'Your text here';
-      view.dispatch(view.state.replaceSelection(`> [!note]\n> ${text}\n`));
-      return true;
-    });
-    ref.current.registerCommand('uppercaseSelection', (view) => {
-      const sel = view.state.selection.main;
-      const text = view.state.sliceDoc(sel.from, sel.to).toUpperCase();
-      if (text) {
-        view.dispatch({ changes: { from: sel.from, to: sel.to, insert: text } });
-      }
-      return true;
-    });
-    setRegistered(true);
-  };
+
+    return () => cancelAnimationFrame(frame);
+  }, [registered]);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <GalleyEditor ref={ref} value={value} onChange={setValue} minRows={6} />
+      <GalleyEditor
+        ref={ref}
+        value={value}
+        onChange={setValue}
+        minRows={6}
+        toolbar={{
+          after: ({ canEdit, execCommand }) => (
+            <>
+              <button
+                type="button"
+                className="ge-toolbar-button"
+                disabled={!canEdit || !registered}
+                title="Insert timestamp"
+                aria-label="Insert timestamp"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => execCommand('insertTimestamp')}
+              >
+                Time
+              </button>
+              <button
+                type="button"
+                className="ge-toolbar-button"
+                disabled={!canEdit || !registered}
+                title="Wrap in callout"
+                aria-label="Wrap in callout"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => execCommand('wrapInCallout')}
+              >
+                Callout
+              </button>
+              <button
+                type="button"
+                className="ge-toolbar-button"
+                disabled={!canEdit || !registered}
+                title="Uppercase selection"
+                aria-label="Uppercase selection"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => execCommand('uppercaseSelection')}
+              >
+                Upper
+              </button>
+            </>
+          ),
+        }}
+      />
       <div style={{ marginTop: '12px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-        {!registered && (
-          <button onClick={registerCommands} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer' }}>
-            Register Custom Commands
-          </button>
-        )}
-        {registered && (
+        {registered ? (
           <>
             <button onClick={() => ref.current?.execCommand('insertTimestamp')}>
               Insert Timestamp
@@ -1029,6 +1133,10 @@ function CustomCommandsStory() {
               Uppercase Selection
             </button>
           </>
+        ) : (
+          <span style={{ color: '#6b7280', fontSize: '13px' }}>
+            Registering commands...
+          </span>
         )}
       </div>
       {registered && (
@@ -1042,8 +1150,8 @@ function CustomCommandsStory() {
 
 /**
  * Shows how to register and execute custom commands via `registerCommand()`
- * and `execCommand()`. Click "Register Custom Commands" first, then use the
- * command buttons. Custom commands take precedence over built-ins.
+ * and `execCommand()`. The same custom commands are also wired into
+ * `toolbar.after` buttons, matching the documented extension pattern.
  */
 export const CustomCommands: Story = {
   render: CustomCommandsStory,
@@ -1586,4 +1694,154 @@ function PasteHandlerStory() {
  */
 export const PasteHandler: Story = {
   render: PasteHandlerStory,
+};
+
+// ── File Upload Workflow ───────────────────────────────────────────────────
+
+type UploadRecord = {
+  id: string;
+  name: string;
+  status: 'uploading' | 'done' | 'failed';
+  markdown?: string;
+};
+
+function createUploadId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
+}
+
+function FileUploadWorkflowStory() {
+  const [value, setValue] = useState(
+    '# Upload Workflow\n\nPaste or drop image files into the editor. This story uses a fake upload and inserts Markdown when it completes.',
+  );
+  const [uploads, setUploads] = useState<UploadRecord[]>([]);
+
+  const fakeUpload = useCallback(async (file: File): Promise<string> => {
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    return `![${file.name}](/uploads/${encodeURIComponent(file.name)})`;
+  }, []);
+
+  const handleFiles = useCallback(async (files: File[], view: EditorView) => {
+    if (files.length === 0) return;
+
+    const records = files.map((file) => ({
+      id: createUploadId(),
+      name: file.name,
+      status: 'uploading' as const,
+    }));
+
+    setUploads((items) => [...records, ...items]);
+
+    const markdownItems: string[] = [];
+    for (const [index, file] of files.entries()) {
+      const id = records[index].id;
+      try {
+        const markdown = await fakeUpload(file);
+        markdownItems.push(markdown);
+        setUploads((items) =>
+          items.map((item) =>
+            item.id === id ? { ...item, status: 'done', markdown } : item,
+          ),
+        );
+      } catch {
+        setUploads((items) =>
+          items.map((item) =>
+            item.id === id ? { ...item, status: 'failed' } : item,
+          ),
+        );
+      }
+    }
+
+    if (markdownItems.length > 0) {
+      view.dispatch(view.state.replaceSelection(`${markdownItems.join('\n')}\n`));
+    }
+  }, [fakeUpload]);
+
+  const dropExtension = useMemo(
+    () =>
+      EditorView.domEventHandlers({
+        dragover(event) {
+          if ((event.dataTransfer?.files.length ?? 0) === 0) return false;
+          event.preventDefault();
+          return true;
+        },
+        drop(event, view) {
+          const files = Array.from(event.dataTransfer?.files ?? []);
+          if (files.length === 0) return false;
+          event.preventDefault();
+          void handleFiles(files, view);
+          return true;
+        },
+      }),
+    [handleFiles],
+  );
+
+  const activeCount = uploads.filter((upload) => upload.status === 'uploading').length;
+
+  return (
+    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        extensions={[dropExtension]}
+        onPaste={(event, view) => {
+          const files = Array.from(event.clipboardData?.files ?? []);
+          if (files.length === 0) return;
+          event.preventDefault();
+          void handleFiles(files, view);
+        }}
+        footer={{
+          after: () => (
+            <span>
+              {activeCount} upload{activeCount === 1 ? '' : 's'} active
+            </span>
+          ),
+        }}
+      />
+      <div
+        style={{
+          marginTop: '12px',
+          padding: '12px',
+          background: '#f8fafc',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          fontSize: '13px',
+        }}
+      >
+        <strong>Upload log</strong>
+        {uploads.length === 0 && (
+          <div style={{ color: '#6b7280', marginTop: '6px' }}>
+            Paste or drop files to add upload records.
+          </div>
+        )}
+        {uploads.map((upload) => (
+          <div
+            key={upload.id}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginTop: '6px',
+              borderTop: '1px solid #e5e7eb',
+              paddingTop: '6px',
+            }}
+          >
+            <span>{upload.name}</span>
+            <code>{upload.status}</code>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Demonstrates app-owned file upload tracking with `onPaste` and a custom
+ * CodeMirror drop extension. The fake upload inserts Markdown image syntax
+ * and reports active uploads through `footer.after`.
+ */
+export const FileUploadWorkflow: Story = {
+  render: FileUploadWorkflowStory,
 };

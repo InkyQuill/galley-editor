@@ -33,6 +33,7 @@ export default defineConfig({
           items: [
             { label: 'Installation', slug: 'guides/installation' },
             { label: 'Quick Start', slug: 'guides/quick-start' },
+            { label: 'Complete Guide', slug: 'guides/complete-guide' },
             { label: 'Customization', slug: 'guides/customization' },
             { label: 'Plugins and Renderers', slug: 'guides/plugins-renderers' },
             { label: 'Storybook', slug: 'guides/storybook' },

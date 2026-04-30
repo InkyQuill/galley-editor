@@ -35,10 +35,7 @@ Galley does not bundle a syntax highlighter. That keeps the package lighter and 
   codeHighlighter={({ code, language }) => {
     const html = highlightWithYourLibrary(code, language);
 
-    return {
-      html,
-      className: `language-${language ?? 'text'}`,
-    };
+    return html;
   }}
 />
 ```
@@ -57,12 +54,24 @@ Use `imageRenderer` when your app needs signed URLs, asset lookup, captions, res
 
 ```tsx
 <GalleyEditor
-  imageRenderer={({ alt, src, title }) => (
-    <figure className="asset-preview">
-      <img src={src} alt={alt} title={title} />
-      {title ? <figcaption>{title}</figcaption> : null}
-    </figure>
-  )}
+  imageRenderer={({ alt, url, title }) => {
+    const figure = document.createElement('figure');
+    figure.className = 'asset-preview';
+
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = alt;
+    if (title) image.title = title;
+
+    figure.append(image);
+    if (title) {
+      const caption = document.createElement('figcaption');
+      caption.textContent = title;
+      figure.append(caption);
+    }
+
+    return figure;
+  }}
 />
 ```
 
@@ -91,4 +100,20 @@ Use raw CodeMirror extensions for behavior that is not tied to Galley's Markdown
 
 ## Uploads and Drops
 
-File-drop upload hooks are planned for the next editing UX pass. The intended shape is consumer-owned: Galley will notify your app about dropped files, wait for the app to return a Markdown link or image, then insert that Markdown into the document.
+Galley v0.7 exposes raw paste events and CodeMirror extension hooks. It does not yet ship a first-class `onFiles` prop, so upload behavior stays consumer-owned:
+
+```tsx
+<GalleyEditor
+  onPaste={(event, view) => {
+    const files = Array.from(event.clipboardData?.files ?? []);
+    if (files.length === 0) return;
+
+    event.preventDefault();
+    void Promise.all(files.map(uploadFile)).then((markdownItems) => {
+      view.dispatch(view.state.replaceSelection(markdownItems.join('\n')));
+    });
+  }}
+/>
+```
+
+For drag-and-drop, register `EditorView.domEventHandlers()` through the `extensions` prop. See the [Complete Guide](../complete-guide/#register-and-track-file-uploads) for a full upload tracking example.
