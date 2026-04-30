@@ -116,7 +116,7 @@ function serializeRow(cells: GalleyTableCell[], columnCount: number): string {
 }
 
 function selectionRangeIntersectsTable(selection: SelectionRange, from: number, to: number): boolean {
-  if (selection.empty) return selection.head >= from && selection.head <= to;
+  if (selection.empty) return selection.head >= from && selection.head < to;
 
   return selection.from < to && selection.to > from;
 }
@@ -173,7 +173,7 @@ export function tableAtSelection(state: EditorState): GalleyTable | null {
     enter(node) {
       if (found) return false;
       if (node.name !== 'Table') return;
-      if (head < node.from || head > node.to) return;
+      if (head < node.from || head >= node.to) return;
 
       found = parseTableRange(state, node.from, node.to);
       return false;
@@ -203,7 +203,7 @@ export function tablesAtSelections(state: EditorState): GalleyTable[] {
 export function tableCellAtPosition(table: GalleyTable, pos: number): GalleyTableCell {
   for (const row of table.rows) {
     for (const cell of row) {
-      if (pos >= cell.sourceFrom && pos <= cell.sourceTo) return cell;
+      if (pos >= cell.sourceFrom && pos < cell.sourceTo) return cell;
     }
   }
 
@@ -215,6 +215,10 @@ export function tableCellAtPosition(table: GalleyTable, pos: number): GalleyTabl
     sourceTo: table.from,
     header: true,
   };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 export function tableCell(table: GalleyTable, ref: TableCellRef): GalleyTableCell | null {
@@ -240,10 +244,31 @@ export function tableNavigationCell(
   const maxRow = Math.max(0, table.rows.length - 1);
   const maxColumn = Math.max(0, table.columnCount - 1);
 
-  if (direction === 'left') return { row: ref.row, column: Math.max(0, ref.column - 1) };
-  if (direction === 'right') return { row: ref.row, column: Math.min(maxColumn, ref.column + 1) };
-  if (direction === 'up') return { row: Math.max(0, ref.row - 1), column: ref.column };
-  return { row: Math.min(maxRow, ref.row + 1), column: ref.column };
+  if (direction === 'left') {
+    return {
+      row: clamp(ref.row, 0, maxRow),
+      column: clamp(ref.column - 1, 0, maxColumn),
+    };
+  }
+
+  if (direction === 'right') {
+    return {
+      row: clamp(ref.row, 0, maxRow),
+      column: clamp(ref.column + 1, 0, maxColumn),
+    };
+  }
+
+  if (direction === 'up') {
+    return {
+      row: clamp(ref.row - 1, 0, maxRow),
+      column: clamp(ref.column, 0, maxColumn),
+    };
+  }
+
+  return {
+    row: clamp(ref.row + 1, 0, maxRow),
+    column: clamp(ref.column, 0, maxColumn),
+  };
 }
 
 export function cellKey(ref: TableCellRef | null): string {

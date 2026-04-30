@@ -159,6 +159,14 @@ describe('table selection helpers', () => {
     });
   });
 
+  it('does not find a table when the cursor is immediately after the table range', () => {
+    const tableSource = '| A | B |\n| --- | --- |\n| 1 | 2 |';
+    const doc = `${tableSource}\n\noutro`;
+    const state = createMarkdownState(doc, EditorSelection.cursor(tableSource.length));
+
+    expect(tableAtSelection(state)).toBeNull();
+  });
+
   it('deduplicates multiple selections in the same table', () => {
     const first = '| A | B |\n| --- | --- |\n| 1 | 2 |';
     const second = '| C |\n| --- |\n| 3 |';
@@ -178,6 +186,16 @@ describe('table selection helpers', () => {
 });
 
 describe('table model helpers', () => {
+  it('does not match a cell when the position equals its exclusive source end', () => {
+    const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| 1 | 2 |\n');
+
+    expect(table).not.toBeNull();
+    const bodyCell = tableCell(table!, { row: 1, column: 1 });
+
+    expect(bodyCell).not.toBeNull();
+    expect(tableCellAtPosition(table!, bodyCell!.sourceTo)).toBe(table!.rows[0]![0]);
+  });
+
   it('updates one cell and preserves table shape', () => {
     const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| 1 | 2 |\n');
 
@@ -201,6 +219,16 @@ describe('table model helpers', () => {
     expect(tableNavigationCell(table!, { row: 0, column: 0 }, 'right')).toEqual({ row: 0, column: 1 });
     expect(tableNavigationCell(table!, { row: 0, column: 1 }, 'down')).toEqual({ row: 1, column: 1 });
     expect(tableNavigationCell(table!, { row: 1, column: 1 }, 'down')).toEqual({ row: 1, column: 1 });
+  });
+
+  it('clamps out-of-range navigation inputs on both axes', () => {
+    const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| 1 | 2 |\n');
+
+    expect(table).not.toBeNull();
+    expect(tableNavigationCell(table!, { row: 999, column: 999 }, 'left')).toEqual({ row: 1, column: 1 });
+    expect(tableNavigationCell(table!, { row: 999, column: 999 }, 'up')).toEqual({ row: 1, column: 1 });
+    expect(tableNavigationCell(table!, { row: -999, column: -999 }, 'right')).toEqual({ row: 0, column: 0 });
+    expect(tableNavigationCell(table!, { row: -999, column: -999 }, 'down')).toEqual({ row: 0, column: 0 });
   });
 
   it('builds stable cell keys', () => {
