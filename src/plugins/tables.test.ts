@@ -3,7 +3,7 @@ import { EditorSelection, type Transaction, type TransactionSpec } from '@codemi
 import type { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
 import { resolveClassNames, type GalleyRenderContext } from '../types';
-import tablesPlugin from './tables';
+import tablesPlugin, { safeTableCellHref } from './tables';
 
 const views: EditorView[] = [];
 const editableLiveContext: GalleyRenderContext = { theme: 'light', mode: 'live', canEdit: true };
@@ -111,16 +111,30 @@ describe('tablesPlugin', () => {
     expect(link?.getAttribute('href')).toBe('https://example.com/path?q=1');
   });
 
-  it('omits unsafe hrefs from inactive table cell links', () => {
-    const doc = '| A |\n| - |\n| [x](javascript:alert(1)) |\n\nplain';
+  it.each([
+    ['javascript:alert(1)'],
+    ['JaVaScRiPt:alert(1)'],
+    ['java\tscript:alert(1)'],
+  ])('omits unsafe hrefs from inactive table cell links for %s', (href) => {
+    const doc = `| A |\n| - |\n| [x](${href}) |\n\nplain`;
     const view = tableEditor(doc);
 
-    const link = cell(view, '1:0').querySelector('.ge-table-cell-link');
+    const renderedCell = cell(view, '1:0');
+    const link = renderedCell.querySelector('.ge-table-cell-link');
 
     expect(link).toBeInstanceOf(HTMLAnchorElement);
     expect(link?.textContent).toBe('x');
     expect(link?.hasAttribute('href')).toBe(false);
-    expect(cell(view, '1:0').querySelector('[href^="javascript:"]')).toBeNull();
+    expect(renderedCell.querySelector('[href*="javascript:"]')).toBeNull();
+  });
+
+  it.each([
+    ['javascript:alert(1)'],
+    ['JaVaScRiPt:alert(1)'],
+    ['java\tscript:alert(1)'],
+    ['java\nscript:alert(1)'],
+  ])('rejects unsafe table cell href %s', (href) => {
+    expect(safeTableCellHref(href)).toBeNull();
   });
 
   it('escapes raw HTML in inactive table cells', () => {

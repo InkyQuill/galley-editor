@@ -572,9 +572,10 @@ function createInlineTokenNode(token: InlineToken): HTMLElement {
   return link;
 }
 
-function safeTableCellHref(rawHref: string): string | null {
+export function safeTableCellHref(rawHref: string): string | null {
   const href = rawHref.trim();
   if (!href) return null;
+  if (hasAsciiControlCharacter(href)) return null;
   if (href.startsWith('#') || href.startsWith('/') || href.startsWith('./') || href.startsWith('../')) {
     return href;
   }
@@ -585,6 +586,14 @@ function safeTableCellHref(rawHref: string): string | null {
   const scheme = schemeMatch[1]?.toLowerCase();
   if (scheme === 'http' || scheme === 'https' || scheme === 'mailto') return href;
   return null;
+}
+
+function hasAsciiControlCharacter(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    if (code <= 0x1f || code === 0x7f) return true;
+  }
+  return false;
 }
 
 function selectCellAtCurrentTableSelection(view: EditorView): void {
