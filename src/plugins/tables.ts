@@ -650,6 +650,15 @@ function makeTablesViewPlugin(
         const cell = table ? tableCell(table, selected.cell) : null;
         if (!table || !cell) return false;
 
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          view.dispatch({
+            effects: selectTableCell.of(null),
+          });
+          return true;
+        }
+
         if (event.key === 'Enter') {
           event.preventDefault();
           view.dispatch({

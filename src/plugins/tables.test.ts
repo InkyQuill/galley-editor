@@ -158,6 +158,17 @@ describe('tablesPlugin', () => {
     expect(view.dom.querySelector('.ge-table-cell-selected')?.textContent).toBe('two');
   });
 
+  it('defocuses a selected cell with Escape without revealing source', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    keydown(view.contentDOM, 'Escape');
+
+    expect(view.dom.querySelector('.ge-table-cell-selected')).toBeNull();
+    expect(view.dom.querySelector('.ge-table-widget table')).toBeInstanceOf(HTMLTableElement);
+  });
+
   it('commits with Tab and Shift+Tab while moving selection right and left', () => {
     const doc = '| A | B | C |\n| - | - | - |\n| one | two | three |\n\nplain';
     const view = tableEditor(doc);
