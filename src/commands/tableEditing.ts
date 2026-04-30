@@ -14,10 +14,18 @@ import {
   type TableCellRef,
 } from '../table-markdown';
 
-type TableReplacement = {
+export interface GalleyTableReplacement {
+  /** Original parsed table, including the source range to replace in the current document. */
   table: GalleyTable;
+  /** Replacement table model serialized into the original table range. */
   next: GalleyTable;
-};
+}
+
+interface SerializedTableReplacement {
+  from: number;
+  to: number;
+  insert: string;
+}
 
 type ReplaceTableSpec = Omit<TransactionSpec, 'changes' | 'scrollIntoView'>;
 
@@ -158,10 +166,14 @@ function tableWithColumnAlignment(
   };
 }
 
-function serializeReplacement(state: EditorState, table: GalleyTable): string {
-  const serialized = serializeMarkdownTable(table);
-  const nextChar = state.sliceDoc(table.to, table.to + 1);
-  const atDocumentEndWithoutNewline = table.to >= state.doc.length &&
+function serializeReplacement(
+  state: EditorState,
+  original: GalleyTable,
+  next: GalleyTable,
+): string {
+  const serialized = serializeMarkdownTable(next);
+  const nextChar = state.sliceDoc(original.to, original.to + 1);
+  const atDocumentEndWithoutNewline = original.to >= state.doc.length &&
     state.sliceDoc(Math.max(0, state.doc.length - 1), state.doc.length) !== '\n';
 
   if ((nextChar === '\n' || atDocumentEndWithoutNewline) && serialized.endsWith('\n')) {
@@ -175,7 +187,7 @@ function replacedTables(
   view: EditorView,
   transform: (table: GalleyTable, cell: GalleyTableCell) => GalleyTable | null,
 ): boolean {
-  const replacements: TableReplacement[] = [];
+  const replacements: GalleyTableReplacement[] = [];
   let selectionAnchor: number | null = null;
 
   for (const table of tablesAtSelections(view.state)) {
@@ -208,7 +220,7 @@ export function replaceTable(
   table: GalleyTable,
   spec: ReplaceTableSpec = {},
 ): boolean {
-  const insert = serializeReplacement(view.state, table);
+  const insert = serializeReplacement(view.state, table, table);
   view.dispatch({
     ...spec,
     changes: { from: table.from, to: table.to, insert },
@@ -218,30 +230,48 @@ export function replaceTable(
 
 export function replaceTables(
   view: EditorView,
-  tables: readonly TableReplacement[],
+  tables: readonly GalleyTableReplacement[],
 ): boolean {
   return dispatchTableReplacements(view, tables, null);
 }
 
 function dispatchTableReplacements(
   view: EditorView,
-  tables: readonly TableReplacement[],
+  tables: readonly GalleyTableReplacement[],
   selectionAnchor: number | null,
 ): boolean {
   if (tables.length === 0) return false;
 
+  const changes = tables
+    .map(({ table, next }) => ({
+      from: table.from,
+      to: table.to,
+      insert: serializeReplacement(view.state, table, next),
+    }))
+    .sort((a, b) => a.from - b.from);
+  const selection = selectionAnchor === null
+    ? null
+    : mapPositionThroughChanges(selectionAnchor, changes);
+
   view.dispatch({
-    changes: tables
-      .slice()
-      .sort((a, b) => a.table.from - b.table.from)
-      .map(({ table, next }) => ({
-        from: table.from,
-        to: table.to,
-        insert: serializeReplacement(view.state, next),
-      })),
-    ...(selectionAnchor === null ? {} : { selection: { anchor: selectionAnchor } }),
+    changes,
+    ...(selection === null ? {} : { selection: { anchor: selection } }),
   });
   return true;
+}
+
+function mapPositionThroughChanges(
+  position: number,
+  changes: readonly SerializedTableReplacement[],
+): number {
+  let mapped = position;
+
+  for (const change of changes) {
+    if (change.to > position) break;
+    mapped += change.insert.length - (change.to - change.from);
+  }
+
+  return mapped;
 }
 
 export function normalizeTable(view: EditorView): boolean {

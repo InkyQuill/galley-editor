@@ -106,6 +106,7 @@ export {
   setTableColumnAlignment,
 } from '../commands';
 export type {
+  GalleyTableReplacement,
   GalleyKeyBinding,
   SortSelectedLinesOptions,
 } from '../commands';

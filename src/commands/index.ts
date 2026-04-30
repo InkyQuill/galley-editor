@@ -27,6 +27,7 @@ import {
   revealTableSource,
   setTableColumnAlignment,
 } from './tableEditing';
+export type { GalleyTableReplacement } from './tableEditing';
 import { indent, outdent, redoCommand, selectAllCommand, undoCommand } from './editing';
 import { duplicateLine } from './editing/duplicateLine';
 import { insertLineAfter, insertLineBefore } from './editing/insertLine';

@@ -196,4 +196,17 @@ describe('table editing commands', () => {
       '|  |  |',
     ].join('\n'));
   });
+
+  it('maps structural command selection when an earlier selected table changes length', () => {
+    const first = '| A | B |\n| --- | --- |\n| 1 | 2 |';
+    const second = '| C | D |\n| --- | --- |\n| 30 | 40 |';
+    const doc = `${first}\n\n${second}`;
+    const view = tracked(createView(doc, EditorSelection.create([
+      EditorSelection.cursor(doc.indexOf('1')),
+      EditorSelection.cursor(doc.indexOf('30')),
+    ], 1)));
+
+    expect(insertTableRowAfter(view)).toBe(true);
+    expect(view.state.selection.main.head).toBe(docOf(view).indexOf('30'));
+  });
 });
