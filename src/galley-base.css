@@ -591,13 +591,13 @@
 }
 
 .ge-upload-error {
-  border-color: var(--ge-color-danger, #dc2626);
+  border-color: var(--ge-color-focus-ring);
   border-style: solid;
 }
 
 .ge-upload-overlay {
   align-items: center;
-  background: color-mix(in srgb, var(--ge-color-bg) 72%, transparent);
+  background: var(--ge-color-surface-elevated);
   display: flex;
   inset: 0;
   justify-content: center;
