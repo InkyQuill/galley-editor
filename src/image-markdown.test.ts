@@ -33,6 +33,34 @@ describe('parseImageMarkdown', () => {
     });
   });
 
+  it('parses explicit zero dimensions', () => {
+    const raw = '![Diagram](diagram.png){width=0 height=0}';
+
+    expect(parseImageMarkdown(raw)).toMatchObject({
+      width: 0,
+      height: 0,
+    });
+  });
+
+  it('does not parse empty dimensions as zero', () => {
+    const raw = '![Diagram](diagram.png){width= height=}';
+    const image = parseImageMarkdown(raw);
+
+    expect(image?.width).toBeUndefined();
+    expect(image?.height).toBeUndefined();
+  });
+
+  it('preserves unknown attributes', () => {
+    const raw = '![x](a){#hero .wide width=100}';
+
+    expect(parseImageMarkdown(raw)).toMatchObject({
+      alt: 'x',
+      url: 'a',
+      width: 100,
+      attrs: ['#hero', '.wide'],
+    });
+  });
+
   it('preserves urls that contain parentheses', () => {
     const dataUrl = "data:image/svg+xml,%3csvg%3e%3crect%20fill='url(%23sky)'/%3e%3c/svg%3e";
     const raw = `![Galley logo](${dataUrl})`;
@@ -66,6 +94,30 @@ describe('serializeImageMarkdown', () => {
       width: null,
       height: 720,
     })).toBe('![Updated](diagram.png){height=720}');
+  });
+
+  it('serializes explicit zero dimensions', () => {
+    const image: GalleyImageInfo = {
+      alt: 'Diagram',
+      url: 'diagram.png',
+      raw: '![Diagram](diagram.png)',
+      from: 0,
+      to: 23,
+    };
+
+    expect(serializeImageMarkdown(image, {
+      width: 0,
+      height: 0,
+    })).toBe('![Diagram](diagram.png){width=0 height=0}');
+  });
+
+  it('preserves unknown attributes when patching metadata', () => {
+    const image = parseImageMarkdown('![x](a){#hero .wide width=100}');
+
+    expect(image).not.toBeNull();
+    expect(serializeImageMarkdown(image as GalleyImageInfo, {
+      height: 200,
+    })).toBe('![x](a){#hero .wide width=100 height=200}');
   });
 });
 

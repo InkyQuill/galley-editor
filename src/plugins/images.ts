@@ -1,7 +1,7 @@
 import { WidgetType } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import { makeInlinePlugin } from '../rendering';
-import { parseImageMarkdown } from '../image-markdown';
+import { imageTrailingAttrsLength, parseImageMarkdown } from '../image-markdown';
 import type {
   ImageRenderer,
   GalleyImageInfo,
@@ -10,12 +10,6 @@ import type {
 } from '../types';
 
 type ParsedImage = GalleyImageInfo;
-
-function trailingAttrsLength(state: EditorState, to: number): number {
-  const line = state.doc.lineAt(to);
-  const afterImage = state.sliceDoc(to, line.to);
-  return afterImage.match(/^\{[^}\n]*\}/)?.[0].length ?? 0;
-}
 
 class ImageWidget extends WidgetType {
   private readonly image: ParsedImage;
@@ -36,6 +30,7 @@ class ImageWidget extends WidgetType {
       other.image.title === this.image.title &&
       other.image.width === this.image.width &&
       other.image.height === this.image.height &&
+      other.image.attrs?.join('\0') === this.image.attrs?.join('\0') &&
       other.image.raw === this.image.raw &&
       other.image.from === this.image.from &&
       other.image.to === this.image.to &&
@@ -69,7 +64,7 @@ function selectionIntersects(from: number, to: number, state: EditorState): bool
 }
 
 function imageRangeTo(state: EditorState, to: number): number {
-  return to + trailingAttrsLength(state, to);
+  return to + imageTrailingAttrsLength(state, to);
 }
 
 function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {

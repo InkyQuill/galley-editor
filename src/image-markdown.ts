@@ -19,9 +19,13 @@ function parseAttrs(attrs: string | undefined): ParsedAttrs {
     const value = separatorIndex === -1 ? undefined : part.slice(separatorIndex + 1);
     const numeric = Number(value);
 
-    if (key === 'width' && Number.isFinite(numeric)) result.width = numeric;
-    else if (key === 'height' && Number.isFinite(numeric)) result.height = numeric;
-    else rest.push(part);
+    if (key === 'width' && value !== undefined && value !== '' && Number.isFinite(numeric)) {
+      result.width = numeric;
+    } else if (key === 'height' && value !== undefined && value !== '' && Number.isFinite(numeric)) {
+      result.height = numeric;
+    } else {
+      rest.push(part);
+    }
   }
 
   return result;
@@ -72,7 +76,7 @@ function splitTitle(target: string): { url: string; title?: string } {
   };
 }
 
-function trailingAttrsLength(state: EditorState, to: number): number {
+export function imageTrailingAttrsLength(state: EditorState, to: number): number {
   const line = state.doc.lineAt(to);
   const afterImage = state.sliceDoc(to, line.to);
   return afterImage.match(/^\{[^}\n]*\}/)?.[0].length ?? 0;
@@ -94,7 +98,7 @@ export function parseImageMarkdown(
   const parsed = splitImageMarkdown(raw);
   if (!parsed) return null;
 
-  const { width, height } = parseAttrs(parsed.attrs);
+  const { width, height, rest } = parseAttrs(parsed.attrs);
   const { url, title } = splitTitle(parsed.target);
 
   return {
@@ -103,6 +107,7 @@ export function parseImageMarkdown(
     ...(title ? { title } : {}),
     ...(width !== undefined ? { width } : {}),
     ...(height !== undefined ? { height } : {}),
+    ...(rest.length > 0 ? { attrs: rest } : {}),
     raw,
     from,
     to,
@@ -120,6 +125,7 @@ export function serializeImageMarkdown(
   const height = patch.height === undefined ? image.height : patch.height;
   const titleSuffix = title ? ` "${title}"` : '';
   const attrs = [
+    ...(image.attrs ?? []),
     typeof width === 'number' && Number.isFinite(width) ? `width=${width}` : null,
     typeof height === 'number' && Number.isFinite(height) ? `height=${height}` : null,
   ].filter((part): part is string => part !== null);
@@ -139,7 +145,7 @@ export function imageAtSelection(state: EditorState): GalleyImageInfo | null {
       if (found) return false;
       if (node.name !== 'Image') return;
 
-      const to = node.to + trailingAttrsLength(state, node.to);
+      const to = node.to + imageTrailingAttrsLength(state, node.to);
       if (!selectionIntersectsRange(selection, node.from, to)) return false;
 
       found = parseImageMarkdown(state.sliceDoc(node.from, to), node.from, to);

@@ -67,6 +67,7 @@ export interface GalleyImageInfo {
   title?: string;
   width?: number;
   height?: number;
+  attrs?: string[];
   raw: string;
   from: number;
   to: number;
