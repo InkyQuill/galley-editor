@@ -188,7 +188,7 @@ class ImageWidget extends WidgetType {
         this.startResize(event, view, wrapper, corner, 'pointer');
       });
       handle.addEventListener('keydown', (event) => {
-        this.resizeFromKeyboard(event, view, corner);
+        this.resizeFromKeyboard(event, view, wrapper, corner);
       });
       wrapper.append(handle);
     }
@@ -208,30 +208,28 @@ class ImageWidget extends WidgetType {
 
     const startX = event.clientX;
     const startY = event.clientY;
-    const freeAtStart = event.shiftKey;
     const moveEvent = eventSource === 'pointer' ? 'pointermove' : 'mousemove';
     const upEvent = eventSource === 'pointer' ? 'pointerup' : 'mouseup';
     const cancelEvent = eventSource === 'pointer' ? 'pointercancel' : 'mouseleave';
     const initialPreview = captureImagePreview(wrapper);
+    const resizeBase = imageWithOriginalResizeDimensions(this.image, wrapper);
 
     const onMove = (moveEvent: MouseEvent | PointerEvent) => {
       moveEvent.preventDefault();
-      this.previewImageDimensions(wrapper, resizeImageMetadata(this.image, {
+      this.previewImageDimensions(wrapper, resizeImageMetadata(resizeBase, {
         corner,
         deltaX: moveEvent.clientX - startX,
         deltaY: moveEvent.clientY - startY,
-        free: freeAtStart || moveEvent.shiftKey,
       }));
     };
     const onUp = (upEvent: MouseEvent | PointerEvent) => {
       upEvent.preventDefault();
       removeListeners();
 
-      this.updateImageDimensions(view, resizeImageMetadata(this.image, {
+      this.updateImageDimensions(view, resizeImageMetadata(resizeBase, {
         corner,
         deltaX: upEvent.clientX - startX,
         deltaY: upEvent.clientY - startY,
-        free: freeAtStart || upEvent.shiftKey,
       }));
     };
     const onCancel = (cancelEvent: Event) => {
@@ -281,6 +279,7 @@ class ImageWidget extends WidgetType {
   private resizeFromKeyboard(
     event: KeyboardEvent,
     view: EditorView,
+    wrapper: HTMLElement,
     corner: ResizeCorner,
   ): void {
     const delta = keyboardResizeDelta(event, corner);
@@ -289,12 +288,14 @@ class ImageWidget extends WidgetType {
     event.preventDefault();
     event.stopPropagation();
 
-    this.updateImageDimensions(view, resizeImageMetadata(this.image, {
-      corner,
-      deltaX: delta.deltaX,
-      deltaY: delta.deltaY,
-      free: event.shiftKey,
-    }));
+    this.updateImageDimensions(
+      view,
+      resizeImageMetadata(imageWithOriginalResizeDimensions(this.image, wrapper), {
+        corner,
+        deltaX: delta.deltaX,
+        deltaY: delta.deltaY,
+      }),
+    );
   }
 
   private updateImageDimensions(
@@ -310,7 +311,6 @@ class ImageWidget extends WidgetType {
     view.dispatch({
       changes: { from: this.image.from, to: this.image.to, insert: next },
       effects: selectImage.of(nextRange),
-      scrollIntoView: true,
     });
   }
 
@@ -420,6 +420,70 @@ function restoreImagePreview(snapshots: ImagePreviewSnapshot[]): void {
     snapshot.image.style.width = snapshot.styleWidth;
     snapshot.image.style.height = snapshot.styleHeight;
   }
+}
+
+interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
+function imageWithOriginalResizeDimensions(image: ParsedImage, wrapper: HTMLElement): ParsedImage {
+  const dimensions = imageResizeBaseDimensions(image, wrapper.querySelector('img'));
+  return dimensions ? { ...image, ...dimensions } : image;
+}
+
+function imageResizeBaseDimensions(
+  image: ParsedImage,
+  renderedImage: HTMLImageElement | null,
+): ImageDimensions | null {
+  const naturalDimensions = naturalImageDimensions(renderedImage);
+  const renderedDimensions = renderedImageDimensions(renderedImage);
+  const metadataWidth = positiveDimension(image.width);
+  const metadataHeight = positiveDimension(image.height);
+
+  if (naturalDimensions) {
+    const ratio = naturalDimensions.height / naturalDimensions.width;
+
+    if (metadataWidth !== undefined) {
+      return { width: metadataWidth, height: metadataWidth * ratio };
+    }
+
+    if (metadataHeight !== undefined) {
+      return { width: metadataHeight / ratio, height: metadataHeight };
+    }
+
+    const baseWidth = renderedDimensions?.width ?? naturalDimensions.width;
+    return { width: baseWidth, height: baseWidth * ratio };
+  }
+
+  if (metadataWidth !== undefined && metadataHeight !== undefined) {
+    return { width: metadataWidth, height: metadataHeight };
+  }
+
+  if (renderedDimensions) return renderedDimensions;
+
+  return null;
+}
+
+function naturalImageDimensions(image: HTMLImageElement | null): ImageDimensions | null {
+  if (!image) return null;
+
+  const width = positiveDimension(image.naturalWidth);
+  const height = positiveDimension(image.naturalHeight);
+  return width !== undefined && height !== undefined ? { width, height } : null;
+}
+
+function renderedImageDimensions(image: HTMLImageElement | null): ImageDimensions | null {
+  if (!image) return null;
+
+  const rect = image.getBoundingClientRect();
+  const width = positiveDimension(rect.width) ?? positiveDimension(image.width);
+  const height = positiveDimension(rect.height) ?? positiveDimension(image.height);
+  return width !== undefined && height !== undefined ? { width, height } : null;
+}
+
+function positiveDimension(value: number | undefined): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
 function selectedImageMatchesImage(

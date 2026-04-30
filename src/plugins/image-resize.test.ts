@@ -19,7 +19,6 @@ describe('resizeImageMetadata', () => {
       corner: 'se',
       deltaX: 160,
       deltaY: 0,
-      free: false,
     })).toEqual({ width: 800, height: 450 });
   });
 
@@ -28,17 +27,15 @@ describe('resizeImageMetadata', () => {
       corner: 'se',
       deltaX: 0,
       deltaY: 90,
-      free: false,
     })).toEqual({ width: 800, height: 450 });
   });
 
-  it('resizes width and height independently for free resize', () => {
+  it('preserves aspect ratio for free resize requests', () => {
     expect(resizeImageMetadata(image({ width: 640, height: 360 }), {
       corner: 'se',
       deltaX: 160,
       deltaY: 40,
-      free: true,
-    })).toEqual({ width: 800, height: 400 });
+    })).toEqual({ width: 800, height: 450 });
   });
 
   it('inverts deltas for northwest resize', () => {
@@ -46,7 +43,6 @@ describe('resizeImageMetadata', () => {
       corner: 'nw',
       deltaX: -160,
       deltaY: -90,
-      free: false,
     })).toEqual({ width: 800, height: 450 });
   });
 
@@ -55,8 +51,7 @@ describe('resizeImageMetadata', () => {
       corner: 'se',
       deltaX: -1000,
       deltaY: -1000,
-      free: true,
-    })).toEqual({ width: 32, height: 32 });
+    })).toEqual({ width: 57, height: 32 });
   });
 
   it('uses default dimensions when metadata is missing', () => {
@@ -64,7 +59,6 @@ describe('resizeImageMetadata', () => {
       corner: 'se',
       deltaX: 160,
       deltaY: 0,
-      free: false,
     })).toEqual({ width: 480, height: 270 });
   });
 });

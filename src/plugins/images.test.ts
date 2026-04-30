@@ -48,6 +48,13 @@ function resizeWithMouse(handle: HTMLElement, options: {
   }));
 }
 
+function setNaturalSize(image: HTMLImageElement, width: number, height: number): void {
+  Object.defineProperties(image, {
+    naturalWidth: { configurable: true, value: width },
+    naturalHeight: { configurable: true, value: height },
+  });
+}
+
 function galleyBaseCss(): string {
   return readFileSync('src/galley-base.css', 'utf8');
 }
@@ -191,6 +198,31 @@ describe('imagesPlugin', () => {
     expect(lineElement(view, 1).textContent).not.toBe('![Galley mark](assets/galley.png){width=800 height=450}');
   });
 
+  it('does not request editor scrolling after resizing an image', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const scrollRequests: boolean[] = [];
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: [
+        ...imagesPlugin.extensions(resolveClassNames()),
+        EditorView.updateListener.of((update) => {
+          for (const transaction of update.transactions) {
+            if (transaction.docChanged) scrollRequests.push(transaction.scrollIntoView);
+          }
+        }),
+      ],
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    resizeWithMouse(handle, { endX: 160, endY: 0 });
+
+    expect(scrollRequests).toEqual([false]);
+  });
+
   it('previews image dimensions while dragging before committing markdown', () => {
     const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
     const view = createEditorView({
@@ -228,7 +260,7 @@ describe('imagesPlugin', () => {
     expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
   });
 
-  it('shift-dragging the southeast resize handle changes dimensions independently', () => {
+  it('shift-dragging the southeast resize handle still preserves image ratio', () => {
     const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
     const view = createEditorView({
       doc,
@@ -242,7 +274,45 @@ describe('imagesPlugin', () => {
 
     resizeWithMouse(handle, { endX: 160, endY: 40, shiftKey: true });
 
-    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=400}\n\nplain');
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
+  });
+
+  it('uses original image dimensions as the resize base when metadata is missing', () => {
+    const doc = '![Square mark](assets/square.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const image = requireElement(view.dom.querySelector<HTMLImageElement>('.ge-image-widget img'));
+    setNaturalSize(image, 400, 400);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    resizeWithMouse(handle, { endX: 100, endY: 0 });
+
+    expect(docOf(view)).toBe('![Square mark](assets/square.png){width=500 height=500}\n\nplain');
+  });
+
+  it('uses the original image ratio even when existing metadata is distorted', () => {
+    const doc = '![Square mark](assets/square.png){width=300 height=180}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const image = requireElement(view.dom.querySelector<HTMLImageElement>('.ge-image-widget img'));
+    setNaturalSize(image, 400, 400);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    resizeWithMouse(handle, { endX: 100, endY: 0 });
+
+    expect(docOf(view)).toBe('![Square mark](assets/square.png){width=400 height=400}\n\nplain');
   });
 
   it('ignores a compatibility mousedown after pointer resize starts', () => {

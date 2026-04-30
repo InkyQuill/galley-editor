@@ -6,7 +6,6 @@ export interface ResizeInput {
   corner: ResizeCorner;
   deltaX: number;
   deltaY: number;
-  free: boolean;
   minSize?: number;
 }
 
@@ -24,25 +23,19 @@ export function resizeImageMetadata(
   const widthDelta = input.corner.endsWith('e') ? input.deltaX : -input.deltaX;
   const heightDelta = input.corner.startsWith('s') ? input.deltaY : -input.deltaY;
 
-  if (!input.free) {
-    const ratio = currentHeight / currentWidth;
-    const widthFromHeightDelta = heightDelta / ratio;
-    const dominantDelta =
-      Math.abs(widthDelta) >= Math.abs(widthFromHeightDelta) ? widthDelta : widthFromHeightDelta;
-    const width = clampSize(currentWidth + dominantDelta, minSize);
-
-    return {
-      width,
-      height: clampSize(width * ratio, minSize),
-    };
-  }
+  const ratio = currentHeight / currentWidth;
+  const widthFromHeightDelta = heightDelta / ratio;
+  const dominantDelta =
+    Math.abs(widthDelta) >= Math.abs(widthFromHeightDelta) ? widthDelta : widthFromHeightDelta;
+  const width = clampAspectWidth(currentWidth + dominantDelta, ratio, minSize);
 
   return {
-    width: clampSize(currentWidth + widthDelta, minSize),
-    height: clampSize(currentHeight + heightDelta, minSize),
+    width,
+    height: Math.round(width * ratio),
   };
 }
 
-function clampSize(value: number, minSize: number): number {
-  return Math.max(minSize, Math.round(value));
+function clampAspectWidth(value: number, ratio: number, minSize: number): number {
+  const minimumWidth = Math.max(minSize, minSize / ratio);
+  return Math.max(Math.round(minimumWidth), Math.round(value));
 }
