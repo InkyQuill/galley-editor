@@ -231,6 +231,44 @@ describe('imagesPlugin', () => {
     expect(view.dom.querySelector('.ge-image-widget figure')).toBeNull();
   });
 
+  it('renders empty-url images as missing placeholders with empty-url metadata', () => {
+    const doc = '![Empty]()\n\nplain';
+    const defaultView = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(defaultView);
+
+    const missing = defaultView.dom.querySelector('.ge-image-missing');
+    expect(missing).toBeInstanceOf(HTMLElement);
+    expect(missing?.textContent).toContain('Image unavailable');
+    expect(missing?.textContent).toContain('Empty');
+
+    const missingRenderer = vi.fn((image: GalleyMissingImageInfo) => {
+      const element = document.createElement('div');
+      element.className = 'custom-empty-url';
+      element.textContent = `${image.reason}:${image.alt}`;
+      return element;
+    });
+    const customView = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        missingImageRenderer: missingRenderer,
+      }),
+    });
+    views.push(customView);
+
+    expect(customView.dom.querySelector('.custom-empty-url')?.textContent).toBe('empty-url:Empty');
+    expect(missingRenderer).toHaveBeenCalledWith(expect.objectContaining({
+      reason: 'empty-url',
+      alt: 'Empty',
+      url: '',
+    }));
+  });
+
   it('passes image metadata and source range to custom imageRenderer widgets', () => {
     const renderer = vi.fn((imageInfo: GalleyImageInfo) => {
       const image = document.createElement('img');

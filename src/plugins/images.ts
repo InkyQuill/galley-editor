@@ -108,6 +108,39 @@ function imageRangeTo(state: EditorState, to: number): number {
   return to + imageTrailingAttrsLength(state, to);
 }
 
+function parseEmptyUrlImageMarkdown(raw: string, from: number, to: number): GalleyImageInfo | null {
+  if (!raw.startsWith('![')) return null;
+
+  const altEnd = raw.indexOf('](', 2);
+  if (altEnd === -1) return null;
+
+  let image = raw;
+  if (raw.endsWith('}')) {
+    const attrsStart = raw.lastIndexOf('{');
+    const imagePart = raw.slice(0, attrsStart);
+    if (attrsStart !== -1 && imagePart.endsWith(')')) {
+      image = imagePart;
+    }
+  }
+
+  if (!image.endsWith(')')) return null;
+
+  const target = image.slice(altEnd + 2, -1).trim();
+  if (target !== '') return null;
+
+  return {
+    alt: raw.slice(2, altEnd),
+    url: '',
+    raw,
+    from,
+    to,
+  };
+}
+
+function parseImageWidgetMarkdown(raw: string, from: number, to: number): GalleyImageInfo | null {
+  return parseImageMarkdown(raw, from, to) ?? parseEmptyUrlImageMarkdown(raw, from, to);
+}
+
 function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
   const image = document.createElement('img');
   image.className = 'ge-image';
@@ -149,7 +182,7 @@ const imagesPlugin: GalleyPlugin = {
       createDecoration(node, state) {
         if (node.name !== 'Image') return null;
         const to = imageRangeTo(state, node.to);
-        const parsed = parseImageMarkdown(state.sliceDoc(node.from, to), node.from, to);
+        const parsed = parseImageWidgetMarkdown(state.sliceDoc(node.from, to), node.from, to);
         if (!parsed) return null;
         return new ImageWidget(parsed, imageClass, renderer, missingRenderer);
       },
