@@ -490,6 +490,7 @@
   background: var(--ge-color-surface-elevated);
   border: 1px dashed var(--ge-color-border);
   border-radius: var(--ge-radius-block);
+  box-sizing: border-box;
   color: var(--ge-color-text-muted);
   display: inline-grid;
   gap: 0.5rem;
