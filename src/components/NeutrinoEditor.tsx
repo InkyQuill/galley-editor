@@ -3,6 +3,7 @@ import {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -17,8 +18,12 @@ import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
   resolveClassNames,
   type NeutrinoEditorProps,
+  type NeutrinoFooterContext,
+  type NeutrinoFooterSlot,
   type NeutrinoHandle,
   type NeutrinoMode,
+  type NeutrinoToolbarContext,
+  type NeutrinoToolbarSlot,
   type ToolbarIconName,
   type ToolbarIconRenderer,
 } from '../types';
@@ -69,6 +74,18 @@ function isIconRenderer(icon: ReactNode | ToolbarIconRenderer): icon is ToolbarI
   return typeof icon === 'function';
 }
 
+function isToolbarSlotRenderer(
+  slot: NeutrinoToolbarSlot,
+): slot is (context: NeutrinoToolbarContext) => ReactNode {
+  return typeof slot === 'function';
+}
+
+function isFooterSlotRenderer(
+  slot: NeutrinoFooterSlot,
+): slot is (context: NeutrinoFooterContext) => ReactNode {
+  return typeof slot === 'function';
+}
+
 const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
   function NeutrinoEditor(props, ref) {
     const {
@@ -108,6 +125,26 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<EditorController | null>(null);
+    const handleProxy = useMemo<NeutrinoHandle>(
+      () => ({
+        get view() { return controllerRef.current?.view ?? null; },
+        getContent: () => controllerRef.current?.getContent() ?? '',
+        setContent: (v: string) => controllerRef.current?.setContent(v),
+        insertText: (t: string) => controllerRef.current?.insertText(t),
+        focus: () => controllerRef.current?.focus(),
+        blur: () => controllerRef.current?.blur(),
+        select: (a: number, h?: number) => controllerRef.current?.select(a, h),
+        getSelection: () => controllerRef.current?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
+        execCommand: (name: string, ...args: unknown[]) => controllerRef.current?.execCommand(name, ...args),
+        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerRef.current?.registerCommand(name, fn),
+        undo: () => controllerRef.current?.undo(),
+        redo: () => controllerRef.current?.redo(),
+        scrollTo: (f: number) => controllerRef.current?.scrollTo(f),
+        scrollSelectionIntoView: () => controllerRef.current?.scrollSelectionIntoView(),
+        addExtension: (ext: import('@codemirror/state').Extension) => controllerRef.current?.addExtension(ext) ?? { remove() {} },
+      }),
+      [],
+    );
     const [resolvedTheme, setResolvedTheme] = useState(() => resolveColorScheme(theme));
     const [internalMode, setInternalMode] = useState<NeutrinoMode>('live');
     const requestedMode = mode ?? internalMode;
@@ -120,6 +157,8 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       ? footer
       : { wordCount: true, characterCount: true, logo: true };
     const showFooter = footer !== false;
+    const currentWordCount = wordCount(value);
+    const currentCharacterCount = value.length;
     const shellClassName = ['ne-editor-shell', surface?.className].filter(Boolean).join(' ');
     const shellStyle = {
       ...surface?.style,
@@ -141,6 +180,44 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       if (!canEditDocument) return;
       controllerRef.current?.execCommand(command, ...args);
       controllerRef.current?.focus();
+    };
+    const toolbarContext: NeutrinoToolbarContext = {
+      value,
+      mode: effectiveMode,
+      canEdit: canEditDocument,
+      editor: handleProxy,
+      execCommand: runCommand,
+      setMode: changeMode,
+      cycleMode,
+    };
+    const footerContext: NeutrinoFooterContext = {
+      value,
+      mode: effectiveMode,
+      wordCount: currentWordCount,
+      characterCount: currentCharacterCount,
+      editor: handleProxy,
+    };
+    const renderToolbarSlot = (
+      slot: NeutrinoToolbarSlot | undefined,
+      position: 'before' | 'after',
+    ) => {
+      if (!slot) return null;
+      return (
+        <div className={`ne-toolbar-slot ne-toolbar-slot-${position}`}>
+          {isToolbarSlotRenderer(slot) ? slot(toolbarContext) : slot}
+        </div>
+      );
+    };
+    const renderFooterSlot = (
+      slot: NeutrinoFooterSlot | undefined,
+      position: 'before' | 'after',
+    ) => {
+      if (!slot) return null;
+      return (
+        <div className={`ne-footer-slot ne-footer-slot-${position}`}>
+          {isFooterSlotRenderer(slot) ? slot(footerContext) : slot}
+        </div>
+      );
     };
     const renderIcon = (name: ToolbarIconName, fallback: ReactNode, label: string) => {
       const configured = toolbarOptions.icons?.[name];
@@ -276,24 +353,8 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     // useEffect that creates the controller has run.
     useImperativeHandle(
       ref,
-      () => ({
-        get view() { return controllerRef.current?.view ?? null; },
-        getContent: () => controllerRef.current?.getContent() ?? '',
-        setContent: (v: string) => controllerRef.current?.setContent(v),
-        insertText: (t: string) => controllerRef.current?.insertText(t),
-        focus: () => controllerRef.current?.focus(),
-        blur: () => controllerRef.current?.blur(),
-        select: (a: number, h?: number) => controllerRef.current?.select(a, h),
-        getSelection: () => controllerRef.current?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
-        execCommand: (name: string, ...args: unknown[]) => controllerRef.current?.execCommand(name, ...args),
-        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerRef.current?.registerCommand(name, fn),
-        undo: () => controllerRef.current?.undo(),
-        redo: () => controllerRef.current?.redo(),
-        scrollTo: (f: number) => controllerRef.current?.scrollTo(f),
-        scrollSelectionIntoView: () => controllerRef.current?.scrollSelectionIntoView(),
-        addExtension: (ext: import('@codemirror/state').Extension) => controllerRef.current?.addExtension(ext) ?? { remove() {} },
-      }),
-      [],
+      () => handleProxy,
+      [handleProxy],
     );
 
     return (
@@ -301,9 +362,11 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
         <div className={shellClassName} style={shellStyle}>
           {showToolbar && (
             <div className="ne-toolbar" aria-label="Editor toolbar">
+              {renderToolbarSlot(toolbarOptions.before, 'before')}
               <select
                 className="ne-toolbar-select"
                 aria-label="Text style"
+                name="ne-text-style"
                 defaultValue="normal"
                 disabled={!canEditDocument}
                 onMouseDown={(event) => event.preventDefault()}
@@ -357,31 +420,36 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
                   </button>
                 </>
               )}
+              {renderToolbarSlot(toolbarOptions.after, 'after')}
             </div>
           )}
           <div ref={containerRef} />
           {showFooter && (
             <div className="ne-footer">
+              {renderFooterSlot(footerOptions.before, 'before')}
               <div className="ne-footer-stats">
                 {footerOptions.wordCount !== false && (
-                  <span>{plural(wordCount(value), 'word', 'words')}</span>
+                  <span>{plural(currentWordCount, 'word', 'words')}</span>
                 )}
                 {footerOptions.characterCount !== false && (
-                  <span>{plural(value.length, 'character', 'characters')}</span>
+                  <span>{plural(currentCharacterCount, 'character', 'characters')}</span>
                 )}
               </div>
-              {footerOptions.logo !== false && (
-                <span
-                  className="ne-footer-logo-wrap"
-                  aria-label={FOOTER_TOOLTIP}
-                  tabIndex={0}
-                >
-                  <NeutrinoLogo />
-                  <span className="ne-footer-tooltip" role="tooltip">
-                    {FOOTER_TOOLTIP}
+              <div className="ne-footer-end">
+                {renderFooterSlot(footerOptions.after, 'after')}
+                {footerOptions.logo !== false && (
+                  <span
+                    className="ne-footer-logo-wrap"
+                    aria-label={FOOTER_TOOLTIP}
+                    tabIndex={0}
+                  >
+                    <NeutrinoLogo />
+                    <span className="ne-footer-tooltip" role="tooltip">
+                      {FOOTER_TOOLTIP}
+                    </span>
                   </span>
-                </span>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>

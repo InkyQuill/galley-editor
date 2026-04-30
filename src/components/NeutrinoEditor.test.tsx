@@ -220,6 +220,26 @@ describe('NeutrinoEditor React wrapper', () => {
     expect(container.querySelector('.ne-footer')).toBeNull();
   });
 
+  it('renders custom footer widgets with count context', () => {
+    const { container } = mount(
+      <NeutrinoEditor
+        value="Hello world"
+        theme="light"
+        footer={{
+          before: <span data-testid="footer-before">Draft</span>,
+          after: ({ wordCount, characterCount, mode }) => (
+            <span data-testid="footer-after">
+              {mode}:{wordCount}:{characterCount}
+            </span>
+          ),
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="footer-before"]')?.textContent).toBe('Draft');
+    expect(container.querySelector('[data-testid="footer-after"]')?.textContent).toBe('live:2:11');
+  });
+
   it('renders the default toolbar', () => {
     const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" />);
 
@@ -265,6 +285,26 @@ describe('NeutrinoEditor React wrapper', () => {
     );
 
     expect(container.querySelector('[data-testid="custom-italic"]')?.textContent).toBe('Italic');
+  });
+
+  it('renders custom toolbar slots with command context', () => {
+    const { container } = mount(
+      <NeutrinoEditor
+        value="Hello world"
+        theme="light"
+        toolbar={{
+          before: <button type="button" data-testid="toolbar-before">Before</button>,
+          after: ({ canEdit, mode }) => (
+            <button type="button" data-testid="toolbar-after">
+              {mode}:{String(canEdit)}
+            </button>
+          ),
+        }}
+      />,
+    );
+
+    expect(container.querySelector('[data-testid="toolbar-before"]')?.textContent).toBe('Before');
+    expect(container.querySelector('[data-testid="toolbar-after"]')?.textContent).toBe('live:true');
   });
 
   it('applies surface class names, styles, and padding variables to the shell', () => {

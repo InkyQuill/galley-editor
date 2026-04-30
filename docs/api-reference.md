@@ -40,7 +40,7 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
-| `footer` | `boolean \| FooterOptions` | `true` | Show the built-in status footer with word count, character count, and logo |
+| `footer` | `boolean \| NeutrinoFooterOptions` | `true` | Show and customize the built-in status footer with word count, character count, logo, and consumer widgets |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
 | `onModeChange` | `(mode: NeutrinoMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |
 | `surface` | `NeutrinoSurfaceOptions` | `undefined` | Shell styling hooks for gradients, frosted glass, and padding overrides |
@@ -280,10 +280,12 @@ interface NeutrinoToolbarOptions {
   enabled?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
+  before?: NeutrinoToolbarSlot;
+  after?: NeutrinoToolbarSlot;
 }
 ```
 
-Use `icons` to pass inline SVG elements, Lucide React components, or render functions:
+Use `icons` to pass inline SVG elements, Lucide React components, or render functions. Use `before` and `after` to add consumer-owned controls into the built-in toolbar.
 
 ```tsx
 import { Bold, Italic } from 'lucide-react';
@@ -294,9 +296,35 @@ import { Bold, Italic } from 'lucide-react';
       bold: <Bold size={16} />,
       italic: ({ label }) => <Italic aria-label={label} size={16} />,
     },
+    after: ({ execCommand, canEdit }) => (
+      <button
+        className="ne-toolbar-button"
+        disabled={!canEdit}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => execCommand('insertHr')}
+      >
+        Section
+      </button>
+    ),
   }}
 />
 ```
+
+Toolbar slot render functions receive `{ value, mode, canEdit, editor, execCommand, setMode, cycleMode }`.
+
+### `NeutrinoFooterOptions`
+
+```typescript
+interface NeutrinoFooterOptions {
+  wordCount?: boolean;
+  characterCount?: boolean;
+  logo?: boolean;
+  before?: NeutrinoFooterSlot;
+  after?: NeutrinoFooterSlot;
+}
+```
+
+Footer slot render functions receive `{ value, mode, wordCount, characterCount, editor }`.
 
 ### `NeutrinoSurfaceOptions`
 

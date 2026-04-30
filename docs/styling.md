@@ -15,7 +15,10 @@ The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 ```css
 --ne-color-text: #1a1a1a;
 --ne-color-text-muted: #6b7280;
---ne-color-bg: transparent;
+--ne-color-bg: #ffffff;
+--ne-color-surface: #f8fafc;
+--ne-color-surface-elevated: #ffffff;
+--ne-color-border: #dbe4ef;
 --ne-color-link: #2563eb;
 --ne-color-link-hover: #1d4ed8;
 --ne-color-code-fg: #1a1a1a;
@@ -29,6 +32,8 @@ The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 --ne-color-selection: rgba(37, 99, 235, 0.2);
 --ne-color-caret: currentColor;
 --ne-color-focus-ring: #2563eb;
+--ne-color-tooltip-bg: #0f172a;
+--ne-color-tooltip-fg: #ffffff;
 
 --ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
 --ne-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
@@ -54,10 +59,17 @@ The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 --ne-h6-leading: 1.4;
 
 --ne-radius-code: 3px;
+--ne-radius-editor: 8px;
+--ne-radius-block: 6px;
 --ne-spacing-block: 0.5em;
 --ne-spacing-inline-padding: 0.125em 0.25em;
 --ne-blockquote-indent: 1em;
+--ne-content-padding: 42px 56px;
+--ne-toolbar-padding: 10px 14px;
+--ne-footer-padding: 4px 10px;
+--ne-backdrop-filter: none;
 --ne-code-font-size: 0.9em;
+--ne-shadow-editor: 0 12px 30px rgba(15, 23, 42, 0.06);
 ```
 
 Dark mode overrides only the color variables that need different values:
@@ -115,6 +127,40 @@ Use `editorClassName` when you need to style the CodeMirror `.cm-editor` element
   border-radius: 8px;
 }
 ```
+
+## Toolbar And Footer Slots
+
+The built-in toolbar and footer expose stable slot containers for consumer UI:
+
+- `.ne-toolbar-slot`, `.ne-toolbar-slot-before`, `.ne-toolbar-slot-after`
+- `.ne-footer-slot`, `.ne-footer-slot-before`, `.ne-footer-slot-after`
+- `.ne-footer-end`
+
+Slot content inherits the editor variables, so custom controls can use the same classes as built-ins:
+
+```tsx
+<NeutrinoEditor
+  toolbar={{
+    after: ({ execCommand, canEdit }) => (
+      <button
+        className="ne-toolbar-button"
+        disabled={!canEdit}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => execCommand('insertHr')}
+      >
+        Section
+      </button>
+    ),
+  }}
+  footer={{
+    after: ({ mode, wordCount }) => (
+      <span>{mode} · {wordCount} words</span>
+    ),
+  }}
+/>
+```
+
+Use `surface.contentPadding`, `surface.toolbarPadding`, and `surface.footerPadding` for one-off padding changes. For full themes, scope CSS variables with `className`.
 
 ## Tailwind V4
 
@@ -204,7 +250,8 @@ The wrapper structure is:
 
 ```html
 <div class="{className}" data-theme="light">
-  <div>
+  <div class="ne-editor-shell">
+    <div class="ne-toolbar">...</div>
     <div class="cm-editor cm-light {editorClassName}">
       <div class="cm-scroller">
         <div class="cm-content">
@@ -212,6 +259,7 @@ The wrapper structure is:
         </div>
       </div>
     </div>
+    <div class="ne-footer">...</div>
   </div>
 </div>
 ```
@@ -223,6 +271,8 @@ Inline classes: `ne-bold`, `ne-italic`, `ne-strikethrough`, `ne-code-inline`, `n
 Block line classes: `ne-heading`, `ne-h1` through `ne-h6`, `ne-code-fence`, `ne-blockquote`, `ne-table`, `ne-divider`, `ne-completed-task`.
 
 Widget classes: `ne-checkbox`, `ne-list-marker`, `ne-list-marker-sizing`, `ne-list-marker-dot`, `ne-divider-widget`.
+
+Chrome classes: `ne-editor-shell`, `ne-toolbar`, `ne-toolbar-button`, `ne-toolbar-select`, `ne-toolbar-separator`, `ne-toolbar-slot`, `ne-footer`, `ne-footer-stats`, `ne-footer-slot`, `ne-footer-end`, `ne-footer-logo-wrap`, `ne-footer-tooltip`.
 
 Depth classes: `ne-depth-0`, `ne-depth-1`, `ne-depth-2`. Depth classes cycle every 3 nesting levels.
 

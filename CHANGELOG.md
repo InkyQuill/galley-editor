@@ -17,10 +17,12 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - `bidi` prop for adding `dir="auto"` to editor lines.
 - `useNeutrino()` hook for hooks-first React consumers.
 - `selectionAffectsDecorations` plugin performance hook.
+- Toolbar and footer before/after slots for consumer-owned controls and status widgets.
 
 ### Changed
 - **Breaking:** `NeutrinoPluginSpec.getDecorationRange()` was removed and replaced with explicit `getLineRange`, `getMarkRange`, and `getPointPosition` methods.
 - Markdown images now render as safe alt text by default instead of fetching image URLs automatically.
+- Storybook now includes a custom chrome slots example and responsive visual checks for editor chrome customization.
 
 ## [0.5.0] — 2026-04-30
 

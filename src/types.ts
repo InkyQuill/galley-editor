@@ -50,16 +50,46 @@ export type ToolbarIconRenderer = (input: {
   mode: NeutrinoMode;
 }) => ReactNode;
 
+export interface NeutrinoToolbarContext {
+  value: string;
+  mode: NeutrinoMode;
+  canEdit: boolean;
+  editor: NeutrinoHandle | null;
+  execCommand(name: BuiltinCommand | string, ...args: unknown[]): unknown;
+  setMode(mode: NeutrinoMode): void;
+  cycleMode(): void;
+}
+
+export type NeutrinoToolbarSlot =
+  | ReactNode
+  | ((context: NeutrinoToolbarContext) => ReactNode);
+
 export interface NeutrinoToolbarOptions {
   enabled?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
+  before?: NeutrinoToolbarSlot;
+  after?: NeutrinoToolbarSlot;
 }
+
+export interface NeutrinoFooterContext {
+  value: string;
+  mode: NeutrinoMode;
+  wordCount: number;
+  characterCount: number;
+  editor: NeutrinoHandle | null;
+}
+
+export type NeutrinoFooterSlot =
+  | ReactNode
+  | ((context: NeutrinoFooterContext) => ReactNode);
 
 export interface NeutrinoFooterOptions {
   wordCount?: boolean;
   characterCount?: boolean;
   logo?: boolean;
+  before?: NeutrinoFooterSlot;
+  after?: NeutrinoFooterSlot;
 }
 
 export interface NeutrinoSurfaceOptions {
@@ -316,9 +346,9 @@ export interface NeutrinoEditorProps {
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
   bidi?: boolean;
-  /** Optional default command toolbar. Default: true. */
+  /** Show and customize the built-in command toolbar, including icon overrides and before/after slots. Default: true. */
   toolbar?: boolean | NeutrinoToolbarOptions;
-  /** Optional status footer. Default: true. */
+  /** Show and customize the built-in status footer, including stats/logo visibility and before/after widgets. Default: true. */
   footer?: boolean | NeutrinoFooterOptions;
   /** Visual mode. Default: 'live'. `editable={false}` always renders as 'preview'. */
   mode?: NeutrinoMode;

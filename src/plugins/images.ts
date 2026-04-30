@@ -56,12 +56,16 @@ class ImageWidget extends WidgetType {
 }
 
 function parseImage(raw: string): ParsedImage | null {
-  const match = /^!\[(?<alt>[^\]]*)\]\((?<url>[^)\s]+)(?:\s+"(?<title>[^"]*)")?\)$/.exec(raw);
+  const match = /^!\[(?<alt>[^\]]*)\]\((?<target>.*)\)$/.exec(raw);
   if (!match?.groups) return null;
+  const target = match.groups.target.trim();
+  if (!target) return null;
+  const titleMatch = /^(?<url>.+?)\s+"(?<title>[^"]*)"$/.exec(target);
+
   return {
     alt: match.groups.alt,
-    url: match.groups.url,
-    ...(match.groups.title ? { title: match.groups.title } : {}),
+    url: titleMatch?.groups?.url ?? target,
+    ...(titleMatch?.groups?.title ? { title: titleMatch.groups.title } : {}),
   };
 }
 
@@ -99,6 +103,7 @@ const imagesPlugin: NeutrinoPlugin = {
 
     const classExt = makeInlinePlugin({
       createDecoration(node) {
+        if (renderer) return null;
         if (node.name !== 'Image') return null;
         return Decoration.mark({ class: imageClass });
       },
@@ -111,9 +116,7 @@ const imagesPlugin: NeutrinoPlugin = {
         if (!renderer || node.name !== 'Image') return null;
         const parsed = parseImage(state.sliceDoc(node.from, node.to));
         if (!parsed) return null;
-        const rendered = renderer(parsed);
-        if (!rendered) return null;
-        return new ImageWidget(parsed, imageClass, () => rendered);
+        return new ImageWidget(parsed, imageClass, renderer);
       },
       getMarkRange(node) {
         return { from: node.from, to: node.to };
@@ -122,7 +125,7 @@ const imagesPlugin: NeutrinoPlugin = {
         preview ? false : selectionIntersects(node.from, node.to, state),
     });
 
-    return [hideSyntaxExt, classExt, widgetExt];
+    return renderer ? [widgetExt] : [hideSyntaxExt, classExt];
   },
 };
 

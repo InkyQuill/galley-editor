@@ -38,6 +38,31 @@ describe('imagesPlugin', () => {
     expect(lineElement(view, 1).textContent).toBe('Sample SVG');
   });
 
+  it('renders data-uri svg markdown images with parentheses in urls', () => {
+    const renderer = vi.fn(({ alt, url }: { alt: string; url: string }) => {
+      const image = document.createElement('img');
+      image.alt = alt;
+      image.src = url;
+      return image;
+    });
+    const dataUrl = "data:image/svg+xml,%3csvg%3e%3crect%20fill='url(%23sky)'/%3e%3c/svg%3e";
+    const doc = `![Sample SVG](${dataUrl})\n\nplain`;
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: renderer,
+      }),
+    });
+    views.push(view);
+
+    const image = view.dom.querySelector('.ne-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('alt')).toBe('Sample SVG');
+    expect(renderer).toHaveBeenCalledWith({ alt: 'Sample SVG', url: dataUrl });
+  });
+
   it('shows raw image markdown when the cursor is inside the image syntax', () => {
     const doc = '![Sample PNG](assets/img.png)\n\nplain';
     const view = createEditorView({

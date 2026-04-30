@@ -617,6 +617,91 @@ export const CustomToolbarIcons: Story = {
   render: CustomToolbarIconsStory,
 };
 
+// ── Custom Toolbar and Footer Slots ────────────────────────────────────────
+
+function CustomChromeSlotsStory() {
+  const [value, setValue] = useState('# Custom Chrome\n\nThe built-in toolbar and footer can host consumer controls.');
+  const [savedAt, setSavedAt] = useState('Not saved');
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <style>{`
+        .recipe-custom-chrome .ne-toolbar-button.ne-save-button {
+          background: #111827;
+          color: #ffffff;
+          gap: 6px;
+          padding: 0 12px;
+        }
+        .recipe-custom-chrome .ne-toolbar-button.ne-save-button:hover,
+        .recipe-custom-chrome .ne-toolbar-button.ne-save-button:focus-visible {
+          background: #374151;
+        }
+        .recipe-custom-chrome .ne-status-pill {
+          align-items: center;
+          background: color-mix(in srgb, var(--ne-color-link) 12%, transparent);
+          border: 1px solid color-mix(in srgb, var(--ne-color-link) 28%, transparent);
+          border-radius: 999px;
+          color: var(--ne-color-link);
+          display: inline-flex;
+          font-size: 0.75rem;
+          font-weight: 650;
+          min-height: 24px;
+          padding: 0 9px;
+        }
+      `}</style>
+      <NeutrinoEditor
+        className="recipe-custom-chrome"
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        toolbar={{
+          before: <span className="ne-status-pill">Draft</span>,
+          after: ({ execCommand, canEdit }) => (
+            <>
+              <button
+                type="button"
+                className="ne-toolbar-button"
+                aria-label="Insert section divider"
+                disabled={!canEdit}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => execCommand('insertHr')}
+              >
+                Section
+              </button>
+              <button
+                type="button"
+                className="ne-toolbar-button ne-save-button"
+                aria-label="Save draft"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setSavedAt(new Date().toLocaleTimeString())}
+              >
+                Save
+              </button>
+            </>
+          ),
+        }}
+        footer={{
+          before: <span className="ne-status-pill">Local draft</span>,
+          after: ({ mode, wordCount }) => (
+            <span>
+              {mode} · {wordCount} words · {savedAt}
+            </span>
+          ),
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Shows consumer-owned toolbar controls and footer widgets inside the built-in
+ * chrome using `toolbar.before`, `toolbar.after`, `footer.before`, and
+ * `footer.after`.
+ */
+export const CustomChromeSlots: Story = {
+  render: CustomChromeSlotsStory,
+};
+
 // ── Frosted Surface ────────────────────────────────────────────────────────
 
 function FrostedSurfaceStory() {
