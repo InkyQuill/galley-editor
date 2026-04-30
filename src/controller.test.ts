@@ -299,6 +299,15 @@ describe('EditorController key handling', () => {
 });
 
 describe('EditorController runtime state', () => {
+  it('accepts file workflow callbacks in settings', () => {
+    const controller = createController('', {}, {
+      onFiles: () => '![demo](demo.png)',
+      onFileError: () => undefined,
+    });
+
+    expect(controller.view).toBeDefined();
+  });
+
   it('preserves multiple selection ranges when setContent clamps to the new document', () => {
     const controller = createController('0123456789abcdefghij');
     controller.view.dispatch({

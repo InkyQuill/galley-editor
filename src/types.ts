@@ -19,11 +19,48 @@ export interface GalleyRenderContext {
   onLinkClick?: LinkClickHandler;
 }
 
-export type ImageRenderer = (image: {
+export type GalleyFileSource = 'paste' | 'drop';
+
+export interface GalleySelectionInfo {
+  from: number;
+  to: number;
+  anchor: number;
+  head: number;
+}
+
+export interface GalleyFileInput {
+  files: File[];
+  source: GalleyFileSource;
+  event: ClipboardEvent | DragEvent;
+  view: EditorView;
+  selection: GalleySelectionInfo;
+}
+
+export type GalleyFileHandlerResult = string | string[] | null | false;
+
+export type GalleyFileHandler =
+  (input: GalleyFileInput) => GalleyFileHandlerResult | Promise<GalleyFileHandlerResult>;
+
+export interface GalleyImageInfo {
   alt: string;
   url: string;
   title?: string;
-}) => HTMLElement | null;
+  width?: number;
+  height?: number;
+  raw: string;
+  from: number;
+  to: number;
+}
+
+export interface GalleyImageMetadataInput {
+  alt?: string;
+  url?: string;
+  title?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+export type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
 
 export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 
@@ -375,6 +412,10 @@ export interface GalleyEditorProps {
   onEscape?: () => boolean | void;
   /** Handle paste events. */
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
+  /** Handle pasted or dropped files before built-in insertion. */
+  onFiles?: GalleyFileHandler;
+  /** Handle errors raised while processing pasted or dropped files. */
+  onFileError?: (error: unknown, input: GalleyFileInput) => void;
   /** Handle Cmd/Ctrl+Enter. */
   onSubmit?: () => void;
 }

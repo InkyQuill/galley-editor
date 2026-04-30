@@ -3,15 +3,12 @@ import type { EditorState } from '@codemirror/state';
 import { makeInlinePlugin } from '../rendering';
 import type {
   ImageRenderer,
+  GalleyImageInfo,
   GalleyClassNames,
   GalleyPlugin,
 } from '../types';
 
-interface ParsedImage {
-  alt: string;
-  url: string;
-  title?: string;
-}
+type ParsedImage = GalleyImageInfo;
 
 class ImageWidget extends WidgetType {
   private readonly image: ParsedImage;
@@ -55,7 +52,7 @@ class ImageWidget extends WidgetType {
   }
 }
 
-function parseImage(raw: string): ParsedImage | null {
+function parseImage(raw: string, from: number, to: number): ParsedImage | null {
   const match = /^!\[(?<alt>[^\]]*)\]\((?<target>.*)\)$/.exec(raw);
   if (!match?.groups) return null;
   const target = match.groups.target.trim();
@@ -66,6 +63,9 @@ function parseImage(raw: string): ParsedImage | null {
     alt: match.groups.alt,
     url: titleMatch?.groups?.url ?? target,
     ...(titleMatch?.groups?.title ? { title: titleMatch.groups.title } : {}),
+    raw,
+    from,
+    to,
   };
 }
 
@@ -93,7 +93,7 @@ const imagesPlugin: GalleyPlugin = {
     const widgetExt = makeInlinePlugin({
       createDecoration(node, state) {
         if (node.name !== 'Image') return null;
-        const parsed = parseImage(state.sliceDoc(node.from, node.to));
+        const parsed = parseImage(state.sliceDoc(node.from, node.to), node.from, node.to);
         if (!parsed) return null;
         return new ImageWidget(parsed, imageClass, renderer);
       },

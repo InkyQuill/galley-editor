@@ -47,6 +47,8 @@ import {
   resolveClassNames,
   type CommandFn,
   type CodeHighlighter,
+  type GalleyFileHandler,
+  type GalleyFileInput,
   type ImageRenderer,
   type LinkClickHandler,
   type GalleyClassNames,
@@ -89,6 +91,8 @@ export interface ControllerSettings {
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
   onLinkClick?: LinkClickHandler;
+  onFiles?: GalleyFileHandler;
+  onFileError?: (error: unknown, input: GalleyFileInput) => void;
   bidi: boolean;
   mode: GalleyMode;
   plugins: GalleyPlugin[];
