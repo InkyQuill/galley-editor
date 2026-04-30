@@ -13,6 +13,7 @@ import {
   keymap,
   placeholder as cmPlaceholder,
   type KeyBinding,
+  type ViewUpdate,
 } from '@codemirror/view';
 import {
   Compartment,
@@ -94,8 +95,6 @@ export interface ControllerSettings {
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
   onLinkClick?: LinkClickHandler;
-  onFiles?: GalleyFileHandler;
-  onFileError?: (error: unknown, input: GalleyFileInput) => void;
   bidi: boolean;
   mode: GalleyMode;
   plugins: GalleyPlugin[];
@@ -189,6 +188,7 @@ export class EditorController implements GalleyHandle {
   private readonly runtimeExtensionsCompartment = new Compartment();
   private readonly editorClassNameCompartment = new Compartment();
   private readonly runtimeExtensions = new Map<symbol, Extension>();
+  private readonly pendingFileRanges = new Set<{ from: number; to: number }>();
 
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
@@ -260,6 +260,7 @@ export class EditorController implements GalleyHandle {
       // Event listeners (use callback refs so they never go stale)
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
+          this.mapPendingFileRanges(update);
           this.callbacks.onChange?.(update.state.doc.toString());
         }
         if (update.selectionSet) {
@@ -314,6 +315,21 @@ export class EditorController implements GalleyHandle {
     return { from: sel.from, to: sel.to, anchor: sel.anchor, head: sel.head };
   }
 
+  private mapPendingFileRanges(update: ViewUpdate): void {
+    for (const range of this.pendingFileRanges) {
+      if (range.from === range.to) {
+        const pos = update.changes.mapPos(range.from, 1);
+        range.from = pos;
+        range.to = pos;
+        continue;
+      }
+
+      range.from = update.changes.mapPos(range.from, 1);
+      range.to = update.changes.mapPos(range.to, -1);
+      if (range.to < range.from) range.to = range.from;
+    }
+  }
+
   private filesFromDataTransfer(dataTransfer: DataTransfer | null): File[] {
     return Array.from(dataTransfer?.files ?? []);
   }
@@ -342,6 +358,8 @@ export class EditorController implements GalleyHandle {
   ): Promise<void> {
     const handler = this.callbacks.onFiles;
     if (!handler || files.length === 0) return;
+    const pendingRange = { from, to };
+    this.pendingFileRanges.add(pendingRange);
 
     const input = {
       files,
@@ -354,12 +372,14 @@ export class EditorController implements GalleyHandle {
     try {
       const result = await handler(input);
       if (result === false || result === null) return;
-      this.insertFileHandlerMarkdown(result, from, to);
+      this.insertFileHandlerMarkdown(result, pendingRange.from, pendingRange.to);
     } catch (error) {
       this.callbacks.onFileError?.(error, input);
       if (!this.callbacks.onFileError) {
         console.error('Galley file handler failed', error);
       }
+    } finally {
+      this.pendingFileRanges.delete(pendingRange);
     }
   }
 

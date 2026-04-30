@@ -280,8 +280,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       codeHighlighter,
       imageRenderer,
       onLinkClick,
-      onFiles,
-      onFileError,
       bidi,
       mode: effectiveMode,
       plugins,
@@ -332,7 +330,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, onLinkClick, onFiles, onFileError, bidi, effectiveMode, plugins, disabledPlugins, extensions]);
+    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {

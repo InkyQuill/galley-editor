@@ -170,6 +170,13 @@ function fileIntentDataTransfer(): DataTransfer {
   } as unknown as DataTransfer;
 }
 
+function nonFileIntentDataTransfer(): DataTransfer {
+  return {
+    files: [],
+    types: ['text/plain'],
+  } as unknown as DataTransfer;
+}
+
 async function nextMicrotask(): Promise<void> {
   await Promise.resolve();
 }
@@ -392,8 +399,8 @@ describe('EditorController key handling', () => {
 });
 
 describe('EditorController runtime state', () => {
-  it('accepts file workflow callbacks in settings', () => {
-    const controller = createController('', {}, {
+  it('accepts file workflow callbacks through stable callbacks', () => {
+    const controller = createController('', {
       onFiles: () => '![demo](demo.png)',
       onFileError: () => undefined,
     });
@@ -414,6 +421,30 @@ describe('EditorController runtime state', () => {
     expect(event.defaultPrevented).toBe(true);
     expect(onFiles).toHaveBeenCalledOnce();
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
+  });
+
+  it('maps async paste insertion through document changes before handler resolution', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    let resolveUpload!: (markdown: string) => void;
+    const upload = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const onFiles = vi.fn(() => upload);
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks);
+    controller.select(controller.getContent().length);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    controller.view.dispatch({
+      changes: { from: 0, insert: 'prefix ' },
+    });
+    resolveUpload('![upload](uploaded.png)');
+    await upload;
+    await nextMicrotask();
+
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(controller.getContent()).toBe('prefix before ![upload](uploaded.png)');
   });
 
   it('leaves content unchanged when a paste file handler returns false', async () => {
@@ -480,6 +511,18 @@ describe('EditorController runtime state', () => {
     controller.view.contentDOM.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).not.toHaveBeenCalled();
+  });
+
+  it('does not allow non-file dragover data', () => {
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks);
+
+    const event = dragoverEvent(nonFileIntentDataTransfer());
+    controller.view.contentDOM.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
     expect(onFiles).not.toHaveBeenCalled();
   });
 
