@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorSelection } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
-import { resolveClassNames, type GalleyImageInfo } from '../types';
+import { resolveClassNames, type GalleyImageInfo, type GalleyMissingImageInfo } from '../types';
 import imagesPlugin from './images';
 
 const views: EditorView[] = [];
@@ -152,6 +152,83 @@ describe('imagesPlugin', () => {
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Galley mark');
     expect(image?.getAttribute('src')).toBe('assets/galley.png');
+  });
+
+  it('shows a missing image placeholder when an image fires an error event', () => {
+    const doc = '![Galley mark](missing.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    const image = view.dom.querySelector('.ge-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+
+    image?.dispatchEvent(new Event('error'));
+
+    const missing = view.dom.querySelector('.ge-image-missing');
+    expect(missing).toBeInstanceOf(HTMLElement);
+    expect(missing?.textContent).toContain('Image unavailable');
+    expect(missing?.textContent).toContain('Galley mark');
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
+  });
+
+  it('uses custom missingImageRenderer on error and passes image metadata', () => {
+    const missingRenderer = vi.fn((image: GalleyMissingImageInfo) => {
+      const element = document.createElement('div');
+      element.className = 'custom-missing';
+      element.textContent = `${image.reason}:${image.alt}`;
+      return element;
+    });
+    const doc = '![Galley mark](missing.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        missingImageRenderer: missingRenderer,
+      }),
+    });
+    views.push(view);
+
+    view.dom.querySelector('.ge-image-widget img')?.dispatchEvent(new Event('error'));
+
+    expect(view.dom.querySelector('.custom-missing')?.textContent).toBe('error:Galley mark');
+    expect(missingRenderer).toHaveBeenCalledWith(expect.objectContaining({
+      reason: 'error',
+      alt: 'Galley mark',
+      url: 'missing.png',
+    }));
+  });
+
+  it('handles an imageRenderer wrapper with an img descendant that fires an error event', () => {
+    const renderer = vi.fn((imageInfo: GalleyImageInfo) => {
+      const figure = document.createElement('figure');
+      const image = document.createElement('img');
+      image.alt = imageInfo.alt;
+      image.src = imageInfo.url;
+      figure.append(image);
+      return figure;
+    });
+    const doc = '![Wrapped mark](missing.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: renderer,
+      }),
+    });
+    views.push(view);
+
+    view.dom.querySelector('.ge-image-widget figure img')?.dispatchEvent(new Event('error'));
+
+    const missing = view.dom.querySelector('.ge-image-missing');
+    expect(missing).toBeInstanceOf(HTMLElement);
+    expect(missing?.textContent).toContain('Wrapped mark');
+    expect(view.dom.querySelector('.ge-image-widget figure')).toBeNull();
   });
 
   it('passes image metadata and source range to custom imageRenderer widgets', () => {

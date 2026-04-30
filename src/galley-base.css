@@ -475,6 +475,25 @@
   max-width: 100%;
 }
 
+.ge-image-missing {
+  align-items: center;
+  background: var(--ge-color-surface);
+  border: 1px solid var(--ge-color-border);
+  border-radius: var(--ge-radius-block);
+  color: var(--ge-color-text-muted);
+  display: inline-grid;
+  gap: 0.25rem;
+  min-height: 5rem;
+  min-width: 8rem;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.ge-image-missing-label {
+  color: var(--ge-color-text);
+  font-weight: 700;
+}
+
 /* Uploads */
 
 .ge-drop-indicator {
