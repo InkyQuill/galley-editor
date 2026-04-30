@@ -31,8 +31,10 @@ Each milestone is independently shippable to the GitLab Package Registry. Implem
 | 0.4.0 | Smart Input | shipped 2026-04-29 | [v0.4-smart-input.md](./v0.4-smart-input.md) | v0.4.0 |
 | 0.5.0 | Editor Commands | shipped 2026-04-30 | [v0.5-editor-commands.md](./v0.5-editor-commands.md) | v0.5.0 |
 | 0.6.0 | Rendering Parity | shipped 2026-04-30 | [v0.6-rendering-parity.md](./v0.6-rendering-parity.md) | v0.6.0 |
-| 0.7.0 | Public Repository Cleanup | in-progress | [v0.7-public-cleanup.md](./v0.7-public-cleanup.md) | — |
-| 1.0.0 | Public Release | draft | [v1.0-public-release.md](./v1.0-public-release.md) | — |
+| 0.7.0 | Public Repository Cleanup | shipped 2026-04-30 | [v0.7-public-cleanup.md](./v0.7-public-cleanup.md) | v0.7.0 |
+| 0.8.0 | Asset Workflows | draft | [v0.8 asset workflows design](../superpowers/specs/2026-04-30-v0.8-asset-workflows-design.md) | — |
+| 0.9.0 | Advanced Authoring | draft | [v0.9 advanced authoring design](../superpowers/specs/2026-04-30-v0.9-advanced-authoring-design.md) | — |
+| 1.0.0 | Public Release & API Stabilization | draft | [v1.0 API stabilization design](../superpowers/specs/2026-04-30-v1.0-api-stabilization-design.md), [v1.0-public-release.md](./v1.0-public-release.md) | — |
 
 **Status values:** `draft` (spec written, not started) → `in-progress` (work began) → `shipped vX.Y.Z on YYYY-MM-DD` (frozen; corrections go in the spec's Post-ship notes section).
 

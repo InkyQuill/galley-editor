@@ -16,6 +16,7 @@ docs-site/.astro
 .remember
 coverage
 .worktrees
+.superpowers
 
 # Editor directories and files
 .vscode/*
