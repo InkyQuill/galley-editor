@@ -158,6 +158,39 @@ describe('tablesPlugin', () => {
     expect(view.dom.querySelector('.ge-table-cell-selected')?.textContent).toBe('two');
   });
 
+  it('keeps editing when mousedown originates from the active cell editor', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    keydown(view.contentDOM, 'Enter');
+    const input = activeInput(view);
+    input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    expect(view.dom.querySelector('.ge-table-cell-editor')).toBe(input);
+    expect(view.dom.querySelector('.ge-table-cell-selected .ge-table-cell-editor')).toBe(input);
+  });
+
+  it('keeps the active cell editor DOM stable while typing in the middle', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    keydown(view.contentDOM, 'Enter');
+    const input = activeInput(view);
+    input.value = 'tXwo';
+    input.setSelectionRange(2, 2);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    expect(activeInput(view)).toBe(input);
+    expect(input.selectionStart).toBe(2);
+    expect(input.selectionEnd).toBe(2);
+
+    keydown(input, 'Enter');
+
+    expect(view.state.doc.toString()).toContain('| one | tXwo |');
+  });
+
   it('defocuses a selected cell with Escape without revealing source', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc);

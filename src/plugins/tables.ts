@@ -10,7 +10,6 @@ import {
   Decoration,
   type DecorationSet,
   EditorView,
-  type ViewUpdate,
   ViewPlugin,
   WidgetType,
 } from '@codemirror/view';
@@ -119,8 +118,6 @@ const sourceEscapedTableField = StateField.define<SourceEscapedTable | null>({
   },
 });
 
-const refreshTableDecorations = StateEffect.define<null>();
-
 class TableWidget extends WidgetType {
   table: GalleyTable;
   tableClass: string;
@@ -227,9 +224,6 @@ class TableWidget extends WidgetType {
     input.className = 'ge-table-cell-editor';
     input.value = this.selected?.draft ?? tableCellInfo.text;
 
-    input.addEventListener('input', () => {
-      this.updateDraft(view, input.value);
-    });
     input.addEventListener('keydown', (event) => {
       this.handleEditorKeydown(event, input, view);
     });
@@ -237,7 +231,6 @@ class TableWidget extends WidgetType {
       event.preventDefault();
       event.stopPropagation();
       input.value = event.clipboardData?.getData('text/plain') ?? '';
-      this.updateDraft(view, input.value);
     });
 
     queueMicrotask(() => {
@@ -255,6 +248,15 @@ class TableWidget extends WidgetType {
     if (!this.canEdit || this.preview || view.state.readOnly) return;
 
     cell.addEventListener('mousedown', (event) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        event.stopPropagation();
+        return;
+      }
+      if (event.target instanceof Element && event.target.closest('.ge-table-cell-editor')) {
+        event.stopPropagation();
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
 
@@ -313,18 +315,6 @@ class TableWidget extends WidgetType {
     event.preventDefault();
     event.stopPropagation();
     this.commitAndMove(view, input.value, direction);
-  }
-
-  private updateDraft(view: EditorView, draft: string): void {
-    if (!this.selected) return;
-
-    view.dispatch({
-      effects: selectTableCell.of({
-        ...this.selected,
-        editing: true,
-        draft,
-      }),
-    });
   }
 
   private cancelEditing(view: EditorView): void {
@@ -580,16 +570,13 @@ function makeTableDecorationsField(
         transaction.state.field(sourceEscapedTableField);
       const selectionChanged = !transaction.newSelection.eq(transaction.startState.selection);
       const treeChanged = syntaxTree(transaction.state) !== syntaxTree(transaction.startState);
-      const viewportRefresh = transaction.effects.some((effect) =>
-        effect.is(refreshTableDecorations));
 
       if (
         transaction.docChanged ||
         selectionChanged ||
         selectedChanged ||
         sourceEscapeChanged ||
-        treeChanged ||
-        viewportRefresh
+        treeChanged
       ) {
         return buildTableDecorations(transaction.state, tableClass, preview, canEdit);
       }
@@ -604,39 +591,7 @@ function makeTablesViewPlugin(
   preview: boolean,
   canEdit: boolean,
 ) {
-  return ViewPlugin.fromClass(class {
-    pendingViewportRefresh: boolean;
-    destroyed: boolean;
-
-    constructor() {
-      this.pendingViewportRefresh = false;
-      this.destroyed = false;
-    }
-
-    update(update: ViewUpdate): void {
-      if (update.viewportChanged) {
-        this.scheduleViewportRefresh(update.view);
-      }
-    }
-
-    destroy(): void {
-      this.destroyed = true;
-    }
-
-    private scheduleViewportRefresh(view: EditorView): void {
-      if (this.pendingViewportRefresh) return;
-
-      this.pendingViewportRefresh = true;
-      queueMicrotask(() => {
-        this.pendingViewportRefresh = false;
-        if (this.destroyed) return;
-
-        view.dispatch({
-          effects: refreshTableDecorations.of(null),
-        });
-      });
-    }
-  }, {
+  return ViewPlugin.define(() => ({}), {
     eventHandlers: {
       keydown(event, view) {
         if (!canEdit || preview || view.state.readOnly) return false;
