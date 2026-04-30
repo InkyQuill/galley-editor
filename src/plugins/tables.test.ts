@@ -129,10 +129,24 @@ describe('tablesPlugin', () => {
   });
 
   it.each([
+    ['http://example.com'],
+    ['mailto:test@example.com'],
+    ['/docs'],
+    ['./page'],
+    ['../page'],
+    ['page.md'],
+    ['#section'],
+  ])('allows safe table cell href %s', (href) => {
+    expect(safeTableCellHref(href)).toBe(href);
+  });
+
+  it.each([
     ['javascript:alert(1)'],
     ['JaVaScRiPt:alert(1)'],
     ['java\tscript:alert(1)'],
     ['java\nscript:alert(1)'],
+    ['data:text/html,<svg>'],
+    ['DaTa:text/html,<svg>'],
   ])('rejects unsafe table cell href %s', (href) => {
     expect(safeTableCellHref(href)).toBeNull();
   });
