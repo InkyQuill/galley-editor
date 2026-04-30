@@ -27,6 +27,11 @@ class ImageWidget extends WidgetType {
       other.image.alt === this.image.alt &&
       other.image.url === this.image.url &&
       other.image.title === this.image.title &&
+      other.image.width === this.image.width &&
+      other.image.height === this.image.height &&
+      other.image.raw === this.image.raw &&
+      other.image.from === this.image.from &&
+      other.image.to === this.image.to &&
       other.imageClass === this.imageClass &&
       other.renderer === this.renderer
     );
