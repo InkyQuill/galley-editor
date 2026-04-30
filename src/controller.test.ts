@@ -165,6 +165,23 @@ function dragoverEvent(transfer: DataTransfer): DragEvent {
   return event;
 }
 
+function dragleaveEvent(transfer: DataTransfer): DragEvent {
+  const event = typeof DragEvent !== 'undefined'
+    ? new DragEvent('dragleave', {
+      bubbles: true,
+      cancelable: true,
+    })
+    : new Event('dragleave', {
+      bubbles: true,
+      cancelable: true,
+    }) as DragEvent;
+  Object.defineProperty(event, 'dataTransfer', {
+    configurable: true,
+    value: transfer,
+  });
+  return event;
+}
+
 function fileIntentDataTransfer(): DataTransfer {
   return {
     files: [],
@@ -578,6 +595,35 @@ describe('EditorController runtime state', () => {
     ]);
   });
 
+  it('shows paste upload placeholder and replaces it with returned markdown', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    let resolveUpload!: (markdown: string) => void;
+    const upload = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const onFiles = vi.fn((input: GalleyFileInput) => {
+      input.report({ phase: 'progress', progress: 0.5, message: 'Uploading...' });
+      return upload;
+    });
+    const controller = createController('before ', { onFiles });
+    controller.select(controller.getContent().length);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    const placeholder = controller.view.dom.querySelector('.ge-upload-placeholder');
+    expect(placeholder).toBeInstanceOf(HTMLElement);
+    expect(placeholder?.textContent).toContain('Uploading...');
+
+    resolveUpload('![upload](uploaded.png)');
+    await upload;
+    await nextMicrotask();
+
+    expect(controller.getContent()).toBe('before ![upload](uploaded.png)');
+    expect(controller.view.dom.querySelector('.ge-upload-placeholder')).toBeNull();
+  });
+
   it('does not fail upload when file status callback throws', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     const statusError = new Error('status failed');
@@ -723,6 +769,65 @@ describe('EditorController runtime state', () => {
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
   });
 
+  it('shows drop upload progress then inserts returned markdown and removes placeholder', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    let resolveUpload!: (markdown: string) => void;
+    const upload = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const onFiles = vi.fn((input: GalleyFileInput) => {
+      input.report({ phase: 'progress', progress: 0.25, message: 'Uploading...' });
+      return upload;
+    });
+    const controller = createController('before ', { onFiles });
+    vi.spyOn(controller.view, 'posAtCoords').mockReturnValue(null);
+    controller.select(controller.getContent().length);
+
+    const event = dropEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    const placeholder = controller.view.dom.querySelector('.ge-upload-placeholder');
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(placeholder).toBeInstanceOf(HTMLElement);
+    expect(placeholder?.textContent).toContain('Uploading...');
+
+    resolveUpload('![upload](uploaded.png)');
+    await upload;
+    await nextMicrotask();
+
+    expect(controller.getContent()).toBe('before ![upload](uploaded.png)');
+    expect(controller.view.dom.querySelector('.ge-upload-placeholder')).toBeNull();
+  });
+
+  it('blocks ordinary edits in locked mode while upload is active and allows them after completion', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    let resolveUpload!: (markdown: string) => void;
+    const upload = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const onFiles = vi.fn(() => upload);
+    const controller = createController('before ', { onFiles }, { uploadInteraction: 'locked' });
+    controller.select(controller.getContent().length);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    controller.view.dispatch({ changes: { from: 0, insert: 'blocked ' } });
+    expect(controller.getContent()).toBe('before ');
+
+    resolveUpload('![upload](uploaded.png)');
+    await upload;
+    await nextMicrotask();
+
+    expect(controller.getContent()).toBe('before ![upload](uploaded.png)');
+
+    controller.view.dispatch({ changes: { from: 0, insert: 'allowed ' } });
+    expect(controller.getContent()).toBe('allowed before ![upload](uploaded.png)');
+  });
+
   it('does not process dropped files when editable=false', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     const onFiles = vi.fn(() => '![upload](uploaded.png)');
@@ -761,6 +866,31 @@ describe('EditorController runtime state', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(onFiles).not.toHaveBeenCalled();
+  });
+
+  it('shows a drop indicator on file dragover and clears it on dragleave and drop', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const controller = createController('before ', { onFiles });
+
+    const dragover = dragoverEvent(fileIntentDataTransfer());
+    controller.view.contentDOM.dispatchEvent(dragover);
+
+    expect(dragover.defaultPrevented).toBe(true);
+    expect(controller.view.dom.querySelector('.ge-drop-indicator')).toBeInstanceOf(HTMLElement);
+
+    controller.view.contentDOM.dispatchEvent(dragleaveEvent(fileIntentDataTransfer()));
+    expect(controller.view.dom.querySelector('.ge-drop-indicator')).toBeNull();
+
+    controller.view.contentDOM.dispatchEvent(dragoverEvent(fileIntentDataTransfer()));
+    expect(controller.view.dom.querySelector('.ge-drop-indicator')).toBeInstanceOf(HTMLElement);
+
+    const drop = dropEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(drop);
+    await nextMicrotask();
+
+    expect(drop.defaultPrevented).toBe(true);
+    expect(controller.view.dom.querySelector('.ge-drop-indicator')).toBeNull();
   });
 
   it('does not allow file dragover when editable=false', () => {

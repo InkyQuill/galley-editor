@@ -37,6 +37,15 @@ import { autosizeExtension } from './autosize';
 import { BUILT_IN_PLUGINS } from './plugins';
 import { biDirectionalTextExtension } from './plugins/bidi';
 import {
+  addUpload,
+  clearDropIndicator,
+  removeUpload,
+  setDropIndicator,
+  updateUpload,
+  uploadRangeById,
+  uploadUiExtension,
+} from './upload-ui';
+import {
   BUILTIN_COMMANDS,
   DEFAULT_KEYMAP,
   makeSmartBackspaceTransaction,
@@ -53,7 +62,9 @@ import {
   type GalleyFileReporter,
   type GalleyFileSource,
   type GalleyFileStatus,
+  type GalleyFileStatusUpdate,
   type GalleyUploadInteraction,
+  type GalleyUploadInfo,
   type ImageRenderer,
   type ImageControlsRenderer,
   type LinkClickHandler,
@@ -316,14 +327,18 @@ export class EditorController implements GalleyHandle {
             this.hasFileData(e.dataTransfer)
           ) {
             e.preventDefault();
+            this.setDropIndicatorForEvent(e);
           }
+        },
+        dragleave: () => {
+          this.view.dispatch({ effects: clearDropIndicator.of(undefined) });
         },
         drop: (e) => {
           const files = this.filesFromDataTransfer(e.dataTransfer);
           if (!this.canEditDocument() || !this.callbacks.onFiles || files.length === 0) return;
           e.preventDefault();
-          const pos = this.view.posAtCoords({ x: e.clientX, y: e.clientY });
-          const insertAt = pos ?? this.view.state.selection.main.from;
+          this.view.dispatch({ effects: clearDropIndicator.of(undefined) });
+          const insertAt = this.dropPositionForEvent(e);
           void this.handleFiles(files, 'drop', e, insertAt, insertAt);
         },
       }),
@@ -363,12 +378,40 @@ export class EditorController implements GalleyHandle {
     return dataTransfer.files.length > 0 || Array.from(dataTransfer.types).includes('Files');
   }
 
-  private insertFileHandlerMarkdown(markdown: string | string[], from: number, to: number): void {
+  private dropPositionForEvent(event: DragEvent): number {
+    let pos: number | null = null;
+    try {
+      pos = this.view.posAtCoords({ x: event.clientX, y: event.clientY });
+    } catch {
+      pos = null;
+    }
+    return pos ?? this.view.state.selection.main.from;
+  }
+
+  private setDropIndicatorForEvent(event: DragEvent): void {
+    const pos = this.dropPositionForEvent(event);
+    const line = this.view.state.doc.lineAt(pos);
+    this.view.dispatch({
+      effects: setDropIndicator.of({
+        pos,
+        lineFrom: line.from,
+        lineTo: line.to,
+      }),
+    });
+  }
+
+  private insertFileHandlerMarkdown(
+    markdown: string | string[],
+    from: number,
+    to: number,
+    effects: StateEffect<unknown>[] = [],
+  ): void {
     if (!this.canEditDocument()) return;
     const text = Array.isArray(markdown) ? markdown.join('\n') : markdown;
     if (!text) return;
     this.view.dispatch({
       changes: { from, to, insert: text },
+      effects,
       selection: { anchor: from + text.length },
       scrollIntoView: true,
     });
@@ -387,15 +430,18 @@ export class EditorController implements GalleyHandle {
     this.pendingFileRanges.add(pendingRange);
     const id = `galley-file-${++this.fileOperationSeq}`;
     const selection = this.getSelectionInfo();
+    const uploadInfo = (update: GalleyFileStatusUpdate): GalleyUploadInfo => ({
+      id,
+      files,
+      source,
+      selection,
+      ...update,
+    });
     const report: GalleyFileReporter = (update) => {
+      const nextUpload = uploadInfo(update);
+      this.view.dispatch({ effects: updateUpload.of(nextUpload) });
       try {
-        this.callbacks.onFileStatus?.({
-          id,
-          files,
-          source,
-          selection,
-          ...update,
-        });
+        this.callbacks.onFileStatus?.(nextUpload);
       } catch (error) {
         console.error('Galley file status handler failed', error);
       }
@@ -412,12 +458,37 @@ export class EditorController implements GalleyHandle {
     };
 
     try {
-      report({ phase: 'start', progress: 0 });
+      const startUpload = uploadInfo({ phase: 'start', progress: 0 });
+      this.view.dispatch({
+        effects: addUpload.of({
+          upload: startUpload,
+          from: pendingRange.from,
+          to: pendingRange.to,
+        }),
+      });
+      try {
+        this.callbacks.onFileStatus?.(startUpload);
+      } catch (error) {
+        console.error('Galley file status handler failed', error);
+      }
       const result = await handler(input);
       if (result !== false && result !== null) {
-        this.insertFileHandlerMarkdown(result, pendingRange.from, pendingRange.to);
+        const completeUpload = uploadInfo({ phase: 'complete', progress: 1 });
+        const mappedRange = uploadRangeById(this.view.state, id) ?? pendingRange;
+        this.insertFileHandlerMarkdown(
+          result,
+          mappedRange.from,
+          mappedRange.to,
+          [updateUpload.of(completeUpload)],
+        );
+        try {
+          this.callbacks.onFileStatus?.(completeUpload);
+        } catch (error) {
+          console.error('Galley file status handler failed', error);
+        }
+      } else {
+        report({ phase: 'complete', progress: 1 });
       }
-      report({ phase: 'complete', progress: 1 });
     } catch (error) {
       report({ phase: 'error', error });
       this.callbacks.onFileError?.(error, input);
@@ -425,6 +496,7 @@ export class EditorController implements GalleyHandle {
         console.error('Galley file handler failed', error);
       }
     } finally {
+      this.view.dispatch({ effects: removeUpload.of(id) });
       this.pendingFileRanges.delete(pendingRange);
     }
   }
@@ -574,6 +646,12 @@ export class EditorController implements GalleyHandle {
       EditorState.readOnly.of(!canEditDocument),
       // Placeholder
       ...(settings.placeholder ? [cmPlaceholder(settings.placeholder)] : []),
+      ...uploadUiExtension({
+        interaction: settings.uploadInteraction,
+        placeholderRenderer: settings.uploadPlaceholderRenderer,
+        dropIndicatorRenderer: settings.dropIndicatorRenderer,
+        overlayRenderer: settings.uploadOverlayRenderer,
+      }),
       // All plugin extensions
       ...pluginExtensions,
       ...(settings.bidi ? [biDirectionalTextExtension] : []),
