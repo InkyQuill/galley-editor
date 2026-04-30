@@ -113,6 +113,7 @@ function defaultPlaceholder(upload: GalleyUploadInfo): HTMLElement {
   progress.setAttribute('aria-valuemin', '0');
   progress.setAttribute('aria-valuemax', '100');
   progress.setAttribute('aria-valuenow', String(percent(upload)));
+  progress.textContent = `${percent(upload)}%`;
 
   wrapper.append(label, progress);
   return wrapper;

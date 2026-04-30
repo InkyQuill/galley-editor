@@ -182,10 +182,10 @@ class ImageWidget extends WidgetType {
       handle.className = `ge-image-resize-handle ge-image-resize-${corner}`;
       handle.ariaLabel = `Resize image ${corner}`;
       handle.addEventListener('mousedown', (event) => {
-        this.startResize(event, view, corner, 'mouse');
+        this.startResize(event, view, wrapper, corner, 'mouse');
       });
       handle.addEventListener('pointerdown', (event) => {
-        this.startResize(event, view, corner, 'pointer');
+        this.startResize(event, view, wrapper, corner, 'pointer');
       });
       handle.addEventListener('keydown', (event) => {
         this.resizeFromKeyboard(event, view, corner);
@@ -197,6 +197,7 @@ class ImageWidget extends WidgetType {
   private startResize(
     event: MouseEvent | PointerEvent,
     view: EditorView,
+    wrapper: HTMLElement,
     corner: ResizeCorner,
     eventSource: 'mouse' | 'pointer',
   ): void {
@@ -211,9 +212,16 @@ class ImageWidget extends WidgetType {
     const moveEvent = eventSource === 'pointer' ? 'pointermove' : 'mousemove';
     const upEvent = eventSource === 'pointer' ? 'pointerup' : 'mouseup';
     const cancelEvent = eventSource === 'pointer' ? 'pointercancel' : 'mouseleave';
+    const initialPreview = captureImagePreview(wrapper);
 
     const onMove = (moveEvent: MouseEvent | PointerEvent) => {
       moveEvent.preventDefault();
+      this.previewImageDimensions(wrapper, resizeImageMetadata(this.image, {
+        corner,
+        deltaX: moveEvent.clientX - startX,
+        deltaY: moveEvent.clientY - startY,
+        free: freeAtStart || moveEvent.shiftKey,
+      }));
     };
     const onUp = (upEvent: MouseEvent | PointerEvent) => {
       upEvent.preventDefault();
@@ -228,21 +236,46 @@ class ImageWidget extends WidgetType {
     };
     const onCancel = (cancelEvent: Event) => {
       cancelEvent.preventDefault();
+      restoreImagePreview(initialPreview);
+      removeListeners();
+    };
+    const onBlur = () => {
+      restoreImagePreview(initialPreview);
       removeListeners();
     };
     const removeListeners = () => {
       document.removeEventListener(moveEvent, onMove);
       document.removeEventListener(upEvent, onUp);
       document.removeEventListener(cancelEvent, onCancel);
-      window.removeEventListener('blur', removeListeners);
+      window.removeEventListener('blur', onBlur);
       this.activeResizeCleanup = undefined;
     };
 
-    this.activeResizeCleanup = removeListeners;
+    this.activeResizeCleanup = onBlur;
     document.addEventListener(moveEvent, onMove);
     document.addEventListener(upEvent, onUp);
     document.addEventListener(cancelEvent, onCancel);
-    window.addEventListener('blur', removeListeners);
+    window.addEventListener('blur', onBlur);
+  }
+
+  private previewImageDimensions(wrapper: HTMLElement, metadata: GalleyImageMetadataInput): void {
+    const width = typeof metadata.width === 'number' && Number.isFinite(metadata.width)
+      ? Math.max(1, Math.round(metadata.width))
+      : null;
+    const height = typeof metadata.height === 'number' && Number.isFinite(metadata.height)
+      ? Math.max(1, Math.round(metadata.height))
+      : null;
+
+    for (const image of wrapper.querySelectorAll('img')) {
+      if (width !== null) {
+        image.setAttribute('width', String(width));
+        image.style.width = `${width}px`;
+      }
+      if (height !== null) {
+        image.setAttribute('height', String(height));
+        image.style.height = `${height}px`;
+      }
+    }
   }
 
   private resizeFromKeyboard(
@@ -350,6 +383,43 @@ function keyboardResizeDelta(
     deltaX: corner.endsWith('e') ? step : -step,
     deltaY: corner.startsWith('s') ? step : -step,
   };
+}
+
+interface ImagePreviewSnapshot {
+  image: HTMLImageElement;
+  widthAttribute: string | null;
+  heightAttribute: string | null;
+  styleWidth: string;
+  styleHeight: string;
+}
+
+function captureImagePreview(wrapper: HTMLElement): ImagePreviewSnapshot[] {
+  return [...wrapper.querySelectorAll('img')].map((image) => ({
+    image,
+    widthAttribute: image.getAttribute('width'),
+    heightAttribute: image.getAttribute('height'),
+    styleWidth: image.style.width,
+    styleHeight: image.style.height,
+  }));
+}
+
+function restoreImagePreview(snapshots: ImagePreviewSnapshot[]): void {
+  for (const snapshot of snapshots) {
+    if (snapshot.widthAttribute === null) {
+      snapshot.image.removeAttribute('width');
+    } else {
+      snapshot.image.setAttribute('width', snapshot.widthAttribute);
+    }
+
+    if (snapshot.heightAttribute === null) {
+      snapshot.image.removeAttribute('height');
+    } else {
+      snapshot.image.setAttribute('height', snapshot.heightAttribute);
+    }
+
+    snapshot.image.style.width = snapshot.styleWidth;
+    snapshot.image.style.height = snapshot.styleHeight;
+  }
 }
 
 function selectedImageMatchesImage(

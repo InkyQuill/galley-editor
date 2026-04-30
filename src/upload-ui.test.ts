@@ -8,6 +8,7 @@ import {
   clearDropIndicator,
   removeUpload,
   setDropIndicator,
+  updateUpload,
   uploadRangeById,
   uploadUiExtension,
 } from './upload-ui';
@@ -58,6 +59,33 @@ describe('uploadUiExtension', () => {
     expect(progress?.getAttribute('aria-valuemin')).toBe('0');
     expect(progress?.getAttribute('aria-valuemax')).toBe('100');
     expect(progress?.getAttribute('aria-valuenow')).toBe('43');
+    expect(progress?.textContent).toBe('43%');
+  });
+
+  it('updates visible placeholder progress when upload reports progress', () => {
+    const view = createEditorView({
+      doc: 'hello world',
+      extensions: [uploadUiExtension({ interaction: 'inline' })],
+    });
+    views.push(view);
+
+    view.dispatch({
+      effects: addUpload.of({
+        upload: upload({ phase: 'progress', progress: 0.125, message: 'Uploading 13%' }),
+        from: 6,
+        to: 11,
+      }),
+    });
+    expect(view.dom.querySelector('.ge-upload-progress')?.textContent).toBe('13%');
+    expect(view.dom.querySelector('.ge-upload-label')?.textContent).toContain('Uploading 13%');
+
+    view.dispatch({
+      effects: updateUpload.of(upload({ phase: 'progress', progress: 0.75, message: 'Uploading 75%' })),
+    });
+
+    expect(view.dom.querySelector('.ge-upload-progress')?.textContent).toBe('75%');
+    expect(view.dom.querySelector('.ge-upload-progress')?.getAttribute('aria-valuenow')).toBe('75');
+    expect(view.dom.querySelector('.ge-upload-label')?.textContent).toContain('Uploading 75%');
   });
 
   it('maps an upload placeholder range through document edits', () => {

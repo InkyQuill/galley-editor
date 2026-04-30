@@ -180,10 +180,11 @@ async function slowImageUpload(input: GalleyFileInput) {
     for (let step = 0; step <= totalSteps; step += 1) {
       const fileProgress = step / totalSteps;
       const totalProgress = (fileIndex + fileProgress) / input.files.length;
+      const percent = Math.round(totalProgress * 100);
       input.report({
         phase: 'progress',
         progress: totalProgress,
-        message: `Uploading ${file.name}`,
+        message: `Uploading ${file.name} (${percent}%)`,
       });
       await wait(220);
     }

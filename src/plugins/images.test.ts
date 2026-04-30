@@ -191,6 +191,43 @@ describe('imagesPlugin', () => {
     expect(lineElement(view, 1).textContent).not.toBe('![Galley mark](assets/galley.png){width=800 height=450}');
   });
 
+  it('previews image dimensions while dragging before committing markdown', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+    }));
+    document.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+
+    const image = view.dom.querySelector('.ge-image-widget img');
+    expect(image?.getAttribute('width')).toBe('800');
+    expect(image?.getAttribute('height')).toBe('450');
+    expect(docOf(view)).toBe(doc);
+
+    document.dispatchEvent(new MouseEvent('mouseup', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
+  });
+
   it('shift-dragging the southeast resize handle changes dimensions independently', () => {
     const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
     const view = createEditorView({
@@ -301,6 +338,42 @@ describe('imagesPlugin', () => {
       clientY: 0,
     }));
 
+    expect(docOf(view)).toBe(doc);
+  });
+
+  it('rolls back live resize preview when dragging is canceled', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('pointerdown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+    }));
+    document.dispatchEvent(new MouseEvent('pointermove', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+    expect(view.dom.querySelector('.ge-image-widget img')?.getAttribute('width')).toBe('800');
+
+    document.dispatchEvent(new MouseEvent('pointercancel', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+
+    const image = view.dom.querySelector('.ge-image-widget img');
+    expect(image?.getAttribute('width')).toBe('640');
+    expect(image?.getAttribute('height')).toBe('360');
     expect(docOf(view)).toBe(doc);
   });
 
