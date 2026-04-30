@@ -23,6 +23,15 @@ describe('resizeImageMetadata', () => {
     })).toEqual({ width: 800, height: 450 });
   });
 
+  it('preserves aspect ratio on vertical-only southeast resize', () => {
+    expect(resizeImageMetadata(image({ width: 640, height: 360 }), {
+      corner: 'se',
+      deltaX: 0,
+      deltaY: 90,
+      free: false,
+    })).toEqual({ width: 800, height: 450 });
+  });
+
   it('resizes width and height independently for free resize', () => {
     expect(resizeImageMetadata(image({ width: 640, height: 360 }), {
       corner: 'se',

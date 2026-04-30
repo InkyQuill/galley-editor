@@ -23,10 +23,14 @@ export function resizeImageMetadata(
   const currentHeight = image.height ?? DEFAULT_HEIGHT;
   const widthDelta = input.corner.endsWith('e') ? input.deltaX : -input.deltaX;
   const heightDelta = input.corner.startsWith('s') ? input.deltaY : -input.deltaY;
-  const width = clampSize(currentWidth + widthDelta, minSize);
 
   if (!input.free) {
     const ratio = currentHeight / currentWidth;
+    const widthFromHeightDelta = heightDelta / ratio;
+    const dominantDelta =
+      Math.abs(widthDelta) >= Math.abs(widthFromHeightDelta) ? widthDelta : widthFromHeightDelta;
+    const width = clampSize(currentWidth + dominantDelta, minSize);
+
     return {
       width,
       height: clampSize(width * ratio, minSize),
@@ -34,7 +38,7 @@ export function resizeImageMetadata(
   }
 
   return {
-    width,
+    width: clampSize(currentWidth + widthDelta, minSize),
     height: clampSize(currentHeight + heightDelta, minSize),
   };
 }

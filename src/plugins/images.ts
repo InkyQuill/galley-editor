@@ -446,13 +446,15 @@ function parseImageWidgetMarkdown(raw: string, from: number, to: number): Galley
   return parseImageMarkdown(raw, from, to) ?? parseEmptyUrlImageMarkdown(raw, from, to);
 }
 
-function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
+function defaultImageRenderer({ alt, url, title, width, height }: ParsedImage): HTMLElement {
   const image = document.createElement('img');
   image.className = 'ge-image';
   image.alt = alt;
   image.src = url;
   image.loading = 'lazy';
   if (title) image.title = title;
+  if (width !== undefined) image.width = width;
+  if (height !== undefined) image.height = height;
   return image;
 }
 

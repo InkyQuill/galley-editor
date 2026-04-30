@@ -335,6 +335,21 @@ describe('imagesPlugin', () => {
     expect(image?.getAttribute('src')).toBe('assets/galley.png');
   });
 
+  it('applies markdown image dimensions to the default rendered image', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    const image = view.dom.querySelector('.ge-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('width')).toBe('640');
+    expect(image?.getAttribute('height')).toBe('360');
+  });
+
   it('renders color logo markdown images as image widgets by default', () => {
     const doc = '![Galley logo](assets/galley-color.png)\n\nplain';
     const view = createEditorView({
