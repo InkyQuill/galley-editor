@@ -14,6 +14,7 @@ export type CodeHighlighter = (input: {
 export interface GalleyRenderContext {
   theme: 'light' | 'dark';
   mode?: GalleyMode;
+  canEdit?: boolean;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
   missingImageRenderer?: MissingImageRenderer;

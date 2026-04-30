@@ -21,8 +21,10 @@ import {
   serializeImageMarkdown,
 } from '../image-markdown';
 import type {
+  ImageControlsRenderer,
   ImageRenderer,
   MissingImageRenderer,
+  GalleyImageMetadataInput,
   GalleyImageInfo,
   GalleyMissingImageInfo,
   GalleyClassNames,
@@ -74,7 +76,9 @@ class ImageWidget extends WidgetType {
   imageClass: string;
   renderer: ImageRenderer;
   missingRenderer: MissingImageRenderer | undefined;
+  controlsRenderer: ImageControlsRenderer | undefined;
   selected: boolean;
+  canEdit: boolean;
   activeResizeCleanup: (() => void) | undefined;
 
   constructor(
@@ -82,14 +86,18 @@ class ImageWidget extends WidgetType {
     imageClass: string,
     renderer: ImageRenderer,
     missingRenderer: MissingImageRenderer | undefined,
+    controlsRenderer: ImageControlsRenderer | undefined,
     selected: boolean,
+    canEdit: boolean,
   ) {
     super();
     this.image = image;
     this.imageClass = imageClass;
     this.renderer = renderer;
     this.missingRenderer = missingRenderer;
+    this.controlsRenderer = controlsRenderer;
     this.selected = selected;
+    this.canEdit = canEdit;
   }
 
   eq(other: ImageWidget): boolean {
@@ -106,7 +114,9 @@ class ImageWidget extends WidgetType {
       other.imageClass === this.imageClass &&
       other.renderer === this.renderer &&
       other.missingRenderer === this.missingRenderer &&
-      other.selected === this.selected
+      other.controlsRenderer === this.controlsRenderer &&
+      other.selected === this.selected &&
+      other.canEdit === this.canEdit
     );
   }
 
@@ -114,7 +124,7 @@ class ImageWidget extends WidgetType {
     if (this.image.url.trim() === '') {
       const wrapper = this.createWrapper();
       this.attachSelectionHandler(wrapper, view);
-      this.appendResizeHandles(wrapper, view);
+      this.appendImageControls(wrapper, view);
       wrapper.append(this.renderMissingImage('empty-url'));
       return wrapper;
     }
@@ -130,7 +140,7 @@ class ImageWidget extends WidgetType {
     const wrapper = this.createWrapper();
     this.attachSelectionHandler(wrapper, view);
     this.attachErrorListeners(wrapper, rendered);
-    this.appendResizeHandles(wrapper, view);
+    this.appendImageControls(wrapper, view);
     wrapper.append(rendered);
     return wrapper;
   }
@@ -145,8 +155,25 @@ class ImageWidget extends WidgetType {
     return wrapper;
   }
 
-  private appendResizeHandles(wrapper: HTMLElement, view: EditorView): void {
-    if (!this.selected) return;
+  private appendImageControls(wrapper: HTMLElement, view: EditorView): void {
+    if (!this.selected || !this.canEdit || view.state.readOnly) return;
+
+    const renderedControls = this.controlsRenderer?.({
+      image: this.image,
+      selected: true,
+      resizing: this.activeResizeCleanup !== undefined,
+      update: (metadata) => this.updateImageDimensions(view, metadata),
+      clearDimensions: () => this.updateImageDimensions(view, { width: null, height: null }),
+      revealSource: () => this.revealSource(view),
+    });
+    if (renderedControls) {
+      renderedControls.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      wrapper.append(renderedControls);
+      return;
+    }
 
     const corners: ResizeCorner[] = ['nw', 'ne', 'sw', 'se'];
     for (const corner of corners) {
@@ -239,8 +266,10 @@ class ImageWidget extends WidgetType {
 
   private updateImageDimensions(
     view: EditorView,
-    metadata: ReturnType<typeof resizeImageMetadata>,
+    metadata: GalleyImageMetadataInput,
   ): void {
+    if (!this.canEdit || view.state.readOnly) return;
+
     const next = serializeImageMarkdown(this.image, metadata);
     if (next === this.image.raw) return;
 
@@ -257,21 +286,29 @@ class ImageWidget extends WidgetType {
   }
 
   private attachSelectionHandler(wrapper: HTMLElement, view: EditorView): void {
+    if (!this.canEdit || view.state.readOnly) return;
+
     wrapper.addEventListener('mousedown', (event) => {
       event.preventDefault();
       event.stopPropagation();
 
       if (event.ctrlKey || event.metaKey) {
-        view.dispatch({
-          selection: EditorSelection.cursor(Math.min(this.image.from + 1, this.image.to)),
-          effects: selectImage.of(null),
-        });
+        this.revealSource(view);
         return;
       }
 
       view.dispatch({
         effects: selectImage.of({ from: this.image.from, to: this.image.to }),
       });
+    });
+  }
+
+  private revealSource(view: EditorView): void {
+    if (!this.canEdit || view.state.readOnly) return;
+
+    view.dispatch({
+      selection: EditorSelection.cursor(Math.min(this.image.from + 1, this.image.to)),
+      effects: selectImage.of(null),
     });
   }
 
@@ -327,7 +364,9 @@ function buildImageDecorations(
   imageClass: string,
   renderer: ImageRenderer,
   missingRenderer: MissingImageRenderer | undefined,
+  controlsRenderer: ImageControlsRenderer | undefined,
   preview: boolean,
+  canEdit: boolean,
 ): DecorationSet {
   const { state } = view;
   const widgets: Range<Decoration>[] = [];
@@ -341,7 +380,7 @@ function buildImageDecorations(
         if (node.name !== 'Image') return;
 
         const imageTo = imageRangeTo(state, node.to);
-        if (!preview && imageRangeIntersectsSelection(state, node.from, imageTo)) return;
+        if (canEdit && !preview && imageRangeIntersectsSelection(state, node.from, imageTo)) return;
 
         const parsed = parseImageWidgetMarkdown(state.sliceDoc(node.from, imageTo), node.from, imageTo);
         if (!parsed) return;
@@ -353,7 +392,9 @@ function buildImageDecorations(
               imageClass,
               renderer,
               missingRenderer,
+              controlsRenderer,
               selectedImageMatchesImage(selectedImage, parsed),
+              canEdit,
             ),
           }).range(node.from, imageTo),
         );
@@ -368,7 +409,9 @@ function makeImagesViewPlugin(
   imageClass: string,
   renderer: ImageRenderer,
   missingRenderer: MissingImageRenderer | undefined,
+  controlsRenderer: ImageControlsRenderer | undefined,
   preview: boolean,
+  canEdit: boolean,
 ) {
   return ViewPlugin.fromClass(
     class {
@@ -380,7 +423,9 @@ function makeImagesViewPlugin(
           imageClass,
           renderer,
           missingRenderer,
+          controlsRenderer,
           preview,
+          canEdit,
         );
       }
 
@@ -398,7 +443,9 @@ function makeImagesViewPlugin(
             imageClass,
             renderer,
             missingRenderer,
+            controlsRenderer,
             preview,
+            canEdit,
           );
         }
       }
@@ -482,12 +529,14 @@ const imagesPlugin: GalleyPlugin = {
   extensions(classNames: GalleyClassNames, context) {
     const imageClass = classNames.image ?? 'ge-image-frame';
     const preview = context?.mode === 'preview';
+    const canEdit = context?.canEdit ?? !preview;
     const renderer = context?.imageRenderer ?? defaultImageRenderer;
     const missingRenderer = context?.missingImageRenderer;
+    const controlsRenderer = context?.imageControlsRenderer;
 
     return [
       selectedImageField,
-      makeImagesViewPlugin(imageClass, renderer, missingRenderer, preview),
+      makeImagesViewPlugin(imageClass, renderer, missingRenderer, controlsRenderer, preview, canEdit),
     ];
   },
 };

@@ -101,6 +101,76 @@ describe('imagesPlugin', () => {
     expect(view.dom.querySelector('.ge-image-resize-handle')).toBeNull();
   });
 
+  it('does not expose image resize controls in preview mode', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        mode: 'preview',
+      }),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+
+    expect(view.dom.querySelector('.ge-image-selected')).toBeNull();
+    expect(view.dom.querySelector('.ge-image-resize-handle')).toBeNull();
+    expect(docOf(view)).toBe(doc);
+  });
+
+  it('uses imageControlsRenderer for selected image controls', () => {
+    const controlsRenderer = vi.fn((input) => {
+      const controls = document.createElement('div');
+      controls.className = 'custom-image-controls';
+
+      const resize = document.createElement('button');
+      resize.type = 'button';
+      resize.textContent = 'Resize';
+      resize.addEventListener('click', () => input.update({ width: 320, height: 180 }));
+
+      const reveal = document.createElement('button');
+      reveal.type = 'button';
+      reveal.textContent = 'Reveal';
+      reveal.addEventListener('click', () => input.revealSource());
+
+      controls.append(resize, reveal);
+      return controls;
+    });
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageControlsRenderer: controlsRenderer,
+      }),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+
+    expect(view.dom.querySelector('.custom-image-controls')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-image-resize-handle')).toBeNull();
+    expect(controlsRenderer).toHaveBeenCalledWith(expect.objectContaining({
+      image: expect.objectContaining({ alt: 'Galley mark' }),
+      selected: true,
+      resizing: false,
+    }));
+
+    view.dom.querySelector('.custom-image-controls button')?.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+    }));
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=320 height=180}\n\nplain');
+
+    view.dom.querySelectorAll('.custom-image-controls button')[1]?.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+    }));
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png){width=320 height=180}');
+  });
+
   it('dragging the southeast resize handle updates markdown image dimensions', () => {
     const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
     const view = createEditorView({

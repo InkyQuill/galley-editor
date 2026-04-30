@@ -46,7 +46,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `codeHighlighter` | Optional highlighter for inactive fenced code block widgets. |
 | `imageRenderer` | Optional renderer for Markdown image widgets. |
 | `missingImageRenderer` | Optional renderer for unavailable Markdown images, including broken and empty sources. |
-| `imageControlsRenderer` | Reserved public renderer type for selected image controls; default resize handles are currently built in. |
+| `imageControlsRenderer` | Optional renderer for selected image controls. Returning `null` uses the built-in resize handles. |
 | `uploadPlaceholderRenderer` | Optional inline upload placeholder renderer. |
 | `dropIndicatorRenderer` | Optional drag/drop insertion indicator renderer. |
 | `uploadOverlayRenderer` | Optional aggregate upload overlay renderer. |
@@ -208,7 +208,7 @@ Image metadata uses this markdown syntax:
 
 By default, an ordinary click selects an image visually and shows resize handles. Ctrl/Cmd-click, or moving the caret into the image source, reveals the markdown source. Resize handles update `{width height}` metadata on the markdown image.
 
-When a rendered image fails to load, or when an image has an empty source, Galley shows a missing-image placeholder. Use `missingImageRenderer` to override that fallback. `imageControlsRenderer` is exported as a public planned extension point for selected image controls; in the current implementation the selected controls are the built-in resize handles.
+When a rendered image fails to load, or when an image has an empty source, Galley shows a missing-image placeholder. Use `missingImageRenderer` to override that fallback. Use `imageControlsRenderer` to override selected image controls; its callbacks update metadata, clear dimensions, or reveal the raw image source. Return `null` to keep Galley's built-in resize handles.
 
 ## Imperative Handle
 

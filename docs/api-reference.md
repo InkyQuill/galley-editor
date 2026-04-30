@@ -38,7 +38,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
 | `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Receives parsed image metadata including `url`, source range, and dimensions |
 | `missingImageRenderer` | `MissingImageRenderer` | `undefined` | Optional custom renderer for broken images and empty image sources |
-| `imageControlsRenderer` | `ImageControlsRenderer` | `undefined` | Reserved public renderer type for selected image controls; default resize handles are currently built in |
+| `imageControlsRenderer` | `ImageControlsRenderer` | `undefined` | Optional renderer for selected image controls. Returning `null` uses the built-in resize handles |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Show and customize the built-in command toolbar |
@@ -193,7 +193,7 @@ type ImageControlsRenderer = (input: {
 }) => HTMLElement | null;
 ```
 
-`imageControlsRenderer` is exported as a public planned extension point for selected image controls. In the current implementation, selected image controls are the built-in resize handles; custom control UI should use `imageRenderer` plus the image metadata commands.
+`imageControlsRenderer` overrides the selected image controls. Its callbacks update image metadata, clear dimensions, or reveal the raw image source. Return `null` to keep Galley's built-in resize handles.
 
 ### `ErrorBoundary`
 

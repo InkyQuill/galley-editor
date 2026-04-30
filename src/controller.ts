@@ -626,6 +626,7 @@ export class EditorController implements GalleyHandle {
     const renderContext = {
       theme: settings.theme === 'dark' ? 'dark' as const : 'light' as const,
       mode: settings.mode,
+      canEdit: canEditDocument,
       codeHighlighter: settings.codeHighlighter,
       imageRenderer: settings.imageRenderer,
       missingImageRenderer: settings.missingImageRenderer,
