@@ -53,12 +53,18 @@ import {
   type GalleyFileReporter,
   type GalleyFileSource,
   type GalleyFileStatus,
+  type GalleyUploadInteraction,
   type ImageRenderer,
+  type ImageControlsRenderer,
   type LinkClickHandler,
+  type MissingImageRenderer,
+  type DropIndicatorRenderer,
   type GalleyClassNames,
   type GalleyHandle,
   type GalleyMode,
   type GalleyPlugin,
+  type UploadOverlayRenderer,
+  type UploadPlaceholderRenderer,
 } from './types';
 
 // ── Callback refs (stable references that the static extensions call into) ──
@@ -97,12 +103,18 @@ export interface ControllerSettings {
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
+  missingImageRenderer?: MissingImageRenderer;
+  imageControlsRenderer?: ImageControlsRenderer;
   onLinkClick?: LinkClickHandler;
   bidi: boolean;
   mode: GalleyMode;
   plugins: GalleyPlugin[];
   disabledPlugins: string[];
   extraExtensions: Extension[];
+  uploadInteraction: GalleyUploadInteraction;
+  uploadPlaceholderRenderer?: UploadPlaceholderRenderer;
+  dropIndicatorRenderer?: DropIndicatorRenderer;
+  uploadOverlayRenderer?: UploadOverlayRenderer;
 }
 
 function getScrollFraction(view: EditorView): number {
@@ -544,6 +556,8 @@ export class EditorController implements GalleyHandle {
       mode: settings.mode,
       codeHighlighter: settings.codeHighlighter,
       imageRenderer: settings.imageRenderer,
+      missingImageRenderer: settings.missingImageRenderer,
+      imageControlsRenderer: settings.imageControlsRenderer,
       onLinkClick: settings.onLinkClick,
     };
     const pluginExtensions = settings.mode === 'markdown'

@@ -41,6 +41,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     plugins: [],
     disabledPlugins: [],
     extraExtensions: [],
+    uploadInteraction: 'inline',
     ...overrides,
   };
 }
@@ -404,6 +405,19 @@ describe('EditorController runtime state', () => {
     const controller = createController('', {
       onFiles: () => '![demo](demo.png)',
       onFileError: () => undefined,
+    });
+
+    expect(controller.view).toBeDefined();
+  });
+
+  it('accepts upload and image UX renderer settings', () => {
+    const controller = createController('', {}, {
+      uploadInteraction: 'overlay',
+      uploadPlaceholderRenderer: () => document.createElement('div'),
+      dropIndicatorRenderer: () => document.createElement('div'),
+      uploadOverlayRenderer: () => document.createElement('div'),
+      missingImageRenderer: () => document.createElement('div'),
+      imageControlsRenderer: () => document.createElement('div'),
     });
 
     expect(controller.view).toBeDefined();

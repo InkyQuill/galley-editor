@@ -100,6 +100,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       keymap,
       codeHighlighter,
       imageRenderer,
+      missingImageRenderer,
+      imageControlsRenderer,
       onLinkClick,
       bidi = false,
       toolbar = true,
@@ -118,6 +120,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       onEscape,
       onPaste,
       onFiles,
+      uploadInteraction = 'inline',
+      uploadPlaceholderRenderer,
+      dropIndicatorRenderer,
+      uploadOverlayRenderer,
       onFileError,
       onFileStatus,
       onSubmit,
@@ -281,12 +287,18 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       keymap,
       codeHighlighter,
       imageRenderer,
+      missingImageRenderer,
+      imageControlsRenderer,
       onLinkClick,
       bidi,
       mode: effectiveMode,
       plugins,
       disabledPlugins,
       extraExtensions: extensions,
+      uploadInteraction,
+      uploadPlaceholderRenderer,
+      dropIndicatorRenderer,
+      uploadOverlayRenderer,
     });
     const settingsRef = useRef<ControllerSettings | null>(null);
     settingsRef.current = buildSettings();
@@ -333,7 +345,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions]);
+    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {

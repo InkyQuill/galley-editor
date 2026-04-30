@@ -16,6 +16,8 @@ export interface GalleyRenderContext {
   mode?: GalleyMode;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
+  missingImageRenderer?: MissingImageRenderer;
+  imageControlsRenderer?: ImageControlsRenderer;
   onLinkClick?: LinkClickHandler;
 }
 
@@ -43,6 +45,30 @@ export interface GalleyFileStatus extends GalleyFileStatusUpdate {
   source: GalleyFileSource;
   selection: GalleySelectionInfo;
 }
+
+export interface GalleyUploadInfo {
+  id: string;
+  files: File[];
+  source: GalleyFileSource;
+  selection: GalleySelectionInfo;
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+}
+
+export type GalleyUploadInteraction = 'inline' | 'overlay' | 'locked';
+
+export type UploadPlaceholderRenderer = (upload: GalleyUploadInfo) => HTMLElement | null;
+
+export type DropIndicatorRenderer = (input: {
+  source: 'drag';
+  pos: number;
+  lineFrom: number;
+  lineTo: number;
+}) => HTMLElement | null;
+
+export type UploadOverlayRenderer = (uploads: GalleyUploadInfo[]) => HTMLElement | null;
 
 export type GalleyFileReporter = (update: GalleyFileStatusUpdate) => void;
 
@@ -73,6 +99,10 @@ export interface GalleyImageInfo {
   to: number;
 }
 
+export interface GalleyMissingImageInfo extends GalleyImageInfo {
+  reason: 'error' | 'empty-url';
+}
+
 export interface GalleyImageMetadataInput {
   alt?: string;
   url?: string;
@@ -82,6 +112,17 @@ export interface GalleyImageMetadataInput {
 }
 
 export type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
+
+export type MissingImageRenderer = (image: GalleyMissingImageInfo) => HTMLElement | null;
+
+export type ImageControlsRenderer = (input: {
+  image: GalleyImageInfo;
+  selected: boolean;
+  resizing: boolean;
+  update(metadata: GalleyImageMetadataInput): void;
+  clearDimensions(): void;
+  revealSource(): void;
+}) => HTMLElement | null;
 
 export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 
@@ -402,6 +443,10 @@ export interface GalleyEditorProps {
   codeHighlighter?: CodeHighlighter;
   /** Optional renderer for markdown images. Defaults to built-in image widgets. */
   imageRenderer?: ImageRenderer;
+  /** Optional renderer for unavailable markdown images. */
+  missingImageRenderer?: MissingImageRenderer;
+  /** Optional renderer for selected markdown image controls. */
+  imageControlsRenderer?: ImageControlsRenderer;
   /** Optional Cmd/Ctrl-click link handler. Return true to suppress default opening. */
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
@@ -437,6 +482,14 @@ export interface GalleyEditorProps {
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   /** Handle pasted or dropped files before built-in insertion. */
   onFiles?: GalleyFileHandler;
+  /** Controls how in-flight uploads are represented. Default: 'inline'. */
+  uploadInteraction?: GalleyUploadInteraction;
+  /** Optional renderer for inline upload placeholders. */
+  uploadPlaceholderRenderer?: UploadPlaceholderRenderer;
+  /** Optional renderer for drag/drop insertion indicators. */
+  dropIndicatorRenderer?: DropIndicatorRenderer;
+  /** Optional renderer for aggregate upload overlays. */
+  uploadOverlayRenderer?: UploadOverlayRenderer;
   /** Handle errors raised while processing pasted or dropped files. */
   onFileError?: (error: unknown, input: GalleyFileInput) => void;
   /** Observe consumer-owned file handling status and progress. */
