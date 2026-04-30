@@ -486,10 +486,10 @@
   gap: 0.25rem;
   max-width: 100%;
   min-height: 5rem;
-  min-width: 8rem;
   overflow-wrap: anywhere;
   padding: 0.75rem;
   text-align: center;
+  width: min(100%, 8rem);
 }
 
 .ge-image-missing-label {
