@@ -259,6 +259,38 @@ Galley parses and preserves image metadata using this syntax:
 
 Consumers can pair custom renderers with the `updateImageMetadata` and `clearImageDimensions` commands to build captions, asset inspectors, or resize controls.
 
+An ordinary click on a rendered image selects it visually and shows Galley's built-in resize handles. Ctrl/Cmd-click, or moving the caret into the image source, reveals the raw markdown. Resize handles update `{width height}` metadata in the image's trailing attribute block.
+
+If an image has an empty source or fails to load, Galley shows a missing-image placeholder. Override it with `missingImageRenderer`:
+
+```tsx
+<GalleyEditor
+  missingImageRenderer={(image) => {
+    const element = document.createElement('span');
+    element.textContent = `${image.reason}: ${image.alt || image.url}`;
+    return element;
+  }}
+/>
+```
+
+### Upload Renderers
+
+Upload behavior stays owned by `onFiles`. Galley owns the default editor UI state for active uploads, including inline placeholders, drag/drop indicators, and optional overlays. `input.report()` updates both `onFileStatus` and the active placeholder renderer.
+
+```tsx
+<GalleyEditor
+  onFiles={uploadFiles}
+  uploadInteraction="inline"
+  uploadPlaceholderRenderer={(upload) => {
+    const element = document.createElement('div');
+    element.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
+    return element;
+  }}
+/>
+```
+
+Set `uploadInteraction="overlay"` to add an editor overlay while uploads are active. Set `uploadInteraction="locked"` to show the overlay and block user document edits until the upload finishes. Use `dropIndicatorRenderer` to replace the drag/drop insertion marker and `uploadOverlayRenderer` to replace the overlay.
+
 ## Building Custom Plugins
 
 ### Basic Example: Highlight `TODO` Comments

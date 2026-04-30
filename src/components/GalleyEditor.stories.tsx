@@ -10,6 +10,8 @@ import type {
   GalleyHandle,
   GalleyImageInfo,
   GalleyMode,
+  MissingImageRenderer,
+  UploadPlaceholderRenderer,
 } from '../types';
 import type { GalleyPlugin, GalleyClassNames } from '../types';
 import { Decoration } from '@codemirror/view';
@@ -167,6 +169,29 @@ async function uploadFilesWithProgress(input: GalleyFileInput) {
       message: `Uploaded ${file.name}`,
     });
   }
+  return markdown;
+}
+
+async function slowImageUpload(input: GalleyFileInput) {
+  const markdown: string[] = [];
+  const totalSteps = 8;
+
+  for (const [fileIndex, file] of input.files.entries()) {
+    for (let step = 0; step <= totalSteps; step += 1) {
+      const fileProgress = step / totalSteps;
+      const totalProgress = (fileIndex + fileProgress) / input.files.length;
+      input.report({
+        phase: 'progress',
+        progress: totalProgress,
+        message: `Uploading ${file.name}`,
+      });
+      await wait(220);
+    }
+
+    markdown.push(`![${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`);
+  }
+
+  input.report({ phase: 'progress', progress: 1, message: 'Inserting image markdown' });
   return markdown;
 }
 
@@ -647,6 +672,249 @@ function ResizableImageRendererStory() {
  */
 export const ResizableImageRenderer: Story = {
   render: ResizableImageRendererStory,
+};
+
+function InlineUploadPlaceholderStory() {
+  const [value, setValue] = useState(
+    '# Portfolio Draft\n\nCover image notes and caption copy live here.\n\nMore copy follows below.',
+  );
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        onFiles={slowImageUpload}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+      />
+      <UploadStatusLog rows={statusRows} />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates the default inline upload placeholder. `onFiles` owns the
+ * upload work, while `input.report()` updates both `onFileStatus` and the
+ * editor-resident placeholder before final markdown insertion.
+ */
+export const InlineUploadPlaceholder: Story = {
+  render: InlineUploadPlaceholderStory,
+};
+
+function LockedUploadOverlayStory() {
+  const [value, setValue] = useState(
+    '# Locked Upload\n\nIncoming photography belongs near this section.\n\nThe remaining launch copy continues below.',
+  );
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        onFiles={slowImageUpload}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+        uploadInteraction="locked"
+        uploadOverlayRenderer={(uploads) => {
+          const overlay = document.createElement('div');
+          overlay.className = 'ge-upload-overlay';
+          overlay.style.display = 'grid';
+          overlay.style.placeItems = 'center';
+          overlay.style.padding = '18px';
+
+          const panel = document.createElement('div');
+          panel.style.border = '1px solid #bfdbfe';
+          panel.style.borderRadius = '8px';
+          panel.style.background = '#eff6ff';
+          panel.style.boxShadow = '0 12px 30px rgba(15, 23, 42, 0.16)';
+          panel.style.color = '#1e3a8a';
+          panel.style.fontSize = '13px';
+          panel.style.fontWeight = '700';
+          panel.style.padding = '10px 12px';
+
+          const progress = Math.round(((uploads.at(-1)?.progress ?? 0) * 100));
+          panel.textContent = `Uploading assets ${progress}%`;
+          overlay.append(panel);
+          return overlay;
+        }}
+      />
+      <UploadStatusLog rows={statusRows} />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates `uploadInteraction="locked"`: an overlay is shown while uploads
+ * are active, user document edits are blocked, and returned markdown is inserted
+ * when the handler resolves.
+ */
+export const LockedUploadOverlay: Story = {
+  render: LockedUploadOverlayStory,
+};
+
+function CustomUploadPlaceholderStory() {
+  const [value, setValue] = useState(
+    '# Gallery Notes\n\nA small collection of product stills and detail shots.',
+  );
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
+
+  const renderUploadPlaceholder = useCallback<UploadPlaceholderRenderer>((upload) => {
+    const element = document.createElement('span');
+    element.setAttribute('role', 'status');
+    element.setAttribute('aria-live', 'polite');
+    element.style.display = 'inline-grid';
+    element.style.gridTemplateColumns = 'auto minmax(80px, 1fr)';
+    element.style.alignItems = 'center';
+    element.style.gap = '8px';
+    element.style.border = '1px solid #99f6e4';
+    element.style.borderRadius = '8px';
+    element.style.background = '#f0fdfa';
+    element.style.color = '#134e4a';
+    element.style.padding = '4px 8px';
+    element.style.fontSize = '12px';
+    element.style.fontWeight = '700';
+
+    const label = document.createElement('span');
+    label.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
+
+    const track = document.createElement('span');
+    track.style.height = '6px';
+    track.style.borderRadius = '999px';
+    track.style.background = '#ccfbf1';
+    track.style.overflow = 'hidden';
+
+    const bar = document.createElement('span');
+    bar.style.display = 'block';
+    bar.style.width = `${Math.round((upload.progress ?? 0) * 100)}%`;
+    bar.style.height = '100%';
+    bar.style.background = '#0f766e';
+    track.append(bar);
+
+    element.append(label, track);
+    return element;
+  }, []);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        onFiles={slowImageUpload}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+        uploadPlaceholderRenderer={renderUploadPlaceholder}
+      />
+      <UploadStatusLog rows={statusRows} />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates `uploadPlaceholderRenderer` with a custom HTMLElement that is
+ * recreated from each reported upload state.
+ */
+export const CustomUploadPlaceholder: Story = {
+  render: CustomUploadPlaceholderStory,
+};
+
+function MissingImagePlaceholderStory() {
+  const [value, setValue] = useState(
+    '## Asset QA\n\n![Broken remote image](/uploads/not-found-storybook-image.png)\n\n![Empty source]()\n',
+  );
+
+  const missingImageRenderer = useCallback<MissingImageRenderer>((image) => {
+    const element = document.createElement('span');
+    element.style.display = 'inline-flex';
+    element.style.alignItems = 'center';
+    element.style.gap = '8px';
+    element.style.border = '1px dashed #f97316';
+    element.style.borderRadius = '8px';
+    element.style.background = '#fff7ed';
+    element.style.color = '#9a3412';
+    element.style.padding = '8px 10px';
+    element.style.fontSize = '13px';
+    element.style.fontWeight = '700';
+    element.textContent = `${image.reason === 'empty-url' ? 'Empty image source' : 'Image unavailable'}: ${image.alt || image.url}`;
+    return element;
+  }, []);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        missingImageRenderer={missingImageRenderer}
+      />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates default missing-image fallback behavior with a custom
+ * `missingImageRenderer` override for broken and empty image sources.
+ */
+export const MissingImagePlaceholder: Story = {
+  render: MissingImagePlaceholderStory,
+};
+
+function ImageResizeHandlesStory() {
+  const [value, setValue] = useState(
+    '## Launch Image\n\n![Launch dashboard](/uploads/launch-dashboard.png "Dashboard"){width=480 height=270}\n\nThe surrounding copy summarizes the latest release metrics.',
+  );
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+      />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates the built-in image selection state and resize handles. Clicking
+ * the rendered image selects it visually; handle drags update `{width height}`
+ * metadata in markdown.
+ */
+export const ImageResizeHandles: Story = {
+  render: ImageResizeHandlesStory,
+};
+
+function ImageSourceRevealStory() {
+  const [value, setValue] = useState(
+    '## Source Reveal\n\n![Campaign hero](/uploads/campaign-hero.png "Campaign hero"){width=520 height=292}\n\nThe campaign copy references the hero image above.',
+  );
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+      />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates the image interaction split: a normal click selects the rendered
+ * image visually, while Ctrl/Cmd-click or caret movement into the source reveals
+ * the markdown.
+ */
+export const ImageSourceReveal: Story = {
+  render: ImageSourceRevealStory,
 };
 
 // ── With Toolbar ────────────────────────────────────────────────────────────
@@ -2070,32 +2338,9 @@ export const PasteHandler: Story = {
 
 function SlowDropUploadProgressStory() {
   const [value, setValue] = useState(
-    '# Slow Drop Upload\n\nDrop one or more files into the editor. The story simulates a slow upload, reports progress, and inserts Markdown file links when it completes.',
+    '# Slow Drop Upload\n\nIncoming references are collected in this section before the closing notes.',
   );
   const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
-
-  const slowUpload = useCallback(async (input: GalleyFileInput) => {
-    const markdownItems: string[] = [];
-    const totalSteps = 8;
-
-    for (const [fileIndex, file] of input.files.entries()) {
-      for (let step = 0; step <= totalSteps; step += 1) {
-        const fileProgress = step / totalSteps;
-        const totalProgress = (fileIndex + fileProgress) / input.files.length;
-        input.report({
-          phase: 'progress',
-          progress: totalProgress,
-          message: `Uploading ${file.name} (${Math.round(fileProgress * 100)}%)`,
-        });
-        await wait(220);
-      }
-
-      markdownItems.push(`[${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`);
-    }
-
-    input.report({ phase: 'progress', progress: 1, message: 'Inserting file links' });
-    return markdownItems;
-  }, []);
 
   const latestStatus = statusRows.at(-1);
   const progress = latestStatus?.progress ?? 0;
@@ -2107,8 +2352,9 @@ function SlowDropUploadProgressStory() {
         value={value}
         onChange={setValue}
         minRows={8}
-        onFiles={slowUpload}
+        onFiles={slowImageUpload}
         onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+        uploadInteraction="inline"
         footer={{
           after: () => (
             <span>
@@ -2182,8 +2428,8 @@ function SlowDropUploadProgressStory() {
 
 /**
  * Demonstrates a slow drop upload powered by `onFiles`, `input.report()`, and
- * `onFileStatus`. The simulated upload reports progress before inserting
- * Markdown file links into the editor.
+ * the default editor-resident inline placeholder. The external status panel
+ * mirrors the same updates received by `onFileStatus`.
  */
 export const SlowDropUploadProgress: Story = {
   render: SlowDropUploadProgressStory,

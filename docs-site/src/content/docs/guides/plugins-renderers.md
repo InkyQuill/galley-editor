@@ -156,3 +156,17 @@ const fakeUpload = async (file: File) =>
 Returned strings are inserted at the paste selection or drop position. Return `false` or `null` when your app handled the files without inserting markdown.
 
 `input.report()` is the progress channel for long uploads. Galley forwards those updates to `onFileStatus` and also emits `start`, `complete`, and `error` phases around the handler call.
+
+Use an inline placeholder renderer when the progress UI should stay inside the editor document:
+
+```tsx
+<GalleyEditor
+  onFiles={uploadFiles}
+  uploadInteraction="inline"
+  uploadPlaceholderRenderer={(upload) => {
+    const element = document.createElement('div');
+    element.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
+    return element;
+  }}
+/>
+```

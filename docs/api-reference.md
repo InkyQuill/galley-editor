@@ -37,6 +37,8 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
 | `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Receives parsed image metadata including `url`, source range, and dimensions |
+| `missingImageRenderer` | `MissingImageRenderer` | `undefined` | Optional custom renderer for broken images and empty image sources |
+| `imageControlsRenderer` | `ImageControlsRenderer` | `undefined` | Reserved public renderer type for selected image controls; default resize handles are currently built in |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Show and customize the built-in command toolbar |
@@ -60,6 +62,10 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `onEscape` | `() => boolean \| void` | Escape key pressed. Return `true` to consume the event; return `false` or `void` to let it pass through |
 | `onPaste` | `(event: ClipboardEvent, view: EditorView) => void` | Paste event |
 | `onFiles` | `(input: GalleyFileInput) => string \| string[] \| null \| false \| Promise<...>` | Handles pasted or dropped files and returns markdown to insert |
+| `uploadInteraction` | `'inline' \| 'overlay' \| 'locked'` | Controls editor-resident upload UI |
+| `uploadPlaceholderRenderer` | `UploadPlaceholderRenderer` | Custom inline upload placeholder renderer |
+| `dropIndicatorRenderer` | `DropIndicatorRenderer` | Custom drag/drop insertion indicator renderer |
+| `uploadOverlayRenderer` | `UploadOverlayRenderer` | Custom aggregate upload overlay renderer |
 | `onFileError` | `(error: unknown, input: GalleyFileInput) => void` | Called when `onFiles` throws or rejects |
 | `onFileStatus` | `(status: GalleyFileStatus) => void` | Receives `start`, `progress`, `complete`, and `error` updates for file workflows |
 | `onSubmit` | `() => void` | Cmd/Ctrl+Enter pressed |
@@ -67,6 +73,17 @@ import { GalleyEditor } from '@inky/galley-editor';
 #### File Workflows
 
 When `onFiles` is provided, Galley intercepts paste/drop operations that contain files, calls the handler, and inserts returned markdown at the original paste selection or drop position.
+
+onFiles owns upload behavior; Galley owns default upload UI state and calls input.report() updates into both onFileStatus and the active placeholder renderer.
+
+```typescript
+uploadInteraction?: 'inline' | 'overlay' | 'locked';
+uploadPlaceholderRenderer?: UploadPlaceholderRenderer;
+dropIndicatorRenderer?: DropIndicatorRenderer;
+uploadOverlayRenderer?: UploadOverlayRenderer;
+missingImageRenderer?: MissingImageRenderer;
+imageControlsRenderer?: ImageControlsRenderer;
+```
 
 ```tsx
 const escapeMarkdownAlt = (value: string) =>
@@ -130,6 +147,53 @@ interface GalleyFileStatus {
 ```
 
 Galley emits `start` before calling `onFiles`, `complete` after successful markdown insertion, and `error` when the handler rejects. Returned `string[]` values are joined with newlines. Return `false` or `null` when the app handled the files without document insertion.
+
+`uploadInteraction` controls how active uploads appear:
+
+- `inline`: the default. Galley inserts an editor-resident placeholder at the paste/drop target and shows the drop indicator during drag.
+- `overlay`: Galley shows the inline placeholder/drop indicator plus an overlay while uploads are active.
+- `locked`: same overlay behavior as `overlay`, and user document edits are blocked while uploads are active. Selection, scrolling, and upload completion updates still work.
+
+Upload renderers receive the current upload state and must return an `HTMLElement` or `null`:
+
+```typescript
+type GalleyUploadInteraction = 'inline' | 'overlay' | 'locked';
+type UploadPlaceholderRenderer = (upload: GalleyUploadInfo) => HTMLElement | null;
+type DropIndicatorRenderer = (input: {
+  source: 'drag';
+  pos: number;
+  lineFrom: number;
+  lineTo: number;
+}) => HTMLElement | null;
+type UploadOverlayRenderer = (uploads: GalleyUploadInfo[]) => HTMLElement | null;
+```
+
+`uploadPlaceholderRenderer` is called again as `input.report()` changes the upload phase, progress, or message. `dropIndicatorRenderer` customizes the editor insertion marker while files are dragged over the editor. `uploadOverlayRenderer` customizes the overlay used by `overlay` and `locked` interactions.
+
+#### Image Fallbacks And Controls
+
+Markdown images render as visual widgets when inactive. An ordinary click selects the image visually and shows the built-in resize handles. Ctrl/Cmd-click, or moving the caret into the image source, reveals the raw markdown source instead. Dragging or keyboard-operating the resize handles updates `{width height}` metadata on the markdown image.
+
+When an image has an empty URL or the rendered image fires an error event, Galley replaces it with a missing-image placeholder. Use `missingImageRenderer` to override that fallback.
+
+```typescript
+interface GalleyMissingImageInfo extends GalleyImageInfo {
+  reason: 'error' | 'empty-url';
+}
+
+type MissingImageRenderer = (image: GalleyMissingImageInfo) => HTMLElement | null;
+
+type ImageControlsRenderer = (input: {
+  image: GalleyImageInfo;
+  selected: boolean;
+  resizing: boolean;
+  update(metadata: GalleyImageMetadataInput): void;
+  clearDimensions(): void;
+  revealSource(): void;
+}) => HTMLElement | null;
+```
+
+`imageControlsRenderer` is exported as a public planned extension point for selected image controls. In the current implementation, selected image controls are the built-in resize handles; custom control UI should use `imageRenderer` plus the image metadata commands.
 
 ### `ErrorBoundary`
 
@@ -313,11 +377,13 @@ interface GalleyRenderContext {
   mode?: GalleyMode;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
+  missingImageRenderer?: MissingImageRenderer;
+  imageControlsRenderer?: ImageControlsRenderer;
   onLinkClick?: LinkClickHandler;
 }
 ```
 
-Built-in plugins use this to adapt rendering for preview mode, custom code highlighting, image widgets, and link activation. Third-party plugins can ignore the second argument.
+Built-in plugins use this to adapt rendering for preview mode, custom code highlighting, image widgets, missing-image fallbacks, and link activation. Third-party plugins can ignore the second argument.
 
 ### `GalleyMode`
 

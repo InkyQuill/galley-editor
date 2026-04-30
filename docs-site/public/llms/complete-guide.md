@@ -260,4 +260,16 @@ async function handleFiles(input: GalleyFileInput) {
 />;
 ```
 
-`onFiles` handles both paste and drop. Galley prevents default file handling, preserves the original selection while the promise resolves, and inserts the returned Markdown when the handler completes. Track upload status in app state and surface it through `footer.after`, `toolbar.after`, or surrounding UI. Resolve uploaded asset IDs or signed URLs in `imageRenderer`.
+`onFiles` handles both paste and drop. Galley prevents default file handling, preserves the original selection while the promise resolves, and inserts the returned Markdown when the handler completes. Track upload status in app state when needed, or render editor-resident progress with the default inline placeholder or `uploadPlaceholderRenderer`. Resolve uploaded asset IDs or signed URLs in `imageRenderer`.
+
+```tsx
+<GalleyEditor
+  onFiles={uploadFiles}
+  uploadInteraction="inline"
+  uploadPlaceholderRenderer={(upload) => {
+    const element = document.createElement('div');
+    element.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
+    return element;
+  }}
+/>
+```

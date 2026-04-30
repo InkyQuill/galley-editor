@@ -478,3 +478,17 @@ export function EditorWithUploads() {
 ```
 
 `onFiles` handles both paste and drop. Galley prevents the browser's default file handling, preserves the original selection while the promise resolves, and inserts the returned Markdown when the handler completes. If your upload handler stores IDs or signed URLs outside Markdown, keep that registry in app state and use `imageRenderer` to resolve Markdown URLs into your asset records.
+
+Use `uploadInteraction="inline"` and `uploadPlaceholderRenderer` when progress should live at the paste or drop location:
+
+```tsx
+<GalleyEditor
+  onFiles={uploadFiles}
+  uploadInteraction="inline"
+  uploadPlaceholderRenderer={(upload) => {
+    const element = document.createElement('div');
+    element.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
+    return element;
+  }}
+/>
+```

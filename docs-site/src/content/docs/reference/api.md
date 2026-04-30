@@ -45,6 +45,11 @@ import { GalleyEditor } from '@inky/galley-editor';
 | --- | --- |
 | `codeHighlighter` | Optional highlighter for inactive fenced code block widgets. |
 | `imageRenderer` | Optional renderer for Markdown image widgets. |
+| `missingImageRenderer` | Optional renderer for unavailable Markdown images, including broken and empty sources. |
+| `imageControlsRenderer` | Reserved public renderer type for selected image controls; default resize handles are currently built in. |
+| `uploadPlaceholderRenderer` | Optional inline upload placeholder renderer. |
+| `dropIndicatorRenderer` | Optional drag/drop insertion indicator renderer. |
+| `uploadOverlayRenderer` | Optional aggregate upload overlay renderer. |
 | `onLinkClick` | Intercepts Cmd/Ctrl-click link activation. |
 
 ## Event Props
@@ -59,6 +64,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `onEscape` | Escape key hook. Return `true` to consume. |
 | `onPaste` | Clipboard paste hook. |
 | `onFiles` | Handles pasted or dropped files and returns markdown to insert. |
+| `uploadInteraction` | Upload UI mode: `'inline'`, `'overlay'`, or `'locked'`. |
 | `onFileError` | Receives errors thrown or rejected by `onFiles`. |
 | `onFileStatus` | Receives file workflow `start`, `progress`, `complete`, and `error` status updates. |
 | `onSubmit` | Cmd/Ctrl+Enter hook. |
@@ -96,11 +102,51 @@ interface GalleyFileStatus {
   source: GalleyFileSource;
   selection: { from: number; to: number; anchor: number; head: number };
 }
+
+interface GalleyUploadInfo {
+  id: string;
+  files: File[];
+  source: GalleyFileSource;
+  selection: { from: number; to: number; anchor: number; head: number };
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+}
+
+type GalleyUploadInteraction = 'inline' | 'overlay' | 'locked';
+type UploadPlaceholderRenderer = (upload: GalleyUploadInfo) => HTMLElement | null;
+type DropIndicatorRenderer = (input: {
+  source: 'drag';
+  pos: number;
+  lineFrom: number;
+  lineTo: number;
+}) => HTMLElement | null;
+type UploadOverlayRenderer = (uploads: GalleyUploadInfo[]) => HTMLElement | null;
 ```
 
 `onFiles(input)` may return a markdown string, an array of markdown strings, `false`, `null`, or a promise of those values. Arrays are joined with newlines and inserted at the original paste selection or drop position.
 
 Use `input.report()` for upload progress. Galley forwards those updates to `onFileStatus(status)` and emits `start`, `complete`, and `error` phases around the handler. `onFileError(error, input)` runs when the handler throws or rejects.
+
+onFiles owns upload behavior; Galley owns default upload UI state and calls input.report() updates into both onFileStatus and the active placeholder renderer.
+
+```ts
+uploadInteraction?: 'inline' | 'overlay' | 'locked';
+uploadPlaceholderRenderer?: UploadPlaceholderRenderer;
+dropIndicatorRenderer?: DropIndicatorRenderer;
+uploadOverlayRenderer?: UploadOverlayRenderer;
+missingImageRenderer?: MissingImageRenderer;
+imageControlsRenderer?: ImageControlsRenderer;
+```
+
+`uploadInteraction` controls how active uploads appear:
+
+- `inline`: the default editor placeholder and drag/drop insertion indicator.
+- `overlay`: inline upload UI plus an overlay while uploads are active.
+- `locked`: overlay behavior plus blocked user document edits while uploads are active.
+
+`uploadPlaceholderRenderer` is called with each reported upload state, so progress from `input.report()` can render inside the editor. `dropIndicatorRenderer` replaces the default drop indicator. `uploadOverlayRenderer` replaces the overlay used by `overlay` and `locked` modes.
 
 ```tsx
 const escapeMarkdownAlt = (value: string) =>
@@ -135,6 +181,21 @@ interface GalleyImageInfo {
 }
 
 type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
+
+interface GalleyMissingImageInfo extends GalleyImageInfo {
+  reason: 'error' | 'empty-url';
+}
+
+type MissingImageRenderer = (image: GalleyMissingImageInfo) => HTMLElement | null;
+
+type ImageControlsRenderer = (input: {
+  image: GalleyImageInfo;
+  selected: boolean;
+  resizing: boolean;
+  update(metadata: GalleyImageMetadataInput): void;
+  clearDimensions(): void;
+  revealSource(): void;
+}) => HTMLElement | null;
 ```
 
 Image metadata uses this markdown syntax:
@@ -144,6 +205,10 @@ Image metadata uses this markdown syntax:
 ```
 
 `imageRenderer` receives `url` rather than `src`, plus source positions (`from`, `to`) so custom widgets can select the image and call metadata commands.
+
+By default, an ordinary click selects an image visually and shows resize handles. Ctrl/Cmd-click, or moving the caret into the image source, reveals the markdown source. Resize handles update `{width height}` metadata on the markdown image.
+
+When a rendered image fails to load, or when an image has an empty source, Galley shows a missing-image placeholder. Use `missingImageRenderer` to override that fallback. `imageControlsRenderer` is exported as a public planned extension point for selected image controls; in the current implementation the selected controls are the built-in resize handles.
 
 ## Imperative Handle
 
