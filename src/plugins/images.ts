@@ -1,7 +1,11 @@
 import { WidgetType } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import { makeInlinePlugin } from '../rendering';
-import { imageTrailingAttrsLength, parseImageMarkdown } from '../image-markdown';
+import {
+  imageRangeIntersectsSelection,
+  imageTrailingAttrsLength,
+  parseImageMarkdown,
+} from '../image-markdown';
 import type {
   ImageRenderer,
   GalleyImageInfo,
@@ -59,10 +63,6 @@ class ImageWidget extends WidgetType {
   }
 }
 
-function selectionIntersects(from: number, to: number, state: EditorState): boolean {
-  return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
-}
-
 function imageRangeTo(state: EditorState, to: number): number {
   return to + imageTrailingAttrsLength(state, to);
 }
@@ -96,7 +96,7 @@ const imagesPlugin: GalleyPlugin = {
         return { from: node.from, to: imageRangeTo(state, node.to) };
       },
       getRevealStrategy: (node, state) =>
-        preview ? false : selectionIntersects(node.from, imageRangeTo(state, node.to), state),
+        preview ? false : imageRangeIntersectsSelection(state, node.from, imageRangeTo(state, node.to)),
     });
 
     return [widgetExt];

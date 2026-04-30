@@ -86,6 +86,33 @@ describe('imagesPlugin', () => {
     expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png)');
   });
 
+  it('keeps the first adjacent image widget when the cursor is at the second image start', () => {
+    const renderer = vi.fn((imageInfo: GalleyImageInfo) => {
+      const image = document.createElement('img');
+      image.alt = imageInfo.alt;
+      image.src = imageInfo.url;
+      return image;
+    });
+    const first = '![a](a){width=1}';
+    const second = '![b](b)';
+    const doc = `${first}${second}`;
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(first.length),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: renderer,
+      }),
+    });
+    views.push(view);
+
+    const images = [...view.dom.querySelectorAll('.ge-image-widget img')];
+    expect(images).toHaveLength(1);
+    expect(images[0]?.getAttribute('alt')).toBe('a');
+    expect(lineElement(view, 1).textContent).toContain(second);
+    expect(lineElement(view, 1).textContent).not.toContain(first);
+  });
+
   it('keeps image widgets in preview mode when the cursor is inside image syntax', () => {
     const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({

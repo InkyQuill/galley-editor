@@ -193,6 +193,34 @@ describe('imageAtSelection', () => {
     });
   });
 
+  it('returns an image when the cursor is at image end before a newline', () => {
+    const raw = '![a](a)';
+    const doc = `${raw}\ntext`;
+    const state = createMarkdownState(doc, EditorSelection.cursor(raw.length));
+
+    expect(imageAtSelection(state)).toEqual({
+      alt: 'a',
+      url: 'a',
+      raw,
+      from: 0,
+      to: raw.length,
+    });
+  });
+
+  it('returns an image when the cursor is at image end before whitespace', () => {
+    const raw = '![a](a)';
+    const doc = `${raw} text`;
+    const state = createMarkdownState(doc, EditorSelection.cursor(raw.length));
+
+    expect(imageAtSelection(state)).toEqual({
+      alt: 'a',
+      url: 'a',
+      raw,
+      from: 0,
+      to: raw.length,
+    });
+  });
+
   it('skips an image when a non-empty selection only touches its endpoint', () => {
     const first = '![a](a){width=1}';
     const second = '![b](b)';

@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language';
-import type { EditorState } from '@codemirror/state';
+import type { EditorState, SelectionRange } from '@codemirror/state';
 import type { GalleyImageInfo, GalleyImageMetadataInput } from './types';
 
 interface ParsedAttrs {
@@ -85,20 +85,37 @@ export function imageTrailingAttrsLength(state: EditorState, to: number): number
   return afterImage.match(/^\{[^}\n]*\}/)?.[0].length ?? 0;
 }
 
-function selectionIntersectsRange(
-  selection: EditorState['selection']['main'],
+function imageEndIsSelectable(state: EditorState, to: number): boolean {
+  const line = state.doc.lineAt(to);
+  if (to === line.to) return true;
+
+  return /\s/.test(state.sliceDoc(to, Math.min(to + 1, state.doc.length)));
+}
+
+function selectionRangeIntersectsImage(
+  state: EditorState,
+  selection: SelectionRange,
   from: number,
   to: number,
-  docLength: number,
 ): boolean {
   if (selection.empty) {
     return selection.head >= from && (
       selection.head < to ||
-      (selection.head === to && to === docLength)
+      (selection.head === to && imageEndIsSelectable(state, to))
     );
   }
 
   return selection.from < to && selection.to > from;
+}
+
+export function imageRangeIntersectsSelection(
+  state: EditorState,
+  from: number,
+  to: number,
+): boolean {
+  return state.selection.ranges.some((range) =>
+    selectionRangeIntersectsImage(state, range, from, to),
+  );
 }
 
 export function parseImageMarkdown(
@@ -157,7 +174,7 @@ export function imageAtSelection(state: EditorState): GalleyImageInfo | null {
       if (node.name !== 'Image') return;
 
       const to = node.to + imageTrailingAttrsLength(state, node.to);
-      if (!selectionIntersectsRange(selection, node.from, to, state.doc.length)) return false;
+      if (!selectionRangeIntersectsImage(state, selection, node.from, to)) return false;
 
       found = parseImageMarkdown(state.sliceDoc(node.from, to), node.from, to);
       return false;
