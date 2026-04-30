@@ -64,7 +64,13 @@ describe('imagesPlugin', () => {
     const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Galley logo');
-    expect(renderer).toHaveBeenCalledWith({ alt: 'Galley logo', url: dataUrl });
+    expect(renderer).toHaveBeenCalledWith(expect.objectContaining({
+      alt: 'Galley logo',
+      url: dataUrl,
+      raw: `![Galley logo](${dataUrl})`,
+      from: 0,
+      to: `![Galley logo](${dataUrl})`.length,
+    }));
   });
 
   it('shows raw image markdown when the cursor is inside the image syntax', () => {

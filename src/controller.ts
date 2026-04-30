@@ -291,20 +291,24 @@ export class EditorController implements GalleyHandle {
         },
         paste: (e, view) => {
           const files = this.filesFromDataTransfer(e.clipboardData);
-          if (files.length > 0 && this.callbacks.onFiles) {
+          if (this.canEditDocument() && files.length > 0 && this.callbacks.onFiles) {
             e.preventDefault();
             void this.handleFiles(files, 'paste', e);
           }
           this.callbacks.onPaste?.(e, view);
         },
         dragover: (e) => {
-          if (this.callbacks.onFiles && this.hasFileData(e.dataTransfer)) {
+          if (
+            this.canEditDocument() &&
+            this.callbacks.onFiles &&
+            this.hasFileData(e.dataTransfer)
+          ) {
             e.preventDefault();
           }
         },
         drop: (e) => {
           const files = this.filesFromDataTransfer(e.dataTransfer);
-          if (!this.callbacks.onFiles || files.length === 0) return;
+          if (!this.canEditDocument() || !this.callbacks.onFiles || files.length === 0) return;
           e.preventDefault();
           const pos = this.view.posAtCoords({ x: e.clientX, y: e.clientY });
           const insertAt = pos ?? this.view.state.selection.main.from;
@@ -312,6 +316,10 @@ export class EditorController implements GalleyHandle {
         },
       }),
     ];
+  }
+
+  private canEditDocument(): boolean {
+    return this.settings.editable && this.settings.mode !== 'preview';
   }
 
   private getSelectionInfo() {
@@ -344,6 +352,7 @@ export class EditorController implements GalleyHandle {
   }
 
   private insertFileHandlerMarkdown(markdown: string | string[], from: number, to: number): void {
+    if (!this.canEditDocument()) return;
     const text = Array.isArray(markdown) ? markdown.join('\n') : markdown;
     if (!text) return;
     this.view.dispatch({
@@ -367,13 +376,17 @@ export class EditorController implements GalleyHandle {
     const id = `galley-file-${++this.fileOperationSeq}`;
     const selection = this.getSelectionInfo();
     const report: GalleyFileReporter = (update) => {
-      this.callbacks.onFileStatus?.({
-        id,
-        files,
-        source,
-        selection,
-        ...update,
-      });
+      try {
+        this.callbacks.onFileStatus?.({
+          id,
+          files,
+          source,
+          selection,
+          ...update,
+        });
+      } catch (error) {
+        console.error('Galley file status handler failed', error);
+      }
     };
 
     const input: GalleyFileInput = {

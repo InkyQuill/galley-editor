@@ -424,6 +424,55 @@ describe('EditorController runtime state', () => {
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
   });
 
+  it('does not process pasted files when editable=false', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks, { editable: false });
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('does not process pasted files in preview mode', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks, { mode: 'preview' });
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('does not mutate when async paste resolves after editable becomes false', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    let resolveUpload!: (markdown: string) => void;
+    const upload = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const onFiles = vi.fn(() => upload);
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    controller.updateSettings(defaultSettings({ editable: false }));
+    resolveUpload('![upload](uploaded.png)');
+    await upload;
+    await nextMicrotask();
+
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
   it('emits paste file status from start through consumer progress to complete', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     const statuses: GalleyFileStatus[] = [];
@@ -464,6 +513,35 @@ describe('EditorController runtime state', () => {
         progress: 1,
       }),
     ]);
+  });
+
+  it('does not fail upload when file status callback throws', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const statusError = new Error('status failed');
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const onFileError = vi.fn();
+    const callbacks = {
+      onFiles,
+      onFileError,
+      onFileStatus: vi.fn(() => {
+        throw statusError;
+      }),
+    };
+    const controller = createController('before ', callbacks);
+
+    try {
+      const event = pasteEvent(fileDataTransfer(file));
+      controller.view.contentDOM.dispatchEvent(event);
+      await nextMicrotask();
+
+      expect(onFiles).toHaveBeenCalledOnce();
+      expect(onFileError).not.toHaveBeenCalled();
+      expect(controller.getContent()).toContain('![upload](uploaded.png)');
+      expect(consoleError).toHaveBeenCalledWith('Galley file status handler failed', statusError);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('maps async paste insertion through document changes before handler resolution', async () => {
@@ -582,6 +660,34 @@ describe('EditorController runtime state', () => {
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
   });
 
+  it('does not process dropped files when editable=false', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks, { editable: false });
+
+    const event = dropEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('does not process dropped files in preview mode', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks, { mode: 'preview' });
+
+    const event = dropEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
   it('allows file dragover when files are only advertised in data transfer types', () => {
     const onFiles = vi.fn(() => '![upload](uploaded.png)');
     const callbacks = { onFiles };
@@ -591,6 +697,30 @@ describe('EditorController runtime state', () => {
     controller.view.contentDOM.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).not.toHaveBeenCalled();
+  });
+
+  it('does not allow file dragover when editable=false', () => {
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks, { editable: false });
+
+    const event = dragoverEvent(fileIntentDataTransfer());
+    controller.view.contentDOM.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(onFiles).not.toHaveBeenCalled();
+  });
+
+  it('does not allow file dragover in preview mode', () => {
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks, { mode: 'preview' });
+
+    const event = dragoverEvent(fileIntentDataTransfer());
+    controller.view.contentDOM.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
     expect(onFiles).not.toHaveBeenCalled();
   });
 
