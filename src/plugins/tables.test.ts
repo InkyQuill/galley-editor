@@ -130,6 +130,7 @@ describe('tablesPlugin', () => {
 
   it.each([
     ['http://example.com'],
+    ['https://example.com'],
     ['mailto:test@example.com'],
     ['/docs'],
     ['./page'],
@@ -147,6 +148,8 @@ describe('tablesPlugin', () => {
     ['java\nscript:alert(1)'],
     ['data:text/html,<svg>'],
     ['DaTa:text/html,<svg>'],
+    ['da\tta:text/html,<svg>'],
+    ['da\nta:text/html,<svg>'],
   ])('rejects unsafe table cell href %s', (href) => {
     expect(safeTableCellHref(href)).toBeNull();
   });
