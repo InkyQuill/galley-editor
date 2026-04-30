@@ -1,83 +1,127 @@
-import { type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
-import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
-import { BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
+import {
+  EditorSelection,
+  StateEffect,
+  StateField,
+  type EditorState,
+  type Range,
+} from '@codemirror/state';
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  ViewPlugin,
+  WidgetType,
+} from '@codemirror/view';
+import {
+  commitTableCell,
+  deleteTableColumn,
+  deleteTableRow,
+  insertTableColumnAfter,
+  insertTableColumnBefore,
+  insertTableRowAfter,
+  insertTableRowBefore,
+  revealTableSource,
+  setTableColumnAlignment,
+} from '../commands/tableEditing';
+import {
+  cellKey,
+  parseMarkdownTable,
+  tableCell,
+  tableCellAtPosition,
+  tableNavigationCell,
+  type GalleyTable,
+  type GalleyTableCell,
+  type TableCellRef,
+} from '../table-markdown';
 import type { GalleyPlugin, GalleyClassNames } from '../types';
 
-type Alignment = 'left' | 'center' | 'right' | null;
-
-interface ParsedTable {
-  headers: string[];
-  alignments: Alignment[];
-  rows: string[][];
+interface SelectedTableCell {
+  tableFrom: number;
+  tableTo: number;
+  cell: TableCellRef;
+  editing: boolean;
+  draft: string | null;
 }
 
-function splitRow(line: string): string[] {
-  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
-  return trimmed.split('|').map((cell) => cell.trim());
-}
+type TableCommand = (view: EditorView) => boolean;
 
-function parseAlignment(cell: string): Alignment {
-  const normalized = cell.trim();
-  if (!/^:?-{1,}:?$/.test(normalized)) return null;
-  const left = normalized.startsWith(':');
-  const right = normalized.endsWith(':');
-  if (left && right) return 'center';
-  if (right) return 'right';
-  if (left) return 'left';
-  return null;
-}
+const selectTableCell = StateEffect.define<SelectedTableCell | null>({
+  map(value, changes) {
+    if (!value) return null;
 
-function parseTable(raw: string): ParsedTable | null {
-  const lines = raw.split('\n').filter((line) => line.trim().length > 0);
-  if (lines.length < 2) return null;
+    const tableFrom = changes.mapPos(value.tableFrom, 1);
+    const tableTo = changes.mapPos(value.tableTo, -1);
+    return tableFrom < tableTo ? { ...value, tableFrom, tableTo } : null;
+  },
+});
 
-  const headers = splitRow(lines[0]);
-  const separator = splitRow(lines[1]);
-  if (headers.length === 0 || separator.length === 0) return null;
-  if (!separator.every((cell) => /^:?-{1,}:?$/.test(cell.trim()))) return null;
+const selectedTableCellField = StateField.define<SelectedTableCell | null>({
+  create() {
+    return null;
+  },
+  update(value, transaction) {
+    let next = value;
+    if (next && transaction.docChanged) {
+      const tableFrom = transaction.changes.mapPos(next.tableFrom, 1);
+      const tableTo = transaction.changes.mapPos(next.tableTo, -1);
+      next = tableFrom < tableTo ? { ...next, tableFrom, tableTo } : null;
+    }
 
-  return {
-    headers,
-    alignments: headers.map((_header, index) => parseAlignment(separator[index] ?? '')),
-    rows: lines.slice(2).map(splitRow),
-  };
-}
+    let hasSelectionEffect = false;
+    for (const effect of transaction.effects) {
+      if (effect.is(selectTableCell)) {
+        hasSelectionEffect = true;
+        next = effect.value;
+      }
+    }
 
-function appendCell(
-  row: HTMLTableRowElement,
-  tagName: 'th' | 'td',
-  value: string,
-  alignment: Alignment,
-): void {
-  const cell = document.createElement(tagName);
-  cell.textContent = value;
-  if (alignment) {
-    cell.classList.add(`ge-align-${alignment}`);
-  }
-  row.append(cell);
-}
+    if (transaction.selection && !hasSelectionEffect) return null;
+    return next;
+  },
+});
 
 class TableWidget extends WidgetType {
-  private readonly table: ParsedTable;
-  private readonly tableClass: string;
+  table: GalleyTable;
+  tableClass: string;
+  selected: SelectedTableCell | null;
+  canEdit: boolean;
+  preview: boolean;
 
   constructor(
-    table: ParsedTable,
+    table: GalleyTable,
     tableClass: string,
+    selected: SelectedTableCell | null,
+    canEdit: boolean,
+    preview: boolean,
   ) {
     super();
     this.table = table;
     this.tableClass = tableClass;
+    this.selected = selected;
+    this.canEdit = canEdit;
+    this.preview = preview;
   }
 
   eq(other: TableWidget): boolean {
-    return JSON.stringify(other.table) === JSON.stringify(this.table);
+    return other.table.from === this.table.from &&
+      other.table.to === this.table.to &&
+      other.table.columnCount === this.table.columnCount &&
+      other.tableClass === this.tableClass &&
+      other.canEdit === this.canEdit &&
+      other.preview === this.preview &&
+      JSON.stringify(other.table.rows) === JSON.stringify(this.table.rows) &&
+      other.table.alignments.join('\0') === this.table.alignments.join('\0') &&
+      selectedTableCellKey(other.selected) === selectedTableCellKey(this.selected);
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement('div');
     wrapper.className = `ge-table-widget ${this.tableClass}`;
+
+    if (this.shouldRenderControls(view)) {
+      wrapper.append(this.createControls(view));
+    }
 
     const scroll = document.createElement('div');
     scroll.className = 'ge-table-scroll';
@@ -87,58 +131,369 @@ class TableWidget extends WidgetType {
 
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    this.table.headers.forEach((header, index) => {
-      appendCell(headerRow, 'th', header, this.table.alignments[index] ?? null);
-    });
+    for (const headerCell of this.table.rows[0] ?? []) {
+      headerRow.append(this.createCell('th', headerCell, view));
+    }
     thead.append(headerRow);
 
     const tbody = document.createElement('tbody');
-    this.table.rows.forEach((row) => {
+    for (const row of this.table.rows.slice(1)) {
       const tr = document.createElement('tr');
-      this.table.headers.forEach((_header, index) => {
-        appendCell(tr, 'td', row[index] ?? '', this.table.alignments[index] ?? null);
-      });
+      for (const bodyCell of row) {
+        tr.append(this.createCell('td', bodyCell, view));
+      }
       tbody.append(tr);
-    });
+    }
 
     table.append(thead, tbody);
     scroll.append(table);
     wrapper.append(scroll);
     return wrapper;
   }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+
+  private createCell(
+    tagName: 'th' | 'td',
+    tableCellInfo: GalleyTableCell,
+    view: EditorView,
+  ): HTMLTableCellElement {
+    const cell = document.createElement(tagName);
+    const key = cellKey(tableCellInfo);
+    cell.dataset.geTableCell = key;
+
+    const alignment = this.table.alignments[tableCellInfo.column] ?? null;
+    if (alignment) cell.classList.add(`ge-align-${alignment}`);
+
+    if (selectedCellMatches(this.selected, this.table, tableCellInfo)) {
+      cell.classList.add('ge-table-cell-selected');
+      if (this.selected?.editing) {
+        cell.append(this.createEditor(view, tableCellInfo));
+      } else {
+        cell.textContent = tableCellInfo.text;
+      }
+    } else {
+      cell.textContent = tableCellInfo.text;
+    }
+
+    this.attachCellSelectionHandler(cell, tableCellInfo, view);
+    return cell;
+  }
+
+  private createEditor(view: EditorView, tableCellInfo: GalleyTableCell): HTMLInputElement {
+    const input = document.createElement('input');
+    input.className = 'ge-table-cell-editor';
+    input.value = this.selected?.draft ?? tableCellInfo.text;
+
+    input.addEventListener('input', () => {
+      this.updateDraft(view, input.value);
+    });
+    input.addEventListener('keydown', (event) => {
+      this.handleEditorKeydown(event, input, view);
+    });
+    input.addEventListener('paste', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      input.value = event.clipboardData?.getData('text/plain') ?? '';
+      this.updateDraft(view, input.value);
+    });
+
+    queueMicrotask(() => {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+    return input;
+  }
+
+  private attachCellSelectionHandler(
+    cell: HTMLTableCellElement,
+    tableCellInfo: GalleyTableCell,
+    view: EditorView,
+  ): void {
+    if (!this.canEdit || this.preview || view.state.readOnly) return;
+
+    cell.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const selection = selectedCellFor(this.table, tableCellInfo, false, null);
+      if (event.ctrlKey || event.metaKey) {
+        view.dispatch({
+          selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
+          effects: selectTableCell.of(null),
+        });
+        revealTableSource(view, tableCellInfo);
+        return;
+      }
+
+      view.dispatch({
+        selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
+        effects: selectTableCell.of(selection),
+      });
+    });
+  }
+
+  private handleEditorKeydown(
+    event: KeyboardEvent,
+    input: HTMLInputElement,
+    view: EditorView,
+  ): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.cancelEditing(view);
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.commitAndMove(view, input.value, 'down');
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.commitAndMove(view, input.value, event.shiftKey ? 'left' : 'right');
+      return;
+    }
+
+    const direction = arrowNavigationDirection(event, input);
+    if (!direction) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.commitAndMove(view, input.value, direction);
+  }
+
+  private updateDraft(view: EditorView, draft: string): void {
+    if (!this.selected) return;
+
+    view.dispatch({
+      effects: selectTableCell.of({
+        ...this.selected,
+        editing: true,
+        draft,
+      }),
+    });
+  }
+
+  private cancelEditing(view: EditorView): void {
+    if (!this.selected) return;
+
+    view.dispatch({
+      effects: selectTableCell.of({
+        ...this.selected,
+        editing: false,
+        draft: null,
+      }),
+    });
+  }
+
+  private commitAndMove(
+    view: EditorView,
+    draft: string,
+    direction: 'left' | 'right' | 'up' | 'down',
+  ): void {
+    if (!this.selected) return;
+
+    const nextRef = tableNavigationCell(this.table, this.selected.cell, direction);
+    if (!commitTableCell(view, this.selected.cell, draft)) return;
+
+    const nextTable = parseMarkdownTable(
+      view.state.sliceDoc(this.table.from, mappedTableTo(view.state, this.table.from)),
+      this.table.from,
+    );
+    const selectedTable = nextTable ?? this.table;
+    const cell = tableCell(selectedTable, nextRef);
+    if (!cell) return;
+
+    view.dispatch({
+      selection: EditorSelection.cursor(cell.sourceFrom),
+      effects: selectTableCell.of(selectedCellFor(selectedTable, cell, false, null)),
+    });
+  }
+
+  private shouldRenderControls(view: EditorView): boolean {
+    return this.selected !== null && this.canEdit && !this.preview && !view.state.readOnly;
+  }
+
+  private createControls(view: EditorView): HTMLElement {
+    const controls = document.createElement('div');
+    controls.className = 'ge-table-controls';
+    controls.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    const buttons: Array<{ label: string; text: string; reveal?: boolean; run: TableCommand }> = [
+      { label: 'Add row before', text: '+R^', run: insertTableRowBefore },
+      { label: 'Add row after', text: '+R', run: insertTableRowAfter },
+      { label: 'Add column before', text: '+C<', run: insertTableColumnBefore },
+      { label: 'Add column after', text: '+C>', run: insertTableColumnAfter },
+      { label: 'Delete row', text: '-R', run: deleteTableRow },
+      { label: 'Delete column', text: '-C', run: deleteTableColumn },
+      { label: 'Align column left', text: 'L', run: (editorView) => setTableColumnAlignment(editorView, 'left') },
+      { label: 'Align column center', text: 'C', run: (editorView) => setTableColumnAlignment(editorView, 'center') },
+      { label: 'Align column right', text: 'R', run: (editorView) => setTableColumnAlignment(editorView, 'right') },
+      { label: 'Clear column alignment', text: 'x', run: (editorView) => setTableColumnAlignment(editorView, null) },
+      {
+        label: 'Edit table source',
+        text: '{}',
+        reveal: true,
+        run: (editorView) => revealTableSource(editorView, this.selected?.cell),
+      },
+    ];
+
+    for (const buttonInfo of buttons) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.ariaLabel = buttonInfo.label;
+      button.textContent = buttonInfo.text;
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const changed = buttonInfo.run(view);
+        if (changed && !buttonInfo.reveal) {
+          selectCellAtCurrentTableSelection(view);
+        }
+      });
+      controls.append(button);
+    }
+
+    return controls;
+  }
+}
+
+function selectedTableCellKey(selected: SelectedTableCell | null): string {
+  if (!selected) return '';
+  return [
+    selected.tableFrom,
+    selected.tableTo,
+    selected.cell.row,
+    selected.cell.column,
+    selected.editing ? 'editing' : 'selected',
+    selected.draft ?? '',
+  ].join(':');
+}
+
+function selectedCellFor(
+  table: GalleyTable,
+  cell: GalleyTableCell,
+  editing: boolean,
+  draft: string | null,
+): SelectedTableCell {
+  return {
+    tableFrom: table.from,
+    tableTo: table.to,
+    cell: { row: cell.row, column: cell.column },
+    editing,
+    draft,
+  };
+}
+
+function selectedCellMatches(
+  selected: SelectedTableCell | null,
+  table: GalleyTable,
+  cell: GalleyTableCell,
+): boolean {
+  return selected?.tableFrom === table.from &&
+    selected.tableTo === table.to &&
+    selected.cell.row === cell.row &&
+    selected.cell.column === cell.column;
+}
+
+function tableSelectionIntersects(state: EditorState, table: GalleyTable): boolean {
+  return state.selection.ranges.some((range) => {
+    if (range.empty) return range.head >= table.from && range.head < table.to;
+    return range.from < table.to && range.to > table.from;
+  });
+}
+
+function selectedTableMatchesTable(selected: SelectedTableCell | null, table: GalleyTable): boolean {
+  return selected?.tableFrom === table.from && selected.tableTo === table.to;
+}
+
+function selectCellAtCurrentTableSelection(view: EditorView): void {
+  const head = view.state.selection.main.head;
+  let selectedTable: GalleyTable | null = null;
+
+  syntaxTree(view.state).iterate({
+    enter(node) {
+      if (selectedTable) return false;
+      if (node.name !== 'Table') return;
+      if (head < node.from || head >= node.to) return;
+
+      selectedTable = parseMarkdownTable(view.state.sliceDoc(node.from, node.to), node.from);
+      return false;
+    },
+  });
+
+  if (!selectedTable) return;
+
+  const cell = tableCellAtPosition(selectedTable, head);
+  view.dispatch({
+    selection: EditorSelection.cursor(cell.sourceFrom),
+    effects: selectTableCell.of(selectedCellFor(selectedTable, cell, false, null)),
+  });
+}
+
+function arrowNavigationDirection(
+  event: KeyboardEvent,
+  input: HTMLInputElement,
+): 'left' | 'right' | 'up' | 'down' | null {
+  const start = input.selectionStart ?? 0;
+  const end = input.selectionEnd ?? start;
+  const atStart = start === 0 && end === 0;
+  const atEnd = start === input.value.length && end === input.value.length;
+
+  if (event.key === 'ArrowLeft' && atStart) return 'left';
+  if (event.key === 'ArrowUp' && atStart) return 'up';
+  if (event.key === 'ArrowRight' && atEnd) return 'right';
+  if (event.key === 'ArrowDown' && atEnd) return 'down';
+  return null;
+}
+
+function mappedTableTo(state: EditorState, tableFrom: number): number {
+  let tableTo = tableFrom;
+  syntaxTree(state).iterate({
+    enter(node) {
+      if (node.name !== 'Table') return;
+      if (node.from !== tableFrom) return;
+      tableTo = node.to;
+      return false;
+    },
+  });
+  return tableTo;
 }
 
 function buildTableDecorations(
   state: EditorState,
   tableClass: string,
   preview: boolean,
+  canEdit: boolean,
 ): DecorationSet {
-  const doc = state.doc;
-  const cursorLine = doc.lineAt(state.selection.main.anchor);
   const widgets: Range<Decoration>[] = [];
+  const selectedCell = state.field(selectedTableCellField);
 
   syntaxTree(state).iterate({
-    enter: (node) => {
+    enter(node) {
       if (node.name !== 'Table') return;
 
-      const nodeLineFrom = doc.lineAt(node.from);
-      const nodeLineTo = doc.lineAt(node.to);
-      const isNear =
-        Math.abs(nodeLineFrom.number - cursorLine.number) <= BLOCK_CURSOR_LINE_PROXIMITY ||
-        Math.abs(nodeLineTo.number - cursorLine.number) <= BLOCK_CURSOR_LINE_PROXIMITY;
-      const sel = state.selection.main;
-      const isInside =
-        (sel.from >= node.from && sel.from <= node.to) ||
-        (sel.to >= node.from && sel.to <= node.to);
+      const table = parseMarkdownTable(state.sliceDoc(node.from, node.to), node.from);
+      if (!table) return;
 
-      if (!preview && (isNear || isInside)) return;
-
-      const parsed = parseTable(state.sliceDoc(node.from, node.to));
-      if (!parsed) return;
+      const selectedForTable = selectedTableMatchesTable(selectedCell, table) ? selectedCell : null;
+      if (canEdit && !preview && tableSelectionIntersects(state, table) && !selectedForTable) {
+        return;
+      }
 
       widgets.push(
         Decoration.replace({
-          widget: new TableWidget(parsed, tableClass),
+          widget: new TableWidget(table, tableClass, selectedForTable, canEdit, preview),
           block: true,
         }).range(node.from, node.to),
       );
@@ -148,29 +503,88 @@ function buildTableDecorations(
   return Decoration.set(widgets, true);
 }
 
+function makeTableDecorationsField(
+  tableClass: string,
+  preview: boolean,
+  canEdit: boolean,
+) {
+  return StateField.define<DecorationSet>({
+    create(state) {
+      return buildTableDecorations(state, tableClass, preview, canEdit);
+    },
+    update(decorations, transaction) {
+      const selectedChanged =
+        transaction.startState.field(selectedTableCellField) !==
+        transaction.state.field(selectedTableCellField);
+      const selectionChanged = !transaction.newSelection.eq(transaction.startState.selection);
+      const treeChanged = syntaxTree(transaction.state) !== syntaxTree(transaction.startState);
+
+      if (transaction.docChanged || selectionChanged || selectedChanged || treeChanged) {
+        return buildTableDecorations(transaction.state, tableClass, preview, canEdit);
+      }
+
+      return decorations.map(transaction.changes);
+    },
+    provide: (field) => EditorView.decorations.from(field),
+  });
+}
+
+function makeTablesViewPlugin(
+  preview: boolean,
+  canEdit: boolean,
+) {
+  return ViewPlugin.define(() => ({}), {
+    eventHandlers: {
+      keydown(event, view) {
+        if (!canEdit || preview || view.state.readOnly) return false;
+        const selected = view.state.field(selectedTableCellField);
+        if (!selected || selected.editing) return false;
+
+        const table = parseMarkdownTable(
+          view.state.sliceDoc(selected.tableFrom, selected.tableTo),
+          selected.tableFrom,
+        );
+        const cell = table ? tableCell(table, selected.cell) : null;
+        if (!table || !cell) return false;
+
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          view.dispatch({
+            effects: selectTableCell.of(selectedCellFor(table, cell, true, cell.text)),
+          });
+          return true;
+        }
+
+        if (isPrintableKey(event)) {
+          event.preventDefault();
+          view.dispatch({
+            effects: selectTableCell.of(selectedCellFor(table, cell, true, event.key)),
+          });
+          return true;
+        }
+
+        return false;
+      },
+    },
+  });
+}
+
+function isPrintableKey(event: KeyboardEvent): boolean {
+  return event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+}
+
 const tablesPlugin: GalleyPlugin = {
   id: 'ge:tables',
   extensions(classNames: GalleyClassNames, context) {
     const tableClass = classNames.table ?? 'ge-table';
     const preview = context?.mode === 'preview';
+    const canEdit = context?.canEdit ?? !preview;
 
-    const field = StateField.define<DecorationSet>({
-      create(state) {
-        return buildTableDecorations(state, tableClass, preview);
-      },
-      update(decos, tr) {
-        decos = decos.map(tr.changes);
-        const selectionChanged = !tr.newSelection.eq(tr.startState.selection);
-        const treeChanged = syntaxTree(tr.state) !== syntaxTree(tr.startState);
-        if (tr.docChanged || selectionChanged || treeChanged) {
-          decos = buildTableDecorations(tr.state, tableClass, preview);
-        }
-        return decos;
-      },
-      provide: (f) => EditorView.decorations.from(f),
-    });
-
-    return [field];
+    return [
+      selectedTableCellField,
+      makeTableDecorationsField(tableClass, preview, canEdit),
+      makeTablesViewPlugin(preview, canEdit),
+    ];
   },
 };
 
