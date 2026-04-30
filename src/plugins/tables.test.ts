@@ -108,6 +108,16 @@ describe('tablesPlugin', () => {
     expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
   });
 
+  it('reveals cell source on meta-click', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1', { metaKey: true });
+
+    expect(view.state.selection.main.head).toBe(doc.indexOf('two'));
+    expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
+  });
+
   it('reveals table source from the edit source control', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc);

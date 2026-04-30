@@ -10,6 +10,7 @@ import {
   Decoration,
   type DecorationSet,
   EditorView,
+  type ViewUpdate,
   ViewPlugin,
   WidgetType,
 } from '@codemirror/view';
@@ -117,6 +118,8 @@ const sourceEscapedTableField = StateField.define<SourceEscapedTable | null>({
     return next;
   },
 });
+
+const refreshTableDecorations = StateEffect.define<null>();
 
 class TableWidget extends WidgetType {
   table: GalleyTable;
@@ -577,8 +580,17 @@ function makeTableDecorationsField(
         transaction.state.field(sourceEscapedTableField);
       const selectionChanged = !transaction.newSelection.eq(transaction.startState.selection);
       const treeChanged = syntaxTree(transaction.state) !== syntaxTree(transaction.startState);
+      const viewportRefresh = transaction.effects.some((effect) =>
+        effect.is(refreshTableDecorations));
 
-      if (transaction.docChanged || selectionChanged || selectedChanged || sourceEscapeChanged || treeChanged) {
+      if (
+        transaction.docChanged ||
+        selectionChanged ||
+        selectedChanged ||
+        sourceEscapeChanged ||
+        treeChanged ||
+        viewportRefresh
+      ) {
         return buildTableDecorations(transaction.state, tableClass, preview, canEdit);
       }
 
@@ -592,7 +604,39 @@ function makeTablesViewPlugin(
   preview: boolean,
   canEdit: boolean,
 ) {
-  return ViewPlugin.define(() => ({}), {
+  return ViewPlugin.fromClass(class {
+    pendingViewportRefresh: boolean;
+    destroyed: boolean;
+
+    constructor() {
+      this.pendingViewportRefresh = false;
+      this.destroyed = false;
+    }
+
+    update(update: ViewUpdate): void {
+      if (update.viewportChanged) {
+        this.scheduleViewportRefresh(update.view);
+      }
+    }
+
+    destroy(): void {
+      this.destroyed = true;
+    }
+
+    private scheduleViewportRefresh(view: EditorView): void {
+      if (this.pendingViewportRefresh) return;
+
+      this.pendingViewportRefresh = true;
+      queueMicrotask(() => {
+        this.pendingViewportRefresh = false;
+        if (this.destroyed) return;
+
+        view.dispatch({
+          effects: refreshTableDecorations.of(null),
+        });
+      });
+    }
+  }, {
     eventHandlers: {
       keydown(event, view) {
         if (!canEdit || preview || view.state.readOnly) return false;
