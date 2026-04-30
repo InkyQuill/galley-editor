@@ -10,6 +10,8 @@ export function updateImageMetadata(
   if (!image) return false;
 
   const next = serializeImageMarkdown(image, input);
+  if (next === image.raw) return false;
+
   view.dispatch({
     changes: { from: image.from, to: image.to, insert: next },
     selection: { anchor: image.from + next.length },

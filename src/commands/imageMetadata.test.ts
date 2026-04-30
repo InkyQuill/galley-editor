@@ -68,6 +68,28 @@ describe('updateImageMetadata', () => {
     expect(docOf(view)).toBe(doc);
   });
 
+  it('returns false without dispatching when metadata is unchanged', () => {
+    const doc = '![Diagram](diagram.png)';
+    let docChanges = 0;
+    const view = tracked(new EditorView({
+      state: EditorState.create({
+        doc,
+        selection: EditorSelection.cursor(doc.indexOf('Diagram')),
+        extensions: [
+          markdown({ extensions: [GFM] }),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) docChanges += 1;
+          }),
+        ],
+      }),
+    }));
+
+    expect(updateImageMetadata(view, {})).toBe(false);
+
+    expect(docOf(view)).toBe(doc);
+    expect(docChanges).toBe(0);
+  });
+
   it('leaves unrelated text before and after the image unchanged', () => {
     const image = '![Old](old.png "Title")';
     const doc = `before ${image} after`;

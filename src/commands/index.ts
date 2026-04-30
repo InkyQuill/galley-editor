@@ -55,6 +55,15 @@ function commandBinding(
   };
 }
 
+function imageMetadataInput(input: unknown): GalleyImageMetadataInput {
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) return {};
+
+  const prototype = Object.getPrototypeOf(input);
+  return prototype === Object.prototype || prototype === null
+    ? input as GalleyImageMetadataInput
+    : {};
+}
+
 export const DEFAULT_KEYMAP: GalleyKeyBinding[] = [
   commandBinding('Mod-d', 'duplicateLine', 'Duplicate the current line or selected lines'),
   commandBinding('Alt-ArrowUp', 'swapLineUp', 'Swap the current line upward'),
@@ -81,7 +90,7 @@ export const BUILTIN_COMMANDS: Record<BuiltinCommand, CommandFn> = {
   insertLink,
   insertImage,
   updateImageMetadata: (view, input) =>
-    updateImageMetadata(view, input as GalleyImageMetadataInput),
+    updateImageMetadata(view, imageMetadataInput(input)),
   clearImageDimensions,
   insertCodeBlock,
   insertTable,

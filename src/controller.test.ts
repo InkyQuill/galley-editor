@@ -409,6 +409,26 @@ describe('EditorController runtime state', () => {
     expect(controller.view).toBeDefined();
   });
 
+  it('does not corrupt image markdown when updateImageMetadata receives null args', () => {
+    const doc = '![Diagram](diagram.png)';
+    const controller = createController(doc);
+    controller.select(doc.indexOf('Diagram'));
+
+    expect(() => controller.execCommand('updateImageMetadata', null)).not.toThrow();
+
+    expect(controller.getContent()).toBe(doc);
+  });
+
+  it('updates image metadata through execCommand', () => {
+    const doc = '![Diagram](diagram.png)';
+    const controller = createController(doc);
+    controller.select(doc.indexOf('Diagram'));
+
+    expect(controller.execCommand('updateImageMetadata', { width: 640 })).toBe(true);
+
+    expect(controller.getContent()).toBe('![Diagram](diagram.png){width=640}');
+  });
+
   it('inserts markdown returned from a paste file handler', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     const onFiles = vi.fn(() => '![upload](uploaded.png)');
