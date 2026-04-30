@@ -34,6 +34,9 @@
   --ne-color-focus-ring: #2563eb;
   --ne-color-tooltip-bg: #0f172a;
   --ne-color-tooltip-fg: #ffffff;
+  --ne-color-scrollbar-track: transparent;
+  --ne-color-scrollbar-thumb: rgba(100, 116, 139, 0.34);
+  --ne-color-scrollbar-thumb-hover: rgba(100, 116, 139, 0.54);
 
   /* Typography */
   --ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -70,6 +73,8 @@
   --ne-toolbar-padding: 10px 14px;
   --ne-footer-padding: 4px 10px;
   --ne-backdrop-filter: none;
+  --ne-scrollbar-size: 10px;
+  --ne-scrollbar-radius: 999px;
 
   /* Code */
   --ne-code-font-size: 0.9em;
@@ -98,6 +103,8 @@
   --ne-color-focus-ring: #60a5fa;
   --ne-color-tooltip-bg: #f8fafc;
   --ne-color-tooltip-fg: #0f172a;
+  --ne-color-scrollbar-thumb: rgba(148, 163, 184, 0.42);
+  --ne-color-scrollbar-thumb-hover: rgba(203, 213, 225, 0.62);
 }
 
 /* Editor shell */
@@ -138,6 +145,29 @@
 
 .ne-editor-shell .cm-scroller {
   background: var(--ne-color-bg);
+  scrollbar-color: var(--ne-color-scrollbar-thumb) var(--ne-color-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.ne-editor-shell .cm-scroller::-webkit-scrollbar {
+  height: var(--ne-scrollbar-size);
+  width: var(--ne-scrollbar-size);
+}
+
+.ne-editor-shell .cm-scroller::-webkit-scrollbar-track {
+  background: var(--ne-color-scrollbar-track);
+}
+
+.ne-editor-shell .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--ne-color-scrollbar-thumb);
+  border: 3px solid var(--ne-color-transparent);
+  border-radius: var(--ne-scrollbar-radius);
+  background-clip: padding-box;
+}
+
+.ne-editor-shell .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--ne-color-scrollbar-thumb-hover);
+  background-clip: padding-box;
 }
 
 .ne-toolbar {
@@ -434,7 +464,8 @@
   margin: 0.75em 0;
 }
 
-.ne-image-frame .ne-image {
+.ne-image-frame .ne-image,
+.ne-image-widget img {
   background: var(--ne-color-surface);
   border: 1px solid var(--ne-color-border);
   border-radius: var(--ne-radius-block);

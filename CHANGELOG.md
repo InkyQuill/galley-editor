@@ -21,7 +21,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ### Changed
 - **Breaking:** `NeutrinoPluginSpec.getDecorationRange()` was removed and replaced with explicit `getLineRange`, `getMarkRange`, and `getPointPosition` methods.
-- Markdown images now render as safe alt text by default instead of fetching image URLs automatically.
+- Markdown images render as built-in image widgets by default; `imageRenderer` remains available for custom widgets or alt-text fallback.
 - Storybook now includes a custom chrome slots example and responsive visual checks for editor chrome customization.
 
 ## [0.5.0] — 2026-04-30

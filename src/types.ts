@@ -340,7 +340,7 @@ export interface NeutrinoEditorProps {
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   /** Optional code highlighter for inactive fenced code block rendering. */
   codeHighlighter?: CodeHighlighter;
-  /** Optional renderer for markdown images. Defaults to safe alt-text rendering. */
+  /** Optional renderer for markdown images. Defaults to built-in image widgets. */
   imageRenderer?: ImageRenderer;
   /** Optional Cmd/Ctrl-click link handler. Return true to suppress default opening. */
   onLinkClick?: LinkClickHandler;

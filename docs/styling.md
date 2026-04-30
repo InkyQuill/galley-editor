@@ -34,6 +34,9 @@ The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 --ne-color-focus-ring: #2563eb;
 --ne-color-tooltip-bg: #0f172a;
 --ne-color-tooltip-fg: #ffffff;
+--ne-color-scrollbar-track: transparent;
+--ne-color-scrollbar-thumb: rgba(100, 116, 139, 0.34);
+--ne-color-scrollbar-thumb-hover: rgba(100, 116, 139, 0.54);
 
 --ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
 --ne-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
@@ -68,6 +71,8 @@ The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 --ne-toolbar-padding: 10px 14px;
 --ne-footer-padding: 4px 10px;
 --ne-backdrop-filter: none;
+--ne-scrollbar-size: 10px;
+--ne-scrollbar-radius: 999px;
 --ne-code-font-size: 0.9em;
 --ne-shadow-editor: 0 12px 30px rgba(15, 23, 42, 0.06);
 ```
@@ -161,6 +166,20 @@ Slot content inherits the editor variables, so custom controls can use the same 
 ```
 
 Use `surface.contentPadding`, `surface.toolbarPadding`, and `surface.footerPadding` for one-off padding changes. For full themes, scope CSS variables with `className`.
+
+## Scrollbars
+
+The CodeMirror scroller uses native scrollbars styled through the Neutrino CSS variable contract. The default track is transparent for an overlay-like feel, and the thumb is fully themeable:
+
+```css
+.my-editor-theme {
+  --ne-scrollbar-size: 12px;
+  --ne-scrollbar-radius: 999px;
+  --ne-color-scrollbar-track: transparent;
+  --ne-color-scrollbar-thumb: rgba(15, 23, 42, 0.24);
+  --ne-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.44);
+}
+```
 
 ## Tailwind V4
 

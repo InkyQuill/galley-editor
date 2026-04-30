@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('imagesPlugin', () => {
-  it('renders inactive markdown images as safe alt text by default', () => {
+  it('renders inactive markdown images as image widgets by default', () => {
     const doc = '![Sample PNG](assets/img.png)\n\nplain';
     const view = createEditorView({
       doc,
@@ -21,11 +21,13 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
-    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
+    const image = view.dom.querySelector('.ne-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('alt')).toBe('Sample PNG');
+    expect(image?.getAttribute('src')).toBe('assets/img.png');
   });
 
-  it('renders svg markdown images as safe alt text by default', () => {
+  it('renders svg markdown images as image widgets by default', () => {
     const doc = '![Sample SVG](sample-diagram.svg)\n\nplain';
     const view = createEditorView({
       doc,
@@ -34,8 +36,10 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
-    expect(lineElement(view, 1).textContent).toBe('Sample SVG');
+    const image = view.dom.querySelector('.ne-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('alt')).toBe('Sample SVG');
+    expect(image?.getAttribute('src')).toBe('sample-diagram.svg');
   });
 
   it('renders data-uri svg markdown images with parentheses in urls', () => {
@@ -76,7 +80,7 @@ describe('imagesPlugin', () => {
     expect(lineElement(view, 1).textContent).toBe('![Sample PNG](assets/img.png)');
   });
 
-  it('keeps safe alt text in preview mode when the cursor is inside image syntax', () => {
+  it('keeps image widgets in preview mode when the cursor is inside image syntax', () => {
     const doc = '![Sample PNG](assets/img.png)\n\nplain';
     const view = createEditorView({
       doc,
@@ -88,8 +92,9 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
-    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
+    const image = view.dom.querySelector('.ne-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('src')).toBe('assets/img.png');
   });
 
   it('uses a custom imageRenderer widget when provided', () => {

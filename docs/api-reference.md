@@ -36,7 +36,7 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
-| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, images render as safe alt text and do not fetch URLs |
+| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, Neutrino renders image widgets with built-in `<img>` elements |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
@@ -367,7 +367,7 @@ type ImageRenderer = (image: {
 }) => HTMLElement | null;
 ```
 
-Returning `null` falls back to safe alt-text rendering.
+Returning `null` falls back to rendered alt text without an image element.
 
 ### `LinkClickHandler`
 

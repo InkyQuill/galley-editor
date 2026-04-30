@@ -212,9 +212,9 @@ The simplest built-in plugin. Uses `makeBlockPlugin` to add `ne-table` line deco
 
 **File:** `src/plugins/images.ts`
 
-By default, markdown images render as safe alt text. The plugin hides `![`, `](`, URL/title syntax, and `)` when inactive; it does not create an `<img>` or fetch remote URLs unless the consumer provides `imageRenderer`.
+By default, markdown images render as built-in image widgets. The plugin replaces inactive image syntax with an `<img>` wrapped in `.ne-image-widget`.
 
-With `imageRenderer`, the plugin replaces the image syntax with a custom widget. Returning `null` falls back to the safe alt-text rendering.
+With `imageRenderer`, consumers can replace the built-in image element with a custom widget. Returning `null` falls back to rendered alt text without an image element.
 
 ## Building Custom Plugins
 

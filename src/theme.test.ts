@@ -32,6 +32,9 @@ const lightVariables = {
   '--ne-color-focus-ring': '#2563eb',
   '--ne-color-tooltip-bg': '#0f172a',
   '--ne-color-tooltip-fg': '#ffffff',
+  '--ne-color-scrollbar-track': 'transparent',
+  '--ne-color-scrollbar-thumb': 'rgba(100, 116, 139, 0.34)',
+  '--ne-color-scrollbar-thumb-hover': 'rgba(100, 116, 139, 0.54)',
   '--ne-font-body': 'ui-sans-serif, system-ui, -apple-system, sans-serif',
   '--ne-font-mono': 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
   '--ne-font-size': '1rem',
@@ -64,6 +67,8 @@ const lightVariables = {
   '--ne-toolbar-padding': '10px 14px',
   '--ne-footer-padding': '4px 10px',
   '--ne-backdrop-filter': 'none',
+  '--ne-scrollbar-size': '10px',
+  '--ne-scrollbar-radius': '999px',
   '--ne-code-font-size': '0.9em',
   '--ne-shadow-editor': '0 12px 30px rgba(15, 23, 42, 0.06)',
 };
@@ -90,6 +95,8 @@ const darkVariables = {
   '--ne-color-focus-ring': '#60a5fa',
   '--ne-color-tooltip-bg': '#f8fafc',
   '--ne-color-tooltip-fg': '#0f172a',
+  '--ne-color-scrollbar-thumb': 'rgba(148, 163, 184, 0.42)',
+  '--ne-color-scrollbar-thumb-hover': 'rgba(203, 213, 225, 0.62)',
 };
 
 function readCss() {

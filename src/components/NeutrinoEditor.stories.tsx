@@ -177,7 +177,7 @@ export const AllFeatures: Story = {
 // ── Image Rendering ────────────────────────────────────────────────────────
 
 function ImageRenderingStory() {
-  const [value, setValue] = useState(`## Safe default
+  const [value, setValue] = useState(`## Default image widgets
 
 ![Generated landscape sample](${sampleLandscape})
 
@@ -705,27 +705,59 @@ export const CustomChromeSlots: Story = {
 // ── Frosted Surface ────────────────────────────────────────────────────────
 
 function FrostedSurfaceStory() {
-  const [value, setValue] = useState(sampleMarkdown);
+  const [value, setValue] = useState(`${sampleMarkdown}
+
+## More scroll content
+
+The glass treatment stays readable while the editing surface scrolls.
+
+- Overlay-style scrollbars inherit the theme
+- Thumb colors are controlled with CSS variables
+- The track stays transparent over the frosted surface
+
+${allFeaturesMarkdown}`);
   return (
-    <div style={{
-      maxWidth: '860px',
-      margin: '0 auto',
-      padding: '32px',
-      borderRadius: '18px',
-      background: 'linear-gradient(135deg, #dbeafe 0%, #fce7f3 45%, #dcfce7 100%)',
-    }}>
+    <div
+      style={{
+        maxWidth: '920px',
+        margin: '0 auto',
+        padding: '42px',
+        borderRadius: '24px',
+        background: [
+          'radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.34), transparent 30%)',
+          'radial-gradient(circle at 82% 24%, rgba(236, 72, 153, 0.26), transparent 28%)',
+          'radial-gradient(circle at 50% 86%, rgba(16, 185, 129, 0.26), transparent 34%)',
+          'linear-gradient(135deg, #e0f2fe 0%, #fdf2f8 48%, #ecfccb 100%)',
+        ].join(', '),
+      }}
+    >
+      <style>{`
+        .recipe-frosted-surface {
+          --ne-color-bg: rgba(255, 255, 255, 0.48);
+          --ne-color-surface: rgba(255, 255, 255, 0.36);
+          --ne-color-surface-elevated: rgba(255, 255, 255, 0.52);
+          --ne-color-border: rgba(255, 255, 255, 0.62);
+          --ne-color-scrollbar-thumb: rgba(15, 23, 42, 0.22);
+          --ne-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.42);
+          --ne-scrollbar-size: 12px;
+          box-shadow:
+            0 24px 60px rgba(15, 23, 42, 0.16),
+            inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        }
+      `}</style>
       <NeutrinoEditor
         value={value}
         onChange={setValue}
         minRows={10}
+        maxRows={18}
         surface={{
           className: 'recipe-frosted-surface',
           contentPadding: '36px 48px',
           toolbarPadding: '10px 16px',
           footerPadding: '7px 12px',
           style: {
-            background: 'rgba(255, 255, 255, 0.72)',
-            backdropFilter: 'blur(22px) saturate(1.35)',
+            background: 'rgba(255, 255, 255, 0.46)',
+            backdropFilter: 'blur(26px) saturate(1.55)',
           },
         }}
       />
@@ -734,8 +766,8 @@ function FrostedSurfaceStory() {
 }
 
 /**
- * Uses the `surface` prop to apply a frosted shell, custom paddings, and
- * parent gradient background without replacing the base theme.
+ * Uses the `surface` prop to apply a glassy shell, custom paddings,
+ * stylable overlay-like scrollbars, and a parent gradient background.
  */
 export const FrostedSurface: Story = {
   render: FrostedSurfaceStory,

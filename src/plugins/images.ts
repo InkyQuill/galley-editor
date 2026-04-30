@@ -1,6 +1,6 @@
-import { Decoration, WidgetType } from '@codemirror/view';
+import { WidgetType } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
-import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
+import { makeInlinePlugin } from '../rendering';
 import type {
   ImageRenderer,
   NeutrinoClassNames,
@@ -73,47 +73,26 @@ function selectionIntersects(from: number, to: number, state: EditorState): bool
   return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
 }
 
+function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
+  const image = document.createElement('img');
+  image.className = 'ne-image';
+  image.alt = alt;
+  image.src = url;
+  image.loading = 'lazy';
+  if (title) image.title = title;
+  return image;
+}
+
 const imagesPlugin: NeutrinoPlugin = {
   id: 'ne:images',
   extensions(classNames: NeutrinoClassNames, context) {
     const imageClass = classNames.image ?? 'ne-image-frame';
     const preview = context?.mode === 'preview';
-    const renderer = context?.imageRenderer;
-
-    const hideSyntaxExt = makeInlinePlugin({
-      createDecoration(node) {
-        const parent = node.node.parent;
-        if (!parent || parent.name !== 'Image') return null;
-        if (
-          node.name === 'LinkMark' ||
-          node.name === 'URL' ||
-          node.name === 'LinkTitle'
-        ) {
-          return HIDE_DECORATION;
-        }
-        return null;
-      },
-      getRevealStrategy(node, state) {
-        if (preview) return false;
-        const parent = node.node.parent;
-        if (!parent || parent.name !== 'Image') return 'select';
-        return selectionIntersects(parent.from, parent.to, state);
-      },
-    });
-
-    const classExt = makeInlinePlugin({
-      createDecoration(node) {
-        if (renderer) return null;
-        if (node.name !== 'Image') return null;
-        return Decoration.mark({ class: imageClass });
-      },
-      getRevealStrategy: () => false,
-      hideWhenNearCursor: false,
-    });
+    const renderer = context?.imageRenderer ?? defaultImageRenderer;
 
     const widgetExt = makeInlinePlugin({
       createDecoration(node, state) {
-        if (!renderer || node.name !== 'Image') return null;
+        if (node.name !== 'Image') return null;
         const parsed = parseImage(state.sliceDoc(node.from, node.to));
         if (!parsed) return null;
         return new ImageWidget(parsed, imageClass, renderer);
@@ -125,7 +104,7 @@ const imagesPlugin: NeutrinoPlugin = {
         preview ? false : selectionIntersects(node.from, node.to, state),
     });
 
-    return renderer ? [widgetExt] : [hideSyntaxExt, classExt];
+    return [widgetExt];
   },
 };
 
