@@ -460,9 +460,11 @@
 /* Images */
 
 .ge-image-frame {
-  display: block;
+  display: inline-block;
   margin: 0.75em 0;
+  max-width: 100%;
   position: relative;
+  vertical-align: middle;
 }
 
 .ge-image-selected {
@@ -511,8 +513,12 @@
   border-radius: var(--ge-radius-block);
   box-sizing: border-box;
   display: block;
-  height: auto;
   max-width: 100%;
+}
+
+.ge-image-frame .ge-image:not([height]),
+.ge-image-widget img:not([height]) {
+  height: auto;
 }
 
 .ge-image-missing {

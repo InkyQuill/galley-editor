@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { readFileSync } from 'node:fs';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
 import { resolveClassNames, type GalleyImageInfo, type GalleyMissingImageInfo } from '../types';
 import imagesPlugin from './images';
@@ -45,6 +46,10 @@ function resizeWithMouse(handle: HTMLElement, options: {
     clientY: options.endY,
     shiftKey: options.shiftKey,
   }));
+}
+
+function galleyBaseCss(): string {
+  return readFileSync('src/galley-base.css', 'utf8');
 }
 
 describe('imagesPlugin', () => {
@@ -348,6 +353,18 @@ describe('imagesPlugin', () => {
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('width')).toBe('640');
     expect(image?.getAttribute('height')).toBe('360');
+  });
+
+  it('base CSS shrink-wraps image frames and preserves explicit image height metadata', () => {
+    const css = galleyBaseCss();
+    const frameRule = css.match(/\.ge-image-frame\s*\{[^}]*\}/)?.[0] ?? '';
+    const baseImageRule =
+      css.match(/\.ge-image-frame \.ge-image,\s*\.ge-image-widget img\s*\{[^}]*\}/)?.[0] ?? '';
+
+    expect(frameRule).toContain('display: inline-block;');
+    expect(frameRule).toContain('max-width: 100%;');
+    expect(frameRule).toContain('vertical-align: middle;');
+    expect(baseImageRule).not.toContain('height: auto;');
   });
 
   it('renders color logo markdown images as image widgets by default', () => {
