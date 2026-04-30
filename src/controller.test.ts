@@ -146,6 +146,30 @@ function dropEvent(transfer: DataTransfer): DragEvent {
   return event;
 }
 
+function dragoverEvent(transfer: DataTransfer): DragEvent {
+  const event = typeof DragEvent !== 'undefined'
+    ? new DragEvent('dragover', {
+      bubbles: true,
+      cancelable: true,
+    })
+    : new Event('dragover', {
+      bubbles: true,
+      cancelable: true,
+    }) as DragEvent;
+  Object.defineProperty(event, 'dataTransfer', {
+    configurable: true,
+    value: transfer,
+  });
+  return event;
+}
+
+function fileIntentDataTransfer(): DataTransfer {
+  return {
+    files: [],
+    types: ['Files'],
+  } as unknown as DataTransfer;
+}
+
 async function nextMicrotask(): Promise<void> {
   await Promise.resolve();
 }
@@ -445,6 +469,18 @@ describe('EditorController runtime state', () => {
     expect(event.defaultPrevented).toBe(true);
     expect(onFiles).toHaveBeenCalledOnce();
     expect(controller.getContent()).toContain('![upload](uploaded.png)');
+  });
+
+  it('allows file dragover when files are only advertised in data transfer types', () => {
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks);
+
+    const event = dragoverEvent(fileIntentDataTransfer());
+    controller.view.contentDOM.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).not.toHaveBeenCalled();
   });
 
   it('preserves multiple selection ranges when setContent clamps to the new document', () => {

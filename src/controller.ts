@@ -293,10 +293,7 @@ export class EditorController implements GalleyHandle {
           this.callbacks.onPaste?.(e, view);
         },
         dragover: (e) => {
-          if (
-            this.callbacks.onFiles &&
-            this.filesFromDataTransfer(e.dataTransfer).length > 0
-          ) {
+          if (this.callbacks.onFiles && this.hasFileData(e.dataTransfer)) {
             e.preventDefault();
           }
         },
@@ -319,6 +316,11 @@ export class EditorController implements GalleyHandle {
 
   private filesFromDataTransfer(dataTransfer: DataTransfer | null): File[] {
     return Array.from(dataTransfer?.files ?? []);
+  }
+
+  private hasFileData(dataTransfer: DataTransfer | null): boolean {
+    if (!dataTransfer) return false;
+    return dataTransfer.files.length > 0 || Array.from(dataTransfer.types).includes('Files');
   }
 
   private insertFileHandlerMarkdown(markdown: string | string[], from: number, to: number): void {
