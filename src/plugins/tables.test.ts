@@ -79,6 +79,57 @@ describe('tablesPlugin', () => {
     expect(table?.querySelector('tbody td')?.textContent).toBe('1');
   });
 
+  it('renders bold and code spans in inactive table cells', () => {
+    const doc = '| A | B |\n| - | - |\n| **bold** | `code` |\n\nplain';
+    const view = tableEditor(doc);
+
+    const bold = cell(view, '1:0').querySelector('.ge-table-cell-bold');
+    const code = cell(view, '1:1').querySelector('.ge-table-cell-code');
+
+    expect(bold).toBeInstanceOf(HTMLElement);
+    expect(bold?.tagName).toBe('STRONG');
+    expect(bold?.textContent).toBe('bold');
+    expect(code).toBeInstanceOf(HTMLElement);
+    expect(code?.tagName).toBe('CODE');
+    expect(code?.textContent).toBe('code');
+
+    clickCell(view, '1:0');
+
+    const selectedBold = cell(view, '1:0').querySelector('.ge-table-cell-bold');
+    expect(selectedBold).toBeInstanceOf(HTMLElement);
+    expect(selectedBold?.textContent).toBe('bold');
+  });
+
+  it('renders links in inactive table cells', () => {
+    const doc = '| A |\n| - |\n| [label](https://example.com/path?q=1) |\n\nplain';
+    const view = tableEditor(doc);
+
+    const link = cell(view, '1:0').querySelector('.ge-table-cell-link');
+
+    expect(link).toBeInstanceOf(HTMLAnchorElement);
+    expect(link?.textContent).toBe('label');
+    expect(link?.getAttribute('href')).toBe('https://example.com/path?q=1');
+  });
+
+  it('escapes raw HTML in inactive table cells', () => {
+    const doc = '| A |\n| - |\n| <img src=x onerror=alert(1)> |\n\nplain';
+    const view = tableEditor(doc);
+    const renderedCell = cell(view, '1:0');
+
+    expect(renderedCell.querySelector('img')).toBeNull();
+    expect(renderedCell.textContent).toBe('<img src=x onerror=alert(1)>');
+  });
+
+  it('keeps raw Markdown in the active cell editor', () => {
+    const doc = '| A |\n| - |\n| **bold** |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:0');
+    keydown(view.contentDOM, 'Enter');
+
+    expect(activeInput(view).value).toBe('**bold**');
+  });
+
   it('keeps editable live parseable tables rendered when editor selection is inside source', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc, 'one');

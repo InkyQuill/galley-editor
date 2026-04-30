@@ -155,6 +155,7 @@ class TableWidget extends WidgetType {
   toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement('div');
     wrapper.className = `ge-table-widget ${this.tableClass}`;
+    if (this.selected) wrapper.classList.add('ge-table-selected');
 
     if (this.shouldRenderControls(view)) {
       wrapper.append(this.createControls(view));
@@ -209,10 +210,10 @@ class TableWidget extends WidgetType {
       if (this.selected?.editing) {
         cell.append(this.createEditor(view, tableCellInfo));
       } else {
-        cell.textContent = tableCellInfo.text;
+        renderCellInlineMarkdown(cell, tableCellInfo.text);
       }
     } else {
-      cell.textContent = tableCellInfo.text;
+      renderCellInlineMarkdown(cell, tableCellInfo.text);
     }
 
     this.attachCellSelectionHandler(cell, tableCellInfo, view);
@@ -385,6 +386,7 @@ class TableWidget extends WidgetType {
     for (const buttonInfo of buttons) {
       const button = document.createElement('button');
       button.type = 'button';
+      button.className = 'ge-table-control';
       button.ariaLabel = buttonInfo.label;
       button.textContent = buttonInfo.text;
       button.addEventListener('click', (event) => {
@@ -466,6 +468,107 @@ function selectedTableMatchesTable(selected: SelectedTableCell | null, table: Ga
 
 function sourceEscapeMatchesTable(sourceEscape: SourceEscapedTable | null, table: GalleyTable): boolean {
   return sourceEscape?.from === table.from && sourceEscape.to === table.to;
+}
+
+type InlineTokenKind = 'bold' | 'code' | 'link';
+
+interface InlineToken {
+  kind: InlineTokenKind;
+  from: number;
+  to: number;
+  text: string;
+  href?: string;
+}
+
+function renderCellInlineMarkdown(cell: HTMLTableCellElement, text: string): void {
+  const fragment = document.createDocumentFragment();
+  let position = 0;
+
+  while (position < text.length) {
+    const token = nextInlineToken(text, position);
+    if (!token) {
+      fragment.append(document.createTextNode(text.slice(position)));
+      break;
+    }
+
+    if (token.from > position) {
+      fragment.append(document.createTextNode(text.slice(position, token.from)));
+    }
+
+    fragment.append(createInlineTokenNode(token));
+    position = token.to;
+  }
+
+  cell.replaceChildren(fragment);
+}
+
+function nextInlineToken(text: string, position: number): InlineToken | null {
+  const source = text.slice(position);
+  const candidates = [
+    matchInlineToken('code', /`([^`]+)`/.exec(source), position),
+    matchInlineToken('bold', /\*\*(.+?)\*\*/.exec(source), position),
+    matchLinkToken(/\[([^\]]+)\]\(([^)]+)\)/.exec(source), position),
+  ].filter((token): token is InlineToken => token !== null);
+
+  candidates.sort((left, right) => {
+    if (left.from !== right.from) return left.from - right.from;
+    return inlineTokenPriority(left.kind) - inlineTokenPriority(right.kind);
+  });
+
+  return candidates[0] ?? null;
+}
+
+function matchInlineToken(
+  kind: Exclude<InlineTokenKind, 'link'>,
+  match: RegExpExecArray | null,
+  position: number,
+): InlineToken | null {
+  if (!match || match.index < 0) return null;
+  return {
+    kind,
+    from: position + match.index,
+    to: position + match.index + match[0].length,
+    text: match[1] ?? '',
+  };
+}
+
+function matchLinkToken(match: RegExpExecArray | null, position: number): InlineToken | null {
+  if (!match || match.index < 0) return null;
+  return {
+    kind: 'link',
+    from: position + match.index,
+    to: position + match.index + match[0].length,
+    text: match[1] ?? '',
+    href: match[2] ?? '',
+  };
+}
+
+function inlineTokenPriority(kind: InlineTokenKind): number {
+  if (kind === 'code') return 0;
+  if (kind === 'link') return 1;
+  return 2;
+}
+
+function createInlineTokenNode(token: InlineToken): HTMLElement {
+  if (token.kind === 'bold') {
+    const strong = document.createElement('strong');
+    strong.className = 'ge-table-cell-bold';
+    strong.textContent = token.text;
+    return strong;
+  }
+
+  if (token.kind === 'code') {
+    const code = document.createElement('code');
+    code.className = 'ge-table-cell-code';
+    code.textContent = token.text;
+    return code;
+  }
+
+  const link = document.createElement('a');
+  link.className = 'ge-table-cell-link';
+  link.setAttribute('href', token.href ?? '');
+  link.textContent = token.text;
+  return link;
 }
 
 function selectCellAtCurrentTableSelection(view: EditorView): void {

@@ -414,10 +414,19 @@
   margin: 0.65em 0;
 }
 
+.ge-table-selected {
+  position: relative;
+}
+
 .ge-table-scroll {
   border: 1px solid var(--ge-color-table-border);
   border-radius: var(--ge-radius-block);
   overflow-x: auto;
+}
+
+.ge-table-selected .ge-table-scroll {
+  border-color: var(--ge-color-focus-ring);
+  box-shadow: 0 0 0 2px var(--ge-color-selection);
 }
 
 .ge-table-rendered {
@@ -443,6 +452,75 @@
 
 .ge-table-rendered tr:last-child td {
   border-bottom: 0;
+}
+
+.ge-table-cell-selected {
+  background: var(--ge-color-selection);
+  box-shadow: inset 0 0 0 1px var(--ge-color-focus-ring);
+}
+
+.ge-table-cell-editor {
+  background: var(--ge-color-bg);
+  border: 1px solid var(--ge-color-focus-ring);
+  border-radius: var(--ge-radius-code);
+  box-sizing: border-box;
+  color: var(--ge-color-text);
+  font: inherit;
+  min-width: 12ch;
+  outline: none;
+  padding: 2px 4px;
+  width: 100%;
+}
+
+.ge-table-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.ge-table-control {
+  background: var(--ge-color-surface-elevated);
+  border: 1px solid var(--ge-color-table-border);
+  border-radius: var(--ge-radius-code);
+  color: var(--ge-color-text);
+  cursor: pointer;
+  font: inherit;
+  min-height: 26px;
+  min-width: 28px;
+  padding: 2px 7px;
+}
+
+.ge-table-control:hover,
+.ge-table-control:focus-visible {
+  background: var(--ge-color-surface);
+  border-color: var(--ge-color-focus-ring);
+  outline: none;
+}
+
+.ge-table-cell-bold {
+  font-weight: 700;
+}
+
+.ge-table-cell-code {
+  background: var(--ge-color-code-bg);
+  border-radius: var(--ge-radius-code);
+  color: var(--ge-color-code-fg);
+  font-family: var(--ge-font-mono);
+  font-size: var(--ge-code-font-size);
+  padding: var(--ge-spacing-inline-padding);
+}
+
+.ge-table-cell-link {
+  color: var(--ge-color-link);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.ge-table-cell-link:hover,
+.ge-table-cell-link:focus-visible {
+  color: var(--ge-color-link-hover);
 }
 
 .ge-table-rendered .ge-align-left {
