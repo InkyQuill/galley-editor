@@ -54,7 +54,7 @@ Use `imageRenderer` when your app needs signed URLs, asset lookup, captions, res
 
 ```tsx
 <GalleyEditor
-  imageRenderer={({ alt, url, title }) => {
+  imageRenderer={({ alt, url, title, width, height, from, to }) => {
     const figure = document.createElement('figure');
     figure.className = 'asset-preview';
 
@@ -62,7 +62,11 @@ Use `imageRenderer` when your app needs signed URLs, asset lookup, captions, res
     image.src = url;
     image.alt = alt;
     if (title) image.title = title;
+    if (width) image.width = width;
+    if (height) image.height = height;
 
+    figure.dataset.from = String(from);
+    figure.dataset.to = String(to);
     figure.append(image);
     if (title) {
       const caption = document.createElement('figcaption');
@@ -74,6 +78,30 @@ Use `imageRenderer` when your app needs signed URLs, asset lookup, captions, res
   }}
 />
 ```
+
+The renderer receives `GalleyImageInfo`:
+
+```ts
+type GalleyImageInfo = {
+  alt: string;
+  url: string;
+  title?: string;
+  width?: number;
+  height?: number;
+  attrs?: string[];
+  raw: string;
+  from: number;
+  to: number;
+};
+```
+
+Image metadata is encoded directly in Markdown:
+
+```md
+![Alt](image.png "Title"){width=640 height=360}
+```
+
+Use the `updateImageMetadata` and `clearImageDimensions` commands from a custom renderer or asset inspector to update the selected image.
 
 SVG images are supported by the default renderer when the source URL is allowed by the browser and the consuming app's content security policy.
 
@@ -100,20 +128,31 @@ Use raw CodeMirror extensions for behavior that is not tied to Galley's Markdown
 
 ## Uploads and Drops
 
-Galley v0.7 exposes raw paste events and CodeMirror extension hooks. It does not yet ship a first-class `onFiles` prop, so upload behavior stays consumer-owned:
+Galley keeps uploads consumer-owned. When `onFiles` is provided, paste/drop operations that contain files call your handler with the files, source, original event, editor view, selection snapshot, and a `report()` function.
 
 ```tsx
-<GalleyEditor
-  onPaste={(event, view) => {
-    const files = Array.from(event.clipboardData?.files ?? []);
-    if (files.length === 0) return;
+const escapeMarkdownAlt = (value: string) =>
+  value.replace(/[\n\r[\]\\]/g, ' ').trim();
 
-    event.preventDefault();
-    void Promise.all(files.map(uploadFile)).then((markdownItems) => {
-      view.dispatch(view.state.replaceSelection(markdownItems.join('\n')));
-    });
+const fakeUpload = async (file: File) =>
+  `![${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`;
+
+<GalleyEditor
+  onFiles={async (input) => {
+    input.report({ phase: 'progress', progress: 0.25, message: 'Uploading...' });
+    const markdown = await Promise.all(input.files.map(fakeUpload));
+    input.report({ phase: 'progress', progress: 0.9, message: 'Inserting markdown...' });
+    return markdown;
+  }}
+  onFileStatus={(status) => {
+    renderUploadRow(status.id, status.phase, status.progress, status.message);
+  }}
+  onFileError={(error, input) => {
+    showUploadError(input.files, error);
   }}
 />
 ```
 
-For drag-and-drop, register `EditorView.domEventHandlers()` through the `extensions` prop. See the [Complete Guide](../complete-guide/#register-and-track-file-uploads) for a full upload tracking example.
+Returned strings are inserted at the paste selection or drop position. Return `false` or `null` when your app handled the files without inserting markdown.
+
+`input.report()` is the progress channel for long uploads. Galley forwards those updates to `onFileStatus` and also emits `start`, `complete`, and `error` phases around the handler call.

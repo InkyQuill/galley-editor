@@ -36,7 +36,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
-| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, Galley renders image widgets with built-in `<img>` elements |
+| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Receives parsed image metadata including `url`, source range, and dimensions |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Show and customize the built-in command toolbar |
@@ -59,7 +59,77 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `onEnter` | `(mod: boolean, shift: boolean) => boolean` | Enter key pressed. Return `true` to suppress default newline |
 | `onEscape` | `() => boolean \| void` | Escape key pressed. Return `true` to consume the event; return `false` or `void` to let it pass through |
 | `onPaste` | `(event: ClipboardEvent, view: EditorView) => void` | Paste event |
+| `onFiles` | `(input: GalleyFileInput) => string \| string[] \| null \| false \| Promise<...>` | Handles pasted or dropped files and returns markdown to insert |
+| `onFileError` | `(error: unknown, input: GalleyFileInput) => void` | Called when `onFiles` throws or rejects |
+| `onFileStatus` | `(status: GalleyFileStatus) => void` | Receives `start`, `progress`, `complete`, and `error` updates for file workflows |
 | `onSubmit` | `() => void` | Cmd/Ctrl+Enter pressed |
+
+#### File Workflows
+
+When `onFiles` is provided, Galley intercepts paste/drop operations that contain files, calls the handler, and inserts returned markdown at the original paste selection or drop position.
+
+```tsx
+const escapeMarkdownAlt = (value: string) =>
+  value.replace(/[\n\r[\]\\]/g, ' ').trim();
+
+const fakeUpload = async (file: File) =>
+  `![${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`;
+
+<GalleyEditor
+  onFiles={async (input) => {
+    input.report({ phase: 'progress', progress: 0.25, message: 'Uploading...' });
+    const markdown = await Promise.all(input.files.map(fakeUpload));
+    input.report({ phase: 'progress', progress: 0.9, message: 'Finishing...' });
+    return markdown;
+  }}
+  onFileStatus={(status) => {
+    console.log(status.id, status.phase, status.progress, status.message);
+  }}
+  onFileError={(error, input) => {
+    console.error('Upload failed', input.source, error);
+  }}
+/>
+```
+
+`onFiles(input)` receives:
+
+```typescript
+interface GalleyFileInput {
+  id: string;
+  files: File[];
+  source: 'paste' | 'drop';
+  event: ClipboardEvent | DragEvent;
+  view: EditorView;
+  selection: { from: number; to: number; anchor: number; head: number };
+  report(update: GalleyFileStatusUpdate): void;
+}
+```
+
+`input.report()` is the consumer progress channel. Galley forwards each update through `onFileStatus(status)` with the same operation `id`, original `files`, `source`, and `selection`.
+
+```typescript
+type GalleyFileStatusPhase = 'start' | 'progress' | 'complete' | 'error';
+
+interface GalleyFileStatusUpdate {
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+}
+
+interface GalleyFileStatus {
+  id: string;
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+  files: File[];
+  source: 'paste' | 'drop';
+  selection: { from: number; to: number; anchor: number; head: number };
+}
+```
+
+Galley emits `start` before calling `onFiles`, `complete` after successful markdown insertion, and `error` when the handler rejects. Returned `string[]` values are joined with newlines. Return `false` or `null` when the app handled the files without document insertion.
 
 ### `ErrorBoundary`
 
@@ -360,14 +430,28 @@ Only one of `getLineRange`, `getMarkRange`, and `getPointPosition` may be define
 ### `ImageRenderer`
 
 ```typescript
-type ImageRenderer = (image: {
+interface GalleyImageInfo {
   alt: string;
   url: string;
   title?: string;
-}) => HTMLElement | null;
+  width?: number;
+  height?: number;
+  attrs?: string[];
+  raw: string;
+  from: number;
+  to: number;
+}
+
+type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
 ```
 
-Returning `null` falls back to rendered alt text without an image element.
+Returning `null` falls back to rendered alt text without an image element. `width` and `height` come from Galley's image metadata syntax:
+
+```md
+![Alt](image.png "Title"){width=640 height=360}
+```
+
+Unknown metadata attributes are preserved in `attrs`.
 
 ### `LinkClickHandler`
 
@@ -417,6 +501,7 @@ type BuiltinCommand =
   | 'toggleHeading'
   | 'toggleBulletList' | 'toggleOrderedList' | 'toggleCheckList'
   | 'insertLink' | 'insertImage' | 'insertCodeBlock' | 'insertTable' | 'insertHr'
+  | 'updateImageMetadata' | 'clearImageDimensions'
   | 'indent' | 'outdent'
   | 'duplicateLine' | 'sortSelectedLines'
   | 'swapLineUp' | 'swapLineDown'
@@ -539,6 +624,8 @@ Named export for heading navigation. Accepts hashes with or without a leading `#
 | `insertCodeBlock` | Inserts fenced code block | `language?: string` |
 | `insertTable` | Inserts a 2x2 markdown table | -- |
 | `insertHr` | Inserts `---` horizontal rule | -- |
+| `updateImageMetadata` | Updates the image at the current selection/cursor | `{ alt?: string; url?: string; title?: string \| null; width?: number \| null; height?: number \| null }` |
+| `clearImageDimensions` | Removes `width` and `height` metadata from the image at the current selection/cursor | -- |
 
 #### Editing
 

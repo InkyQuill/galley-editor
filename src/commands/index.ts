@@ -1,5 +1,5 @@
 import type { KeyBinding } from '@codemirror/view';
-import type { BuiltinCommand, CommandFn, FindOpts } from '../types';
+import type { BuiltinCommand, CommandFn, FindOpts, GalleyImageMetadataInput } from '../types';
 import { toggleBold, toggleCode, toggleItalic, toggleStrikethrough } from './inline';
 import {
   toggleBulletList,
@@ -14,6 +14,7 @@ import {
   insertLink,
   insertTable,
 } from './insert';
+import { clearImageDimensions, updateImageMetadata } from './imageMetadata';
 import { indent, outdent, redoCommand, selectAllCommand, undoCommand } from './editing';
 import { duplicateLine } from './editing/duplicateLine';
 import { insertLineAfter, insertLineBefore } from './editing/insertLine';
@@ -31,6 +32,7 @@ export { sortSelectedLines, type SortSelectedLinesOptions } from './editing/sort
 export { swapLineDown, swapLineUp } from './editing/swapLine';
 export { findInDocument } from './navigation/findInDocument';
 export { jumpToHash, slugifyHeading } from './navigation/jumpToHash';
+export { clearImageDimensions, updateImageMetadata } from './imageMetadata';
 
 export type GalleyKeyBinding = KeyBinding & {
   command?: BuiltinCommand;
@@ -51,6 +53,36 @@ function commandBinding(
     description,
     run: (view) => BUILTIN_COMMANDS[command](view, ...args) !== false,
   };
+}
+
+function imageMetadataInput(input: unknown): GalleyImageMetadataInput {
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) return {};
+
+  const prototype = Object.getPrototypeOf(input);
+  if (prototype !== Object.prototype && prototype !== null) return {};
+
+  const candidate = input as Record<string, unknown>;
+  const sanitized: GalleyImageMetadataInput = {};
+
+  if (typeof candidate.alt === 'string') sanitized.alt = candidate.alt;
+  if (typeof candidate.url === 'string') sanitized.url = candidate.url;
+  if (typeof candidate.title === 'string' || candidate.title === null) {
+    sanitized.title = candidate.title;
+  }
+  if (
+    (typeof candidate.width === 'number' && Number.isFinite(candidate.width)) ||
+    candidate.width === null
+  ) {
+    sanitized.width = candidate.width;
+  }
+  if (
+    (typeof candidate.height === 'number' && Number.isFinite(candidate.height)) ||
+    candidate.height === null
+  ) {
+    sanitized.height = candidate.height;
+  }
+
+  return sanitized;
 }
 
 export const DEFAULT_KEYMAP: GalleyKeyBinding[] = [
@@ -78,6 +110,9 @@ export const BUILTIN_COMMANDS: Record<BuiltinCommand, CommandFn> = {
   toggleCheckList,
   insertLink,
   insertImage,
+  updateImageMetadata: (view, input) =>
+    updateImageMetadata(view, imageMetadataInput(input)),
+  clearImageDimensions,
   insertCodeBlock,
   insertTable,
   insertHr,

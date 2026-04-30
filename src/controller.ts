@@ -13,6 +13,7 @@ import {
   keymap,
   placeholder as cmPlaceholder,
   type KeyBinding,
+  type ViewUpdate,
 } from '@codemirror/view';
 import {
   Compartment,
@@ -47,6 +48,11 @@ import {
   resolveClassNames,
   type CommandFn,
   type CodeHighlighter,
+  type GalleyFileHandler,
+  type GalleyFileInput,
+  type GalleyFileReporter,
+  type GalleyFileSource,
+  type GalleyFileStatus,
   type ImageRenderer,
   type LinkClickHandler,
   type GalleyClassNames,
@@ -69,6 +75,9 @@ export interface EditorCallbacks {
   onBlur?: () => void;
   onScroll?: (fraction: number) => void;
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
+  onFiles?: GalleyFileHandler;
+  onFileError?: (error: unknown, input: GalleyFileInput) => void;
+  onFileStatus?: (status: GalleyFileStatus) => void;
   onEnter?: (mod: boolean, shift: boolean) => boolean;
   onEscape?: () => boolean | void;
   onSubmit?: () => void;
@@ -182,7 +191,9 @@ export class EditorController implements GalleyHandle {
   private readonly runtimeExtensionsCompartment = new Compartment();
   private readonly editorClassNameCompartment = new Compartment();
   private readonly runtimeExtensions = new Map<symbol, Extension>();
+  private readonly pendingFileRanges = new Set<{ from: number; to: number }>();
 
+  private fileOperationSeq = 0;
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
   private callbacks: EditorCallbacks;
@@ -253,6 +264,7 @@ export class EditorController implements GalleyHandle {
       // Event listeners (use callback refs so they never go stale)
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
+          this.mapPendingFileRanges(update);
           this.callbacks.onChange?.(update.state.doc.toString());
         }
         if (update.selectionSet) {
@@ -278,10 +290,131 @@ export class EditorController implements GalleyHandle {
           this.dispatchScroll(getScrollFraction(view));
         },
         paste: (e, view) => {
+          const files = this.filesFromDataTransfer(e.clipboardData);
+          if (this.canEditDocument() && files.length > 0 && this.callbacks.onFiles) {
+            e.preventDefault();
+            void this.handleFiles(files, 'paste', e);
+          }
           this.callbacks.onPaste?.(e, view);
+        },
+        dragover: (e) => {
+          if (
+            this.canEditDocument() &&
+            this.callbacks.onFiles &&
+            this.hasFileData(e.dataTransfer)
+          ) {
+            e.preventDefault();
+          }
+        },
+        drop: (e) => {
+          const files = this.filesFromDataTransfer(e.dataTransfer);
+          if (!this.canEditDocument() || !this.callbacks.onFiles || files.length === 0) return;
+          e.preventDefault();
+          const pos = this.view.posAtCoords({ x: e.clientX, y: e.clientY });
+          const insertAt = pos ?? this.view.state.selection.main.from;
+          void this.handleFiles(files, 'drop', e, insertAt, insertAt);
         },
       }),
     ];
+  }
+
+  private canEditDocument(): boolean {
+    return this.settings.editable && this.settings.mode !== 'preview';
+  }
+
+  private getSelectionInfo() {
+    const sel = this.view.state.selection.main;
+    return { from: sel.from, to: sel.to, anchor: sel.anchor, head: sel.head };
+  }
+
+  private mapPendingFileRanges(update: ViewUpdate): void {
+    for (const range of this.pendingFileRanges) {
+      if (range.from === range.to) {
+        const pos = update.changes.mapPos(range.from, 1);
+        range.from = pos;
+        range.to = pos;
+        continue;
+      }
+
+      range.from = update.changes.mapPos(range.from, 1);
+      range.to = update.changes.mapPos(range.to, -1);
+      if (range.to < range.from) range.to = range.from;
+    }
+  }
+
+  private filesFromDataTransfer(dataTransfer: DataTransfer | null): File[] {
+    return Array.from(dataTransfer?.files ?? []);
+  }
+
+  private hasFileData(dataTransfer: DataTransfer | null): boolean {
+    if (!dataTransfer) return false;
+    return dataTransfer.files.length > 0 || Array.from(dataTransfer.types).includes('Files');
+  }
+
+  private insertFileHandlerMarkdown(markdown: string | string[], from: number, to: number): void {
+    if (!this.canEditDocument()) return;
+    const text = Array.isArray(markdown) ? markdown.join('\n') : markdown;
+    if (!text) return;
+    this.view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
+      scrollIntoView: true,
+    });
+  }
+
+  private async handleFiles(
+    files: File[],
+    source: GalleyFileSource,
+    event: ClipboardEvent | DragEvent,
+    from = this.view.state.selection.main.from,
+    to = this.view.state.selection.main.to,
+  ): Promise<void> {
+    const handler = this.callbacks.onFiles;
+    if (!handler || files.length === 0) return;
+    const pendingRange = { from, to };
+    this.pendingFileRanges.add(pendingRange);
+    const id = `galley-file-${++this.fileOperationSeq}`;
+    const selection = this.getSelectionInfo();
+    const report: GalleyFileReporter = (update) => {
+      try {
+        this.callbacks.onFileStatus?.({
+          id,
+          files,
+          source,
+          selection,
+          ...update,
+        });
+      } catch (error) {
+        console.error('Galley file status handler failed', error);
+      }
+    };
+
+    const input: GalleyFileInput = {
+      id,
+      files,
+      source,
+      event,
+      view: this.view,
+      selection,
+      report,
+    };
+
+    try {
+      report({ phase: 'start', progress: 0 });
+      const result = await handler(input);
+      if (result !== false && result !== null) {
+        this.insertFileHandlerMarkdown(result, pendingRange.from, pendingRange.to);
+      }
+      report({ phase: 'complete', progress: 1 });
+    } catch (error) {
+      report({ phase: 'error', error });
+      this.callbacks.onFileError?.(error, input);
+      if (!this.callbacks.onFileError) {
+        console.error('Galley file handler failed', error);
+      }
+    } finally {
+      this.pendingFileRanges.delete(pendingRange);
+    }
   }
 
   private handleEnter(cm: EditorView, mod: boolean, shift: boolean): boolean {

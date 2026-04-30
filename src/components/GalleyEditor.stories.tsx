@@ -1,9 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useArgs } from 'storybook/preview-api';
-import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import { useRef, useState, useCallback, useEffect, type CSSProperties } from 'react';
 import GalleyEditor from './GalleyEditor';
 import ErrorBoundary from './ErrorBoundary';
-import type { GalleyEditorProps, GalleyHandle, GalleyMode } from '../types';
+import type {
+  GalleyEditorProps,
+  GalleyFileInput,
+  GalleyFileStatus,
+  GalleyHandle,
+  GalleyImageInfo,
+  GalleyMode,
+} from '../types';
 import type { GalleyPlugin, GalleyClassNames } from '../types';
 import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
@@ -44,6 +51,137 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 type ThemeChoice = 'light' | 'dark' | 'auto';
+type UploadLogEntry = Pick<GalleyFileStatus, 'id' | 'phase' | 'progress' | 'message' | 'source'> & {
+  fileNames: string;
+};
+
+const escapeMarkdownAlt = (value: string) => value.replace(/[\n\r[\]\\]/g, ' ').trim();
+
+const fakeUpload = async (file: File) =>
+  `![${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`;
+
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const markdownPreviewStyle = {
+  marginTop: '12px',
+  padding: '12px',
+  backgroundColor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px',
+  fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+  fontSize: '12px',
+  lineHeight: 1.5,
+  overflowX: 'auto',
+  whiteSpace: 'pre-wrap',
+} satisfies CSSProperties;
+
+function MarkdownPreview({ value }: { value: string }) {
+  return (
+    <pre aria-label="Current markdown" style={markdownPreviewStyle}>
+      {value}
+    </pre>
+  );
+}
+
+function UploadStatusLog({ rows }: { rows: UploadLogEntry[] }) {
+  return (
+    <div
+      aria-label="Upload status"
+      aria-live="polite"
+      role="status"
+      style={{
+        marginTop: '12px',
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '90px minmax(120px, 1fr) 90px minmax(120px, 1.4fr)',
+        gap: '8px',
+        padding: '8px 10px',
+        background: '#f9fafb',
+        color: '#4b5563',
+        fontSize: '12px',
+        fontWeight: 700,
+      }}>
+        <span>Source</span>
+        <span>Files</span>
+        <span>Progress</span>
+        <span>Status</span>
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ padding: '10px', color: '#6b7280', fontSize: '13px' }}>
+          No uploads yet.
+        </div>
+      ) : rows.map((row) => (
+        <div
+          key={row.id}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '90px minmax(120px, 1fr) 90px minmax(120px, 1.4fr)',
+            gap: '8px',
+            padding: '8px 10px',
+            borderTop: '1px solid #e5e7eb',
+            fontSize: '13px',
+          }}
+        >
+          <span>{row.source}</span>
+          <span>{row.fileNames}</span>
+          <span>{row.progress === undefined ? '-' : `${Math.round(row.progress * 100)}%`}</span>
+          <span>{row.message ?? row.phase}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function appendFileStatus(rows: UploadLogEntry[], status: GalleyFileStatus): UploadLogEntry[] {
+  const nextRow = {
+    id: status.id,
+    phase: status.phase,
+    progress: status.progress,
+    message: status.message,
+    source: status.source,
+    fileNames: status.files.map((file) => file.name).join(', '),
+  };
+  const existingIndex = rows.findIndex((row) => row.id === status.id);
+  if (existingIndex === -1) return [...rows.slice(-5), nextRow];
+  return rows.map((row, index) => (index === existingIndex ? nextRow : row));
+}
+
+async function uploadFilesWithProgress(input: GalleyFileInput) {
+  const markdown: string[] = [];
+  for (const [index, file] of input.files.entries()) {
+    input.report({
+      phase: 'progress',
+      progress: index / input.files.length,
+      message: `Uploading ${file.name}`,
+    });
+    await wait(250);
+    markdown.push(await fakeUpload(file));
+    input.report({
+      phase: 'progress',
+      progress: (index + 1) / input.files.length,
+      message: `Uploaded ${file.name}`,
+    });
+  }
+  return markdown;
+}
+
+function firstImageRange(markdown: string) {
+  const match = /!\[[^\]]*\]\([^)]*\)(?:\{[^}]*\})?/.exec(markdown);
+  if (!match) return null;
+  return { from: match.index, to: match.index + match[0].length };
+}
+
+function selectFirstImage(editor: GalleyHandle | null, markdown: string) {
+  const range = firstImageRange(markdown);
+  if (!editor || !range) return false;
+  editor.select(range.from, range.to);
+  return true;
+}
 
 // ── Sample content ──────────────────────────────────────────────────────────
 
@@ -277,6 +415,238 @@ Enable the renderer below to opt into thumbnails.`);
 
 export const ImageRendering: Story = {
   render: ImageRenderingStory,
+};
+
+// ── Asset Workflows ────────────────────────────────────────────────────────
+
+function PasteUploadWorkflowStory() {
+  const [value, setValue] = useState('# Paste Upload Workflow\n\nPaste one or more image files into the editor.');
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        onFiles={uploadFilesWithProgress}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+      />
+      <UploadStatusLog rows={statusRows} />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates async file paste handling with `onFiles`, consumer progress
+ * updates through `input.report()`, and app-level status rendering through
+ * `onFileStatus`.
+ */
+export const PasteUploadWorkflow: Story = {
+  render: PasteUploadWorkflowStory,
+};
+
+function DropUploadWorkflowStory() {
+  const [value, setValue] = useState('# Drop Upload Workflow\n\nDrop image files between paragraphs.\n\nThe uploaded markdown is inserted at the drop position.');
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
+
+  return (
+    <div style={{ maxWidth: '880px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        onFiles={uploadFilesWithProgress}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
+      />
+      <UploadStatusLog rows={statusRows} />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Shows the same consumer-owned upload flow for drag and drop. Galley keeps
+ * the original drop selection while the async upload runs, then inserts the
+ * returned markdown when the promise resolves.
+ */
+export const DropUploadWorkflow: Story = {
+  render: DropUploadWorkflowStory,
+};
+
+function ImageMetadataEditorStory() {
+  const initialMarkdown = '## Image Metadata\n\n![Draft hero](/uploads/hero.png "Hero image"){width=640 height=360}\n\nSelect the image or use the controls below to update the metadata.';
+  const [value, setValue] = useState(initialMarkdown);
+  const [alt, setAlt] = useState('Product screenshot');
+  const [url, setUrl] = useState('/uploads/product-screenshot.png');
+  const [title, setTitle] = useState('Annotated product screenshot');
+  const [width, setWidth] = useState('720');
+  const [height, setHeight] = useState('405');
+  const editorRef = useRef<GalleyHandle>(null);
+
+  const applyMetadata = () => {
+    if (!selectFirstImage(editorRef.current, editorRef.current?.getContent() ?? value)) return;
+    editorRef.current?.execCommand('updateImageMetadata', {
+      alt,
+      url,
+      title: title.trim() ? title : null,
+      width: width.trim() ? Number(width) : null,
+      height: height.trim() ? Number(height) : null,
+    });
+  };
+
+  const clearDimensions = () => {
+    if (!selectFirstImage(editorRef.current, editorRef.current?.getContent() ?? value)) return;
+    editorRef.current?.execCommand('clearImageDimensions');
+    setWidth('');
+    setHeight('');
+  };
+
+  return (
+    <div style={{ maxWidth: '920px', margin: '0 auto' }}>
+      <GalleyEditor
+        ref={editorRef}
+        value={value}
+        onChange={setValue}
+        minRows={8}
+      />
+      <div
+        style={{
+          marginTop: '12px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gap: '10px',
+        }}
+      >
+        <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>
+          Alt
+          <input value={alt} onChange={(event) => setAlt(event.currentTarget.value)} />
+        </label>
+        <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>
+          URL
+          <input value={url} onChange={(event) => setUrl(event.currentTarget.value)} />
+        </label>
+        <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>
+          Title
+          <input value={title} onChange={(event) => setTitle(event.currentTarget.value)} />
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>
+            Width
+            <input inputMode="numeric" value={width} onChange={(event) => setWidth(event.currentTarget.value)} />
+          </label>
+          <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>
+            Height
+            <input inputMode="numeric" value={height} onChange={(event) => setHeight(event.currentTarget.value)} />
+          </label>
+        </div>
+      </div>
+      <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <button type="button" onClick={applyMetadata}>
+          Apply metadata
+        </button>
+        <button type="button" onClick={clearDimensions}>
+          Clear dimensions
+        </button>
+      </div>
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates the `updateImageMetadata` and `clearImageDimensions` commands.
+ * The metadata syntax stays in Markdown as `![Alt](image.png "Title"){width=640 height=360}`.
+ */
+export const ImageMetadataEditor: Story = {
+  render: ImageMetadataEditorStory,
+};
+
+function ResizableImageRendererStory() {
+  const [value, setValue] = useState('## Resizable Renderer\n\n![Dashboard screenshot](/uploads/dashboard.png "Dashboard"){width=480 height=270}\n\nThe custom renderer reads image dimensions and writes them back to markdown.');
+  const editorRef = useRef<GalleyHandle>(null);
+
+  const selectImage = useCallback((image: GalleyImageInfo) => {
+    editorRef.current?.select(image.from, image.to);
+  }, []);
+
+  const renderImage = useCallback((image: GalleyImageInfo) => {
+    const figure = document.createElement('figure');
+    figure.style.display = 'inline-grid';
+    figure.style.gap = '8px';
+    figure.style.margin = '0';
+    figure.style.maxWidth = '100%';
+
+    const img = document.createElement('img');
+    img.src = image.url;
+    img.alt = image.alt;
+    if (image.title) img.title = image.title;
+    img.loading = 'lazy';
+    img.style.display = 'block';
+    img.style.maxWidth = '100%';
+    img.style.width = image.width ? `${image.width}px` : 'min(100%, 420px)';
+    if (image.height) img.style.height = `${image.height}px`;
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '8px';
+
+    const controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.gap = '6px';
+    controls.style.flexWrap = 'wrap';
+
+    const makeButton = (label: string, onClick: () => void) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.style.border = '1px solid #cbd5e1';
+      button.style.borderRadius = '6px';
+      button.style.background = '#ffffff';
+      button.style.cursor = 'pointer';
+      button.style.fontSize = '12px';
+      button.style.padding = '4px 8px';
+      button.addEventListener('mousedown', (event) => event.preventDefault());
+      button.addEventListener('click', () => {
+        selectImage(image);
+        onClick();
+      });
+      return button;
+    };
+
+    controls.append(
+      makeButton('320px', () => editorRef.current?.execCommand('updateImageMetadata', { width: 320, height: 180 })),
+      makeButton('+80px', () => editorRef.current?.execCommand('updateImageMetadata', {
+        width: (image.width ?? 480) + 80,
+        height: image.height ? image.height + 45 : undefined,
+      })),
+      makeButton('Clear size', () => editorRef.current?.execCommand('clearImageDimensions')),
+    );
+
+    figure.append(img, controls);
+    return figure;
+  }, [selectImage]);
+
+  return (
+    <div style={{ maxWidth: '920px', margin: '0 auto' }}>
+      <GalleyEditor
+        ref={editorRef}
+        value={value}
+        onChange={setValue}
+        minRows={8}
+        imageRenderer={renderImage}
+      />
+      <MarkdownPreview value={value} />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates a custom `imageRenderer` that consumes `width` and `height`
+ * metadata and offers small resize actions backed by Galley's image metadata
+ * commands.
+ */
+export const ResizableImageRenderer: Story = {
+  render: ResizableImageRendererStory,
 };
 
 // ── With Toolbar ────────────────────────────────────────────────────────────
@@ -1696,88 +2066,40 @@ export const PasteHandler: Story = {
   render: PasteHandlerStory,
 };
 
-// ── File Upload Workflow ───────────────────────────────────────────────────
+// ── Slow Drop Upload Progress ──────────────────────────────────────────────
 
-type UploadRecord = {
-  id: string;
-  name: string;
-  status: 'uploading' | 'done' | 'failed';
-  markdown?: string;
-};
-
-function createUploadId(): string {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-}
-
-function FileUploadWorkflowStory() {
+function SlowDropUploadProgressStory() {
   const [value, setValue] = useState(
-    '# Upload Workflow\n\nPaste or drop image files into the editor. This story uses a fake upload and inserts Markdown when it completes.',
+    '# Slow Drop Upload\n\nDrop one or more files into the editor. The story simulates a slow upload, reports progress, and inserts Markdown file links when it completes.',
   );
-  const [uploads, setUploads] = useState<UploadRecord[]>([]);
+  const [statusRows, setStatusRows] = useState<UploadLogEntry[]>([]);
 
-  const fakeUpload = useCallback(async (file: File): Promise<string> => {
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    return `![${file.name}](/uploads/${encodeURIComponent(file.name)})`;
+  const slowUpload = useCallback(async (input: GalleyFileInput) => {
+    const markdownItems: string[] = [];
+    const totalSteps = 8;
+
+    for (const [fileIndex, file] of input.files.entries()) {
+      for (let step = 0; step <= totalSteps; step += 1) {
+        const fileProgress = step / totalSteps;
+        const totalProgress = (fileIndex + fileProgress) / input.files.length;
+        input.report({
+          phase: 'progress',
+          progress: totalProgress,
+          message: `Uploading ${file.name} (${Math.round(fileProgress * 100)}%)`,
+        });
+        await wait(220);
+      }
+
+      markdownItems.push(`[${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`);
+    }
+
+    input.report({ phase: 'progress', progress: 1, message: 'Inserting file links' });
+    return markdownItems;
   }, []);
 
-  const handleFiles = useCallback(async (files: File[], view: EditorView) => {
-    if (files.length === 0) return;
-
-    const records = files.map((file) => ({
-      id: createUploadId(),
-      name: file.name,
-      status: 'uploading' as const,
-    }));
-
-    setUploads((items) => [...records, ...items]);
-
-    const markdownItems: string[] = [];
-    for (const [index, file] of files.entries()) {
-      const id = records[index].id;
-      try {
-        const markdown = await fakeUpload(file);
-        markdownItems.push(markdown);
-        setUploads((items) =>
-          items.map((item) =>
-            item.id === id ? { ...item, status: 'done', markdown } : item,
-          ),
-        );
-      } catch {
-        setUploads((items) =>
-          items.map((item) =>
-            item.id === id ? { ...item, status: 'failed' } : item,
-          ),
-        );
-      }
-    }
-
-    if (markdownItems.length > 0) {
-      view.dispatch(view.state.replaceSelection(`${markdownItems.join('\n')}\n`));
-    }
-  }, [fakeUpload]);
-
-  const dropExtension = useMemo(
-    () =>
-      EditorView.domEventHandlers({
-        dragover(event) {
-          if ((event.dataTransfer?.files.length ?? 0) === 0) return false;
-          event.preventDefault();
-          return true;
-        },
-        drop(event, view) {
-          const files = Array.from(event.dataTransfer?.files ?? []);
-          if (files.length === 0) return false;
-          event.preventDefault();
-          void handleFiles(files, view);
-          return true;
-        },
-      }),
-    [handleFiles],
-  );
-
-  const activeCount = uploads.filter((upload) => upload.status === 'uploading').length;
+  const latestStatus = statusRows.at(-1);
+  const progress = latestStatus?.progress ?? 0;
+  const activeCount = statusRows.filter((row) => row.phase === 'progress' && row.progress !== 1).length;
 
   return (
     <div style={{ maxWidth: '860px', margin: '0 auto' }}>
@@ -1785,17 +2107,12 @@ function FileUploadWorkflowStory() {
         value={value}
         onChange={setValue}
         minRows={8}
-        extensions={[dropExtension]}
-        onPaste={(event, view) => {
-          const files = Array.from(event.clipboardData?.files ?? []);
-          if (files.length === 0) return;
-          event.preventDefault();
-          void handleFiles(files, view);
-        }}
+        onFiles={slowUpload}
+        onFileStatus={(status) => setStatusRows((rows) => appendFileStatus(rows, status))}
         footer={{
           after: () => (
             <span>
-              {activeCount} upload{activeCount === 1 ? '' : 's'} active
+              {activeCount > 0 ? 'Upload in progress' : 'Drop files to upload'}
             </span>
           ),
         }}
@@ -1809,14 +2126,35 @@ function FileUploadWorkflowStory() {
           borderRadius: '8px',
           fontSize: '13px',
         }}
+        aria-label="Slow upload progress"
+        aria-live="polite"
+        role="status"
       >
-        <strong>Upload log</strong>
-        {uploads.length === 0 && (
+        <strong>Drop upload progress</strong>
+        <div
+          style={{
+            marginTop: '10px',
+            height: '8px',
+            borderRadius: '999px',
+            background: '#e5e7eb',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${Math.round(progress * 100)}%`,
+              height: '100%',
+              background: '#2563eb',
+              transition: 'width 180ms ease',
+            }}
+          />
+        </div>
+        {statusRows.length === 0 && (
           <div style={{ color: '#6b7280', marginTop: '6px' }}>
-            Paste or drop files to add upload records.
+            Drop files to start a simulated slow upload.
           </div>
         )}
-        {uploads.map((upload) => (
+        {statusRows.map((upload) => (
           <div
             key={upload.id}
             style={{
@@ -1828,20 +2166,25 @@ function FileUploadWorkflowStory() {
               paddingTop: '6px',
             }}
           >
-            <span>{upload.name}</span>
-            <code>{upload.status}</code>
+            <span>{upload.fileNames}</span>
+            <code>
+              {upload.progress === undefined
+                ? upload.phase
+                : `${upload.phase} ${Math.round(upload.progress * 100)}%`}
+            </code>
           </div>
         ))}
       </div>
+      <MarkdownPreview value={value} />
     </div>
   );
 }
 
 /**
- * Demonstrates app-owned file upload tracking with `onPaste` and a custom
- * CodeMirror drop extension. The fake upload inserts Markdown image syntax
- * and reports active uploads through `footer.after`.
+ * Demonstrates a slow drop upload powered by `onFiles`, `input.report()`, and
+ * `onFileStatus`. The simulated upload reports progress before inserting
+ * Markdown file links into the editor.
  */
-export const FileUploadWorkflow: Story = {
-  render: FileUploadWorkflowStory,
+export const SlowDropUploadProgress: Story = {
+  render: SlowDropUploadProgressStory,
 };

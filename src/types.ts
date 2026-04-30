@@ -19,11 +19,69 @@ export interface GalleyRenderContext {
   onLinkClick?: LinkClickHandler;
 }
 
-export type ImageRenderer = (image: {
+export type GalleyFileSource = 'paste' | 'drop';
+
+export interface GalleySelectionInfo {
+  from: number;
+  to: number;
+  anchor: number;
+  head: number;
+}
+
+export type GalleyFileStatusPhase = 'start' | 'progress' | 'complete' | 'error';
+
+export interface GalleyFileStatusUpdate {
+  phase: GalleyFileStatusPhase;
+  progress?: number;
+  message?: string;
+  error?: unknown;
+}
+
+export interface GalleyFileStatus extends GalleyFileStatusUpdate {
+  id: string;
+  files: File[];
+  source: GalleyFileSource;
+  selection: GalleySelectionInfo;
+}
+
+export type GalleyFileReporter = (update: GalleyFileStatusUpdate) => void;
+
+export interface GalleyFileInput {
+  id: string;
+  files: File[];
+  source: GalleyFileSource;
+  event: ClipboardEvent | DragEvent;
+  view: EditorView;
+  selection: GalleySelectionInfo;
+  report: GalleyFileReporter;
+}
+
+export type GalleyFileHandlerResult = string | string[] | null | false;
+
+export type GalleyFileHandler =
+  (input: GalleyFileInput) => GalleyFileHandlerResult | Promise<GalleyFileHandlerResult>;
+
+export interface GalleyImageInfo {
   alt: string;
   url: string;
   title?: string;
-}) => HTMLElement | null;
+  width?: number;
+  height?: number;
+  attrs?: string[];
+  raw: string;
+  from: number;
+  to: number;
+}
+
+export interface GalleyImageMetadataInput {
+  alt?: string;
+  url?: string;
+  title?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+export type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
 
 export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 
@@ -216,6 +274,8 @@ export type BuiltinCommand =
   | 'toggleCheckList'
   | 'insertLink'
   | 'insertImage'
+  | 'updateImageMetadata'
+  | 'clearImageDimensions'
   | 'insertCodeBlock'
   | 'insertTable'
   | 'insertHr'
@@ -375,6 +435,12 @@ export interface GalleyEditorProps {
   onEscape?: () => boolean | void;
   /** Handle paste events. */
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
+  /** Handle pasted or dropped files before built-in insertion. */
+  onFiles?: GalleyFileHandler;
+  /** Handle errors raised while processing pasted or dropped files. */
+  onFileError?: (error: unknown, input: GalleyFileInput) => void;
+  /** Observe consumer-owned file handling status and progress. */
+  onFileStatus?: (status: GalleyFileStatus) => void;
   /** Handle Cmd/Ctrl+Enter. */
   onSubmit?: () => void;
 }

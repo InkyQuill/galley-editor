@@ -1,17 +1,19 @@
 import { WidgetType } from '@codemirror/view';
 import type { EditorState } from '@codemirror/state';
 import { makeInlinePlugin } from '../rendering';
+import {
+  imageRangeIntersectsSelection,
+  imageTrailingAttrsLength,
+  parseImageMarkdown,
+} from '../image-markdown';
 import type {
   ImageRenderer,
+  GalleyImageInfo,
   GalleyClassNames,
   GalleyPlugin,
 } from '../types';
 
-interface ParsedImage {
-  alt: string;
-  url: string;
-  title?: string;
-}
+type ParsedImage = GalleyImageInfo;
 
 class ImageWidget extends WidgetType {
   private readonly image: ParsedImage;
@@ -30,6 +32,12 @@ class ImageWidget extends WidgetType {
       other.image.alt === this.image.alt &&
       other.image.url === this.image.url &&
       other.image.title === this.image.title &&
+      other.image.width === this.image.width &&
+      other.image.height === this.image.height &&
+      other.image.attrs?.join('\0') === this.image.attrs?.join('\0') &&
+      other.image.raw === this.image.raw &&
+      other.image.from === this.image.from &&
+      other.image.to === this.image.to &&
       other.imageClass === this.imageClass &&
       other.renderer === this.renderer
     );
@@ -55,22 +63,8 @@ class ImageWidget extends WidgetType {
   }
 }
 
-function parseImage(raw: string): ParsedImage | null {
-  const match = /^!\[(?<alt>[^\]]*)\]\((?<target>.*)\)$/.exec(raw);
-  if (!match?.groups) return null;
-  const target = match.groups.target.trim();
-  if (!target) return null;
-  const titleMatch = /^(?<url>.+?)\s+"(?<title>[^"]*)"$/.exec(target);
-
-  return {
-    alt: match.groups.alt,
-    url: titleMatch?.groups?.url ?? target,
-    ...(titleMatch?.groups?.title ? { title: titleMatch.groups.title } : {}),
-  };
-}
-
-function selectionIntersects(from: number, to: number, state: EditorState): boolean {
-  return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
+function imageRangeTo(state: EditorState, to: number): number {
+  return to + imageTrailingAttrsLength(state, to);
 }
 
 function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
@@ -93,15 +87,16 @@ const imagesPlugin: GalleyPlugin = {
     const widgetExt = makeInlinePlugin({
       createDecoration(node, state) {
         if (node.name !== 'Image') return null;
-        const parsed = parseImage(state.sliceDoc(node.from, node.to));
+        const to = imageRangeTo(state, node.to);
+        const parsed = parseImageMarkdown(state.sliceDoc(node.from, to), node.from, to);
         if (!parsed) return null;
         return new ImageWidget(parsed, imageClass, renderer);
       },
-      getMarkRange(node) {
-        return { from: node.from, to: node.to };
+      getMarkRange(node, state) {
+        return { from: node.from, to: imageRangeTo(state, node.to) };
       },
       getRevealStrategy: (node, state) =>
-        preview ? false : selectionIntersects(node.from, node.to, state),
+        preview ? false : imageRangeIntersectsSelection(state, node.from, imageRangeTo(state, node.to)),
     });
 
     return [widgetExt];

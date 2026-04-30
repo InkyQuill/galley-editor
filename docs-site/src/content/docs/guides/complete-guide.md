@@ -141,7 +141,7 @@ The imperative handle also exposes non-command actions:
 | `addExtension(extension)` | Register a CodeMirror extension at runtime and receive a `remove()` handle. |
 | `view` | Read-only access to the current CodeMirror `EditorView`. |
 
-Event props include `onFocus`, `onBlur`, `onSelectionChange`, `onScroll`, `onEnter`, `onEscape`, `onPaste`, and `onSubmit`.
+Event props include `onFocus`, `onBlur`, `onSelectionChange`, `onScroll`, `onEnter`, `onEscape`, `onPaste`, `onFiles`, `onFileStatus`, `onFileError`, and `onSubmit`.
 
 ## Add Custom Toolbar Buttons
 
@@ -387,75 +387,88 @@ For one-off shell tweaks, use `surface`:
 
 ## Register And Track File Uploads
 
-Galley v0.7 exposes raw paste events and CodeMirror extension hooks. It does not yet ship a first-class `onFiles` or drop-upload prop, so upload registration is app-owned:
+Galley keeps storage and upload behavior app-owned. Provide `onFiles` to handle pasted or dropped files, return Markdown when uploads finish, and use `input.report()` plus `onFileStatus` to keep upload UI responsive while the editor waits for the result.
 
-1. Read files from `onPaste` or a custom drop extension.
-2. Prevent the default browser behavior when you handle files.
-3. Track upload records in React state.
-4. Insert returned Markdown with `view.dispatch(view.state.replaceSelection(markdown))` or `editor.insertText(markdown)`.
-5. Render uploaded assets with `imageRenderer`.
+1. `onFiles(input)` receives the files, source (`paste` or `drop`), original event, editor view, selection snapshot, and `report()`.
+2. Call `input.report({ phase: 'progress', progress, message })` during long uploads.
+3. Galley forwards reports to `onFileStatus(status)`.
+4. Return a Markdown string or array of strings. Galley inserts it at the original paste selection or drop position.
+5. Return `false` or `null` when the app handled the files without inserting Markdown.
 
 ```tsx
 import { useState } from 'react';
-import type { EditorView } from '@codemirror/view';
+import type { GalleyFileInput, GalleyFileStatus } from '@inky/galley-editor';
 
 type UploadRecord = {
   id: string;
-  name: string;
-  status: 'uploading' | 'done' | 'failed';
-  url?: string;
+  names: string;
+  phase: GalleyFileStatus['phase'];
+  progress?: number;
+  message?: string;
 };
 
-async function uploadFile(file: File): Promise<string> {
-  const url = `/uploads/${encodeURIComponent(file.name)}`;
-  return `![${file.name}](${url})`;
+const escapeMarkdownLabel = (value: string) =>
+  value.replace(/[\n\r[\]\\]/g, ' ').trim();
+
+async function uploadToStorage(file: File): Promise<void> {
+  await new Promise((resolve) => window.setTimeout(resolve, 500));
 }
 
-function filesFromClipboard(event: ClipboardEvent): File[] {
-  return Array.from(event.clipboardData?.files ?? []);
+async function uploadFile(file: File, input: GalleyFileInput, index: number): Promise<string> {
+  input.report({
+    phase: 'progress',
+    progress: index / input.files.length,
+    message: `Uploading ${file.name}`,
+  });
+
+  await uploadToStorage(file);
+
+  const url = `/uploads/${encodeURIComponent(file.name)}`;
+  return `[${escapeMarkdownLabel(file.name)}](${url})`;
 }
 
 export function EditorWithUploads() {
   const [value, setValue] = useState('');
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
 
-  async function handleFiles(files: File[], view: EditorView) {
-    for (const file of files) {
-      const id = crypto.randomUUID();
-      setUploads((items) => [...items, { id, name: file.name, status: 'uploading' }]);
+  async function handleFiles(input: GalleyFileInput) {
+    const markdown = [];
 
-      try {
-        const markdown = await uploadFile(file);
-        view.dispatch(view.state.replaceSelection(`${markdown}\n`));
-        setUploads((items) =>
-          items.map((item) =>
-            item.id === id ? { ...item, status: 'done', url: markdown } : item,
-          ),
-        );
-      } catch {
-        setUploads((items) =>
-          items.map((item) =>
-            item.id === id ? { ...item, status: 'failed' } : item,
-          ),
-        );
-      }
+    for (const [index, file] of input.files.entries()) {
+      markdown.push(await uploadFile(file, input, index));
     }
+
+    input.report({ phase: 'progress', progress: 1, message: 'Inserting links' });
+    return markdown;
   }
 
   return (
     <GalleyEditor
       value={value}
       onChange={setValue}
-      onPaste={(event, view) => {
-        const files = filesFromClipboard(event);
-        if (files.length === 0) return;
-        event.preventDefault();
-        void handleFiles(files, view);
+      onFiles={handleFiles}
+      onFileStatus={(status) => {
+        setUploads((items) => {
+          const next = {
+            id: status.id,
+            names: status.files.map((file) => file.name).join(', '),
+            phase: status.phase,
+            progress: status.progress,
+            message: status.message,
+          };
+          const existing = items.findIndex((item) => item.id === status.id);
+          if (existing === -1) return [next, ...items];
+          return items.map((item, index) => (index === existing ? next : item));
+        });
+      }}
+      onFileError={(error, input) => {
+        console.error('Upload failed', input.files, error);
       }}
       footer={{
         after: () => (
           <span>
-            {uploads.filter((upload) => upload.status === 'uploading').length} uploads active
+            {uploads.filter((upload) => upload.phase === 'progress' && upload.progress !== 1).length}
+            {' '}uploads active
           </span>
         ),
       }}
@@ -464,29 +477,4 @@ export function EditorWithUploads() {
 }
 ```
 
-To handle drag-and-drop files today, register a CodeMirror DOM extension through `extensions`:
-
-```tsx
-import { EditorView } from '@codemirror/view';
-
-function uploadDropExtension(handleFiles: (files: File[], view: EditorView) => void) {
-  return EditorView.domEventHandlers({
-    dragover(event) {
-      if ((event.dataTransfer?.files.length ?? 0) === 0) return false;
-      event.preventDefault();
-      return true;
-    },
-    drop(event, view) {
-      const files = Array.from(event.dataTransfer?.files ?? []);
-      if (files.length === 0) return false;
-      event.preventDefault();
-      handleFiles(files, view);
-      return true;
-    },
-  });
-}
-
-<GalleyEditor extensions={[uploadDropExtension(handleFiles)]} />;
-```
-
-If your upload handler stores IDs or signed URLs outside Markdown, keep that registry in your app state and use `imageRenderer` to resolve Markdown URLs into your asset records.
+`onFiles` handles both paste and drop. Galley prevents the browser's default file handling, preserves the original selection while the promise resolves, and inserts the returned Markdown when the handler completes. If your upload handler stores IDs or signed URLs outside Markdown, keep that registry in app state and use `imageRenderer` to resolve Markdown URLs into your asset records.

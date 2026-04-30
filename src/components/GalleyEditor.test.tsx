@@ -3,7 +3,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import GalleyEditor, { type GalleyHandle } from './GalleyEditor';
 import type { EditorView } from '@codemirror/view';
+import type { Extension } from '@codemirror/state';
 import { GALLEY_VERSION } from '../version';
+import { EditorController } from '../controller';
+import type { GalleyClassNames, GalleyPlugin } from '../types';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -117,6 +120,49 @@ describe('GalleyEditor React wrapper', () => {
     rerender(root, <GalleyEditor value="hello" editorClassName="" theme="light" />);
     expect(editor?.classList.contains('a')).toBe(false);
     expect(editor?.classList.contains('b')).toBe(false);
+  });
+
+  it('does not reconfigure settings when only file callbacks change', () => {
+    const updateSettingsSpy = vi.spyOn(EditorController.prototype, 'updateSettings');
+    const classNames: GalleyClassNames = {};
+    const plugins: GalleyPlugin[] = [];
+    const disabledPlugins: string[] = [];
+    const extensions: Extension[] = [];
+    const onFiles = () => 'upload';
+
+    try {
+      const { root } = mount(
+        <GalleyEditor
+          value="hello"
+          theme="light"
+          classNames={classNames}
+          plugins={plugins}
+          disabledPlugins={disabledPlugins}
+          extensions={extensions}
+          onFiles={onFiles}
+          onFileStatus={() => undefined}
+        />,
+      );
+      const callsAfterMount = updateSettingsSpy.mock.calls.length;
+
+      rerender(
+        root,
+        <GalleyEditor
+          value="hello"
+          theme="light"
+          classNames={classNames}
+          plugins={plugins}
+          disabledPlugins={disabledPlugins}
+          extensions={extensions}
+          onFiles={onFiles}
+          onFileStatus={() => undefined}
+        />,
+      );
+
+      expect(updateSettingsSpy).toHaveBeenCalledTimes(callsAfterMount);
+    } finally {
+      updateSettingsSpy.mockRestore();
+    }
   });
 
   it('allows parent layout effects to call focus before the controller mounts', () => {
