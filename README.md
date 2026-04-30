@@ -1,6 +1,6 @@
 # Galley Editor
 
-> ⚠️ **In active development.** v0.7.0 is the current public-repository cleanup build, with rendering parity, reference links, safe image rendering, bidi support, hooks, and a cleaned-up source tree. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+> ⚠️ **In active development.** v0.8.0 is the current pre-1.0 build. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
