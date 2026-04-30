@@ -59,9 +59,30 @@ function imageMetadataInput(input: unknown): GalleyImageMetadataInput {
   if (input === null || typeof input !== 'object' || Array.isArray(input)) return {};
 
   const prototype = Object.getPrototypeOf(input);
-  return prototype === Object.prototype || prototype === null
-    ? input as GalleyImageMetadataInput
-    : {};
+  if (prototype !== Object.prototype && prototype !== null) return {};
+
+  const candidate = input as Record<string, unknown>;
+  const sanitized: GalleyImageMetadataInput = {};
+
+  if (typeof candidate.alt === 'string') sanitized.alt = candidate.alt;
+  if (typeof candidate.url === 'string') sanitized.url = candidate.url;
+  if (typeof candidate.title === 'string' || candidate.title === null) {
+    sanitized.title = candidate.title;
+  }
+  if (
+    (typeof candidate.width === 'number' && Number.isFinite(candidate.width)) ||
+    candidate.width === null
+  ) {
+    sanitized.width = candidate.width;
+  }
+  if (
+    (typeof candidate.height === 'number' && Number.isFinite(candidate.height)) ||
+    candidate.height === null
+  ) {
+    sanitized.height = candidate.height;
+  }
+
+  return sanitized;
 }
 
 export const DEFAULT_KEYMAP: GalleyKeyBinding[] = [

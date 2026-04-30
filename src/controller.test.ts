@@ -429,6 +429,35 @@ describe('EditorController runtime state', () => {
     expect(controller.getContent()).toBe('![Diagram](diagram.png){width=640}');
   });
 
+  it('ignores malformed image metadata fields through execCommand', () => {
+    const doc = '![Diagram](diagram.png)';
+    const controller = createController(doc);
+    controller.select(doc.indexOf('Diagram'));
+
+    expect(() =>
+      controller.execCommand('updateImageMetadata', {
+        alt: Symbol('x'),
+        width: '640',
+      }),
+    ).not.toThrow();
+
+    expect(controller.getContent()).toBe(doc);
+  });
+
+  it('applies valid mixed image metadata fields through execCommand', () => {
+    const doc = '![Old](old.png "Title")';
+    const controller = createController(doc);
+    controller.select(doc.indexOf('Old'));
+
+    expect(controller.execCommand('updateImageMetadata', {
+      alt: 'New',
+      title: null,
+      width: 640,
+    })).toBe(true);
+
+    expect(controller.getContent()).toBe('![New](old.png){width=640}');
+  });
+
   it('inserts markdown returned from a paste file handler', async () => {
     const file = new File(['image'], 'demo.png', { type: 'image/png' });
     const onFiles = vi.fn(() => '![upload](uploaded.png)');
