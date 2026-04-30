@@ -19,6 +19,7 @@ import {
   imageTrailingAttrsLength,
   parseImageMarkdown,
 } from '../image-markdown';
+import { updateImageMetadata } from '../commands/imageMetadata';
 import type {
   ImageRenderer,
   MissingImageRenderer,
@@ -27,6 +28,7 @@ import type {
   GalleyClassNames,
   GalleyPlugin,
 } from '../types';
+import { resizeImageMetadata, type ResizeCorner } from './image-resize';
 
 type ParsedImage = GalleyImageInfo;
 type SelectedImageRange = { from: number; to: number };
@@ -111,6 +113,7 @@ class ImageWidget extends WidgetType {
     if (this.image.url.trim() === '') {
       const wrapper = this.createWrapper();
       this.attachSelectionHandler(wrapper, view);
+      this.appendResizeHandles(wrapper, view);
       wrapper.append(this.renderMissingImage('empty-url'));
       return wrapper;
     }
@@ -126,6 +129,7 @@ class ImageWidget extends WidgetType {
     const wrapper = this.createWrapper();
     this.attachSelectionHandler(wrapper, view);
     this.attachErrorListeners(wrapper, rendered);
+    this.appendResizeHandles(wrapper, view);
     wrapper.append(rendered);
     return wrapper;
   }
@@ -138,6 +142,69 @@ class ImageWidget extends WidgetType {
     const wrapper = document.createElement('span');
     wrapper.className = `${this.imageClass} ge-image-widget${this.selected ? ' ge-image-selected' : ''}`;
     return wrapper;
+  }
+
+  private appendResizeHandles(wrapper: HTMLElement, view: EditorView): void {
+    if (!this.selected) return;
+
+    const corners: ResizeCorner[] = ['nw', 'ne', 'sw', 'se'];
+    for (const corner of corners) {
+      const handle = document.createElement('button');
+      handle.type = 'button';
+      handle.className = `ge-image-resize-handle ge-image-resize-${corner}`;
+      handle.ariaLabel = `Resize image ${corner}`;
+      handle.addEventListener('mousedown', (event) => {
+        this.startResize(event, view, corner, 'mouse');
+      });
+      handle.addEventListener('pointerdown', (event) => {
+        this.startResize(event, view, corner, 'pointer');
+      });
+      wrapper.append(handle);
+    }
+  }
+
+  private startResize(
+    event: MouseEvent | PointerEvent,
+    view: EditorView,
+    corner: ResizeCorner,
+    eventSource: 'mouse' | 'pointer',
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const freeAtStart = event.shiftKey;
+    const moveEvent = eventSource === 'pointer' ? 'pointermove' : 'mousemove';
+    const upEvent = eventSource === 'pointer' ? 'pointerup' : 'mouseup';
+
+    const onMove = (moveEvent: MouseEvent | PointerEvent) => {
+      moveEvent.preventDefault();
+    };
+    const onUp = (upEvent: MouseEvent | PointerEvent) => {
+      upEvent.preventDefault();
+      removeListeners();
+
+      const metadata = resizeImageMetadata(this.image, {
+        corner,
+        deltaX: upEvent.clientX - startX,
+        deltaY: upEvent.clientY - startY,
+        free: freeAtStart || upEvent.shiftKey,
+      });
+
+      view.dispatch({
+        selection: EditorSelection.cursor(Math.min(this.image.from + 1, this.image.to)),
+        effects: selectImage.of({ from: this.image.from, to: this.image.to }),
+      });
+      updateImageMetadata(view, metadata);
+    };
+    const removeListeners = () => {
+      document.removeEventListener(moveEvent, onMove);
+      document.removeEventListener(upEvent, onUp);
+    };
+
+    document.addEventListener(moveEvent, onMove);
+    document.addEventListener(upEvent, onUp);
   }
 
   private attachSelectionHandler(wrapper: HTMLElement, view: EditorView): void {

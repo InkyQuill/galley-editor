@@ -470,6 +470,40 @@
   outline-offset: 3px;
 }
 
+.ge-image-resize-handle {
+  background: var(--ge-color-bg);
+  border: 1px solid var(--ge-color-focus-ring);
+  border-radius: 999px;
+  box-sizing: border-box;
+  height: 0.75rem;
+  position: absolute;
+  width: 0.75rem;
+}
+
+.ge-image-resize-nw {
+  cursor: nwse-resize;
+  left: -0.4rem;
+  top: -0.4rem;
+}
+
+.ge-image-resize-ne {
+  cursor: nesw-resize;
+  right: -0.4rem;
+  top: -0.4rem;
+}
+
+.ge-image-resize-sw {
+  bottom: -0.4rem;
+  cursor: nesw-resize;
+  left: -0.4rem;
+}
+
+.ge-image-resize-se {
+  bottom: -0.4rem;
+  cursor: nwse-resize;
+  right: -0.4rem;
+}
+
 .ge-image-frame .ge-image,
 .ge-image-widget img {
   background: var(--ge-color-surface);

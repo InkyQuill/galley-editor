@@ -11,6 +11,21 @@ afterEach(() => {
   destroyViews(views);
 });
 
+function docOf(view: EditorView): string {
+  return view.state.doc.toString();
+}
+
+function requireElement<T extends HTMLElement>(element: T | null): T {
+  if (!element) throw new Error('Expected element to exist');
+  return element;
+}
+
+function selectImageWidget(view: EditorView): HTMLElement {
+  const widget = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-widget'));
+  widget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  return widget;
+}
+
 describe('imagesPlugin', () => {
   it('ordinary mouse click selects an image visually without revealing markdown', () => {
     const doc = '![Galley mark](assets/galley.png)\n\nplain';
@@ -27,6 +42,91 @@ describe('imagesPlugin', () => {
 
     expect(view.dom.querySelector('.ge-image-widget.ge-image-selected img')).toBeInstanceOf(HTMLImageElement);
     expect(lineElement(view, 1).textContent).not.toBe('![Galley mark](assets/galley.png)');
+  });
+
+  it('shows four resize handles for a visually selected image', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+
+    expect(view.dom.querySelectorAll('.ge-image-resize-handle')).toHaveLength(4);
+    expect(view.dom.querySelector('.ge-image-resize-nw')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-image-resize-ne')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-image-resize-sw')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-image-resize-se')).toBeInstanceOf(HTMLElement);
+  });
+
+  it('does not show resize handles for an unselected image', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeInstanceOf(HTMLImageElement);
+    expect(view.dom.querySelector('.ge-image-resize-handle')).toBeNull();
+  });
+
+  it('dragging the southeast resize handle updates markdown image dimensions', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+    }));
+    document.dispatchEvent(new MouseEvent('mouseup', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 0,
+    }));
+
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=450}\n\nplain');
+  });
+
+  it('shift-dragging the southeast resize handle changes dimensions independently', () => {
+    const doc = '![Galley mark](assets/galley.png){width=640 height=360}\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    selectImageWidget(view);
+    const handle = requireElement(view.dom.querySelector<HTMLElement>('.ge-image-resize-se'));
+
+    handle.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      clientX: 0,
+      clientY: 0,
+      shiftKey: true,
+    }));
+    document.dispatchEvent(new MouseEvent('mouseup', {
+      bubbles: true,
+      clientX: 160,
+      clientY: 40,
+      shiftKey: true,
+    }));
+
+    expect(docOf(view)).toBe('![Galley mark](assets/galley.png){width=800 height=400}\n\nplain');
   });
 
   it('ctrl-click reveals raw image markdown', () => {
