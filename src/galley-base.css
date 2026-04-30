@@ -475,6 +475,59 @@
   max-width: 100%;
 }
 
+/* Uploads */
+
+.ge-drop-indicator {
+  background: var(--ge-color-focus-ring);
+  border-radius: 999px;
+  height: 2px;
+  margin: 0.25rem 0;
+  pointer-events: none;
+}
+
+.ge-upload-placeholder {
+  align-items: center;
+  background: var(--ge-color-surface-elevated);
+  border: 1px dashed var(--ge-color-border);
+  border-radius: var(--ge-radius-block);
+  color: var(--ge-color-text-muted);
+  display: inline-grid;
+  gap: 0.5rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin: 0.25rem 0;
+  max-width: min(100%, 26rem);
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.ge-upload-progress {
+  align-items: center;
+  aspect-ratio: 1;
+  border: 4px solid var(--ge-color-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 3rem;
+}
+
+.ge-upload-error {
+  border-color: var(--ge-color-danger, #dc2626);
+  border-style: solid;
+}
+
+.ge-upload-overlay {
+  align-items: center;
+  background: color-mix(in srgb, var(--ge-color-bg) 72%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
 /* Dividers */
 
 .cm-line.ge-divider {
