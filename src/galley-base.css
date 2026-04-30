@@ -480,11 +480,14 @@
   background: var(--ge-color-surface);
   border: 1px solid var(--ge-color-border);
   border-radius: var(--ge-radius-block);
+  box-sizing: border-box;
   color: var(--ge-color-text-muted);
   display: inline-grid;
   gap: 0.25rem;
+  max-width: 100%;
   min-height: 5rem;
   min-width: 8rem;
+  overflow-wrap: anywhere;
   padding: 0.75rem;
   text-align: center;
 }

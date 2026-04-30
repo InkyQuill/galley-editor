@@ -85,7 +85,10 @@ class ImageWidget extends WidgetType {
   }
 
   private attachErrorListeners(wrapper: HTMLElement, rendered: HTMLElement): void {
+    let replaced = false;
     const onError = () => {
+      if (replaced) return;
+      replaced = true;
       wrapper.replaceChildren(this.renderMissingImage('error'));
     };
 

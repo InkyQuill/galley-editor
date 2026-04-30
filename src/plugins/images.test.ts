@@ -231,6 +231,43 @@ describe('imagesPlugin', () => {
     expect(view.dom.querySelector('.ge-image-widget figure')).toBeNull();
   });
 
+  it('renders missing UI once when multiple descendant images fire error events', () => {
+    const renderer = vi.fn((imageInfo: GalleyImageInfo) => {
+      const figure = document.createElement('figure');
+      for (const suffix of ['one', 'two']) {
+        const image = document.createElement('img');
+        image.alt = `${imageInfo.alt} ${suffix}`;
+        image.src = imageInfo.url;
+        figure.append(image);
+      }
+      return figure;
+    });
+    const missingRenderer = vi.fn((image: GalleyMissingImageInfo) => {
+      const element = document.createElement('div');
+      element.className = 'custom-missing';
+      element.textContent = `${image.reason}:${image.alt}`;
+      return element;
+    });
+    const doc = '![Wrapped mark](missing.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: renderer,
+        missingImageRenderer: missingRenderer,
+      }),
+    });
+    views.push(view);
+
+    const images = view.dom.querySelectorAll('.ge-image-widget figure img');
+    images[0]?.dispatchEvent(new Event('error'));
+    images[1]?.dispatchEvent(new Event('error'));
+
+    expect(missingRenderer).toHaveBeenCalledTimes(1);
+    expect(view.dom.querySelector('.custom-missing')?.textContent).toBe('error:Wrapped mark');
+  });
+
   it('renders empty-url images as missing placeholders with empty-url metadata', () => {
     const doc = '![Empty]()\n\nplain';
     const defaultView = createEditorView({
