@@ -238,6 +238,12 @@ export function tableCellAtPosition(table: GalleyTable, pos: number): GalleyTabl
     }
   }
 
+  for (const row of table.rows) {
+    for (const cell of row) {
+      if (cell.cellFrom === cell.cellTo && pos === cell.cellFrom) return cell;
+    }
+  }
+
   return table.rows[0]?.[0] ?? {
     row: 0,
     column: 0,

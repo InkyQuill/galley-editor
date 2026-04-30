@@ -235,6 +235,34 @@ describe('table model helpers', () => {
     expect(tableCellAtPosition(table!, empty!.cellFrom)).toBe(empty);
   });
 
+  it('matches an explicit zero-width empty source cell by its boundary', () => {
+    const table = parseMarkdownTable('| A | B | C |\n| --- | --- | --- |\n| 1 || 3 |\n');
+    const empty = tableCell(table!, { row: 1, column: 1 });
+
+    expect(empty).toMatchObject({
+      row: 1,
+      column: 1,
+      text: '',
+      header: false,
+    });
+    expect(empty?.cellFrom).toBe(empty?.cellTo);
+    expect(tableCellAtPosition(table!, empty!.cellFrom)).toBe(empty);
+  });
+
+  it('matches a padded ragged cell by its boundary', () => {
+    const table = parseMarkdownTable('| A | B | C |\n| --- | --- | --- |\n| 1 | 2 |\n');
+    const padded = tableCell(table!, { row: 1, column: 2 });
+
+    expect(padded).toMatchObject({
+      row: 1,
+      column: 2,
+      text: '',
+      header: false,
+    });
+    expect(padded?.cellFrom).toBe(padded?.cellTo);
+    expect(tableCellAtPosition(table!, padded!.cellFrom)).toBe(padded);
+  });
+
   it('updates one cell and preserves table shape', () => {
     const table = parseMarkdownTable('| A | B |\n| --- | --- |\n| 1 | 2 |\n');
 
