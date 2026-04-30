@@ -462,6 +462,12 @@
 .ge-image-frame {
   display: block;
   margin: 0.75em 0;
+  position: relative;
+}
+
+.ge-image-selected {
+  outline: 2px solid var(--ge-color-focus-ring);
+  outline-offset: 3px;
 }
 
 .ge-image-frame .ge-image,

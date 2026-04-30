@@ -1,6 +1,19 @@
-import { WidgetType } from '@codemirror/view';
-import type { EditorState } from '@codemirror/state';
-import { makeInlinePlugin } from '../rendering';
+import { syntaxTree } from '@codemirror/language';
+import {
+  EditorSelection,
+  StateEffect,
+  StateField,
+  type EditorState,
+  type Range,
+} from '@codemirror/state';
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  type ViewUpdate,
+  ViewPlugin,
+  WidgetType,
+} from '@codemirror/view';
 import {
   imageRangeIntersectsSelection,
   imageTrailingAttrsLength,
@@ -16,24 +29,64 @@ import type {
 } from '../types';
 
 type ParsedImage = GalleyImageInfo;
+type SelectedImageRange = { from: number; to: number };
+
+const selectImage = StateEffect.define<SelectedImageRange | null>({
+  map(value, changes) {
+    if (!value) return null;
+
+    const from = changes.mapPos(value.from, 1);
+    const to = changes.mapPos(value.to, -1);
+    return from < to ? { from, to } : null;
+  },
+});
+
+const selectedImageField = StateField.define<SelectedImageRange | null>({
+  create() {
+    return null;
+  },
+  update(value, transaction) {
+    let next = value;
+    if (next && transaction.docChanged) {
+      const from = transaction.changes.mapPos(next.from, 1);
+      const to = transaction.changes.mapPos(next.to, -1);
+      next = from < to ? { from, to } : null;
+    }
+
+    let hasSelectionEffect = false;
+    for (const effect of transaction.effects) {
+      if (effect.is(selectImage)) {
+        hasSelectionEffect = true;
+        next = effect.value;
+      }
+    }
+
+    if (transaction.selection && !hasSelectionEffect) return null;
+
+    return next;
+  },
+});
 
 class ImageWidget extends WidgetType {
-  private readonly image: ParsedImage;
-  private readonly imageClass: string;
-  private readonly renderer: ImageRenderer;
-  private readonly missingRenderer: MissingImageRenderer | undefined;
+  image: ParsedImage;
+  imageClass: string;
+  renderer: ImageRenderer;
+  missingRenderer: MissingImageRenderer | undefined;
+  selected: boolean;
 
   constructor(
     image: ParsedImage,
     imageClass: string,
     renderer: ImageRenderer,
     missingRenderer: MissingImageRenderer | undefined,
+    selected: boolean,
   ) {
     super();
     this.image = image;
     this.imageClass = imageClass;
     this.renderer = renderer;
     this.missingRenderer = missingRenderer;
+    this.selected = selected;
   }
 
   eq(other: ImageWidget): boolean {
@@ -49,13 +102,15 @@ class ImageWidget extends WidgetType {
       other.image.to === this.image.to &&
       other.imageClass === this.imageClass &&
       other.renderer === this.renderer &&
-      other.missingRenderer === this.missingRenderer
+      other.missingRenderer === this.missingRenderer &&
+      other.selected === this.selected
     );
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     if (this.image.url.trim() === '') {
       const wrapper = this.createWrapper();
+      this.attachSelectionHandler(wrapper, view);
       wrapper.append(this.renderMissingImage('empty-url'));
       return wrapper;
     }
@@ -69,6 +124,7 @@ class ImageWidget extends WidgetType {
     }
 
     const wrapper = this.createWrapper();
+    this.attachSelectionHandler(wrapper, view);
     this.attachErrorListeners(wrapper, rendered);
     wrapper.append(rendered);
     return wrapper;
@@ -80,8 +136,27 @@ class ImageWidget extends WidgetType {
 
   private createWrapper(): HTMLElement {
     const wrapper = document.createElement('span');
-    wrapper.className = `${this.imageClass} ge-image-widget`;
+    wrapper.className = `${this.imageClass} ge-image-widget${this.selected ? ' ge-image-selected' : ''}`;
     return wrapper;
+  }
+
+  private attachSelectionHandler(wrapper: HTMLElement, view: EditorView): void {
+    wrapper.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.ctrlKey || event.metaKey) {
+        view.dispatch({
+          selection: EditorSelection.cursor(Math.min(this.image.from + 1, this.image.to)),
+          effects: selectImage.of(null),
+        });
+        return;
+      }
+
+      view.dispatch({
+        effects: selectImage.of({ from: this.image.from, to: this.image.to }),
+      });
+    });
   }
 
   private attachErrorListeners(wrapper: HTMLElement, rendered: HTMLElement): void {
@@ -105,6 +180,100 @@ class ImageWidget extends WidgetType {
     const image = { ...this.image, reason };
     return this.missingRenderer?.(image) ?? defaultMissingImageRenderer(image);
   }
+}
+
+function selectedImageMatchesImage(
+  selected: SelectedImageRange | null,
+  image: ParsedImage,
+): boolean {
+  return selected?.from === image.from && selected.to === image.to;
+}
+
+function buildImageDecorations(
+  view: EditorView,
+  imageClass: string,
+  renderer: ImageRenderer,
+  missingRenderer: MissingImageRenderer | undefined,
+  preview: boolean,
+): DecorationSet {
+  const { state } = view;
+  const widgets: Range<Decoration>[] = [];
+  const selectedImage = state.field(selectedImageField);
+
+  for (const { from, to } of view.visibleRanges) {
+    syntaxTree(state).iterate({
+      from,
+      to,
+      enter(node) {
+        if (node.name !== 'Image') return;
+
+        const imageTo = imageRangeTo(state, node.to);
+        if (!preview && imageRangeIntersectsSelection(state, node.from, imageTo)) return;
+
+        const parsed = parseImageWidgetMarkdown(state.sliceDoc(node.from, imageTo), node.from, imageTo);
+        if (!parsed) return;
+
+        widgets.push(
+          Decoration.replace({
+            widget: new ImageWidget(
+              parsed,
+              imageClass,
+              renderer,
+              missingRenderer,
+              selectedImageMatchesImage(selectedImage, parsed),
+            ),
+          }).range(node.from, imageTo),
+        );
+      },
+    });
+  }
+
+  return Decoration.set(widgets, true);
+}
+
+function makeImagesViewPlugin(
+  imageClass: string,
+  renderer: ImageRenderer,
+  missingRenderer: MissingImageRenderer | undefined,
+  preview: boolean,
+) {
+  return ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+
+      constructor(view: EditorView) {
+        this.decorations = buildImageDecorations(
+          view,
+          imageClass,
+          renderer,
+          missingRenderer,
+          preview,
+        );
+      }
+
+      update(update: ViewUpdate) {
+        const selectedImageChanged =
+          update.startState.field(selectedImageField) !== update.state.field(selectedImageField);
+        if (
+          update.docChanged ||
+          update.viewportChanged ||
+          update.selectionSet ||
+          selectedImageChanged
+        ) {
+          this.decorations = buildImageDecorations(
+            update.view,
+            imageClass,
+            renderer,
+            missingRenderer,
+            preview,
+          );
+        }
+      }
+    },
+    {
+      decorations: (plugin) => plugin.decorations,
+    },
+  );
 }
 
 function imageRangeTo(state: EditorState, to: number): number {
@@ -181,22 +350,10 @@ const imagesPlugin: GalleyPlugin = {
     const renderer = context?.imageRenderer ?? defaultImageRenderer;
     const missingRenderer = context?.missingImageRenderer;
 
-    const widgetExt = makeInlinePlugin({
-      createDecoration(node, state) {
-        if (node.name !== 'Image') return null;
-        const to = imageRangeTo(state, node.to);
-        const parsed = parseImageWidgetMarkdown(state.sliceDoc(node.from, to), node.from, to);
-        if (!parsed) return null;
-        return new ImageWidget(parsed, imageClass, renderer, missingRenderer);
-      },
-      getMarkRange(node, state) {
-        return { from: node.from, to: imageRangeTo(state, node.to) };
-      },
-      getRevealStrategy: (node, state) =>
-        preview ? false : imageRangeIntersectsSelection(state, node.from, imageRangeTo(state, node.to)),
-    });
-
-    return [widgetExt];
+    return [
+      selectedImageField,
+      makeImagesViewPlugin(imageClass, renderer, missingRenderer, preview),
+    ];
   },
 };
 

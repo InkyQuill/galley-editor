@@ -12,6 +12,114 @@ afterEach(() => {
 });
 
 describe('imagesPlugin', () => {
+  it('ordinary mouse click selects an image visually without revealing markdown', () => {
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    const widget = view.dom.querySelector('.ge-image-widget');
+    widget?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    widget?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(view.dom.querySelector('.ge-image-widget.ge-image-selected img')).toBeInstanceOf(HTMLImageElement);
+    expect(lineElement(view, 1).textContent).not.toBe('![Galley mark](assets/galley.png)');
+  });
+
+  it('ctrl-click reveals raw image markdown', () => {
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    view.dom
+      .querySelector('.ge-image-widget')
+      ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, ctrlKey: true }));
+
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png)');
+  });
+
+  it('meta-click reveals raw image markdown', () => {
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    view.dom
+      .querySelector('.ge-image-widget')
+      ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, metaKey: true }));
+
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png)');
+  });
+
+  it('programmatic selection inside image range reveals raw markdown', () => {
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    view.dispatch({ selection: EditorSelection.cursor(3) });
+
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('![Galley mark](assets/galley.png)');
+  });
+
+  it('moving editor selection away clears visual image selection', () => {
+    const first = '![First](first.png)';
+    const second = '![Second](second.png)';
+    const doc = `${first}\n${second}\n\nplain`;
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    view.dom
+      .querySelector('.ge-image-widget')
+      ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(view.dom.querySelectorAll('.ge-image-selected')).toHaveLength(1);
+
+    view.dispatch({ selection: EditorSelection.cursor(doc.indexOf('plain')) });
+
+    expect(view.dom.querySelector('.ge-image-selected')).toBeNull();
+    expect(view.dom.querySelectorAll('.ge-image-widget img')).toHaveLength(2);
+  });
+
+  it('maps visual image selection through document edits', () => {
+    const doc = '![Galley mark](assets/galley.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    view.dom
+      .querySelector('.ge-image-widget')
+      ?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+    view.dispatch({ changes: { from: 0, insert: 'intro\n' } });
+
+    const selectedImage = view.dom.querySelector('.ge-image-widget.ge-image-selected img');
+    expect(selectedImage).toBeInstanceOf(HTMLImageElement);
+    expect(selectedImage?.getAttribute('alt')).toBe('Galley mark');
+  });
+
   it('renders inactive markdown images as image widgets by default', () => {
     const doc = '![Galley mark](assets/galley.png)\n\nplain';
     const view = createEditorView({
