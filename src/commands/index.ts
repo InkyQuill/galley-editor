@@ -1,5 +1,5 @@
 import type { KeyBinding } from '@codemirror/view';
-import type { BuiltinCommand, CommandFn, FindOpts } from '../types';
+import type { BuiltinCommand, CommandFn, FindOpts, GalleyImageMetadataInput } from '../types';
 import { toggleBold, toggleCode, toggleItalic, toggleStrikethrough } from './inline';
 import {
   toggleBulletList,
@@ -14,6 +14,7 @@ import {
   insertLink,
   insertTable,
 } from './insert';
+import { clearImageDimensions, updateImageMetadata } from './imageMetadata';
 import { indent, outdent, redoCommand, selectAllCommand, undoCommand } from './editing';
 import { duplicateLine } from './editing/duplicateLine';
 import { insertLineAfter, insertLineBefore } from './editing/insertLine';
@@ -31,6 +32,7 @@ export { sortSelectedLines, type SortSelectedLinesOptions } from './editing/sort
 export { swapLineDown, swapLineUp } from './editing/swapLine';
 export { findInDocument } from './navigation/findInDocument';
 export { jumpToHash, slugifyHeading } from './navigation/jumpToHash';
+export { clearImageDimensions, updateImageMetadata } from './imageMetadata';
 
 export type GalleyKeyBinding = KeyBinding & {
   command?: BuiltinCommand;
@@ -78,6 +80,9 @@ export const BUILTIN_COMMANDS: Record<BuiltinCommand, CommandFn> = {
   toggleCheckList,
   insertLink,
   insertImage,
+  updateImageMetadata: (view, input) =>
+    updateImageMetadata(view, input as GalleyImageMetadataInput),
+  clearImageDimensions,
   insertCodeBlock,
   insertTable,
   insertHr,

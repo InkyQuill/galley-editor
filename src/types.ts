@@ -274,6 +274,8 @@ export type BuiltinCommand =
   | 'toggleCheckList'
   | 'insertLink'
   | 'insertImage'
+  | 'updateImageMetadata'
+  | 'clearImageDimensions'
   | 'insertCodeBlock'
   | 'insertTable'
   | 'insertHr'

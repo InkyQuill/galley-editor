@@ -73,6 +73,8 @@ export {
   swapLineDown,
   insertLineAfter,
   insertLineBefore,
+  updateImageMetadata,
+  clearImageDimensions,
   jumpToHash,
   slugifyHeading,
   findInDocument,
