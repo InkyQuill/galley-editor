@@ -18,30 +18,29 @@ npm run build:lib    # build the publishable library
 
 ## Clean-room rule
 
-The directory `3rdparty/editor/` contains a copy of [Joplin's editor](https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under [AGPL-3.0-or-later](https://www.gnu.org/licenses/agpl-3.0.html). It is **read-only reference material**. It is excluded from the build, the lint, the typecheck, the published tarball, and the eslint scope.
+Galley previously carried a local read-only editor reference tree during early behavior research. That source has been audited and removed from the public repository; see [`docs/specs/editor-reference-audit.md`](./docs/specs/editor-reference-audit.md).
 
-**Rule:** code in `src/` is authored from a **written behavior description**, not by reading or translating Joplin's source.
+**Rule:** code in `src/` is authored from a **written behavior description**, not by copying or translating another editor's source.
 
-The workflow for porting a behavior:
+The workflow for adding behavior inspired by another editor:
 
-1. Open the relevant Joplin file. Read it. In the appropriate spec doc under `docs/specs/`, write a **prose specification** of what the function does, edge cases, return contract — *not* the algorithm in code form.
-2. Close the Joplin file. No `3rdparty/` file open in the IDE during implementation.
-3. Implement from the spec. If you get stuck and need to re-consult, repeat step 1 — update the spec, not the code.
-4. Tests assert behavior described in the spec, not behavior observed by running Joplin.
+1. Write a prose specification under `docs/specs/` describing the behavior, edge cases, and public contract.
+2. Close external source before implementation. Do not translate implementation details, file structure, or algorithms.
+3. Implement from the Galley spec in the style of this codebase.
+4. Tests assert the behavior described in the spec.
 
 ## Mechanical safeguards
 
 These prevent accidental contamination of the published package:
 
-- `3rdparty/` is excluded from ESLint via `globalIgnores` in `eslint.config.js`, and from TypeScript via the `exclude` arrays of `tsconfig.app.json` and `tsconfig.lib.json`.
-- `package.json` uses an explicit `files` allowlist — only the directories and files named there are included in the published tarball; `3rdparty/` is excluded by omission.
-- The CI job `forbid-3rdparty-import` greps `dist/` for Joplin filename tokens and fails the pipeline on any hit.
+- `package.json` uses an explicit `files` allowlist — only the directories and files named there are included in the published tarball.
+- The CI test job greps `dist/` for external editor source markers such as `joplin` and `@joplin`, and fails the pipeline on any hit.
 
 ## PR checklist
 
 Every merge request must include:
 
-- [ ] No code in this PR was copied or translated from `3rdparty/`. Behavior was specified in writing first.
+- [ ] No code in this PR was copied or translated from another editor. Behavior was specified in writing first.
 - [ ] All tests pass locally (`npm run test`).
 - [ ] Lint passes (`npm run lint`).
 - [ ] Typecheck passes (`npx tsc -b`).
@@ -51,4 +50,4 @@ Every merge request must include:
 
 ## Attribution
 
-Behavior in this library was inspired by studying Joplin's editor (https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under AGPL-3.0-or-later. No Joplin source code is included in this package.
+Behavior in this library was informed by studying existing markdown editors, including Joplin's editor (https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under AGPL-3.0-or-later. No Joplin source code is included in this package or repository.

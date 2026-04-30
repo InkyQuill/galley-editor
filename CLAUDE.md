@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Galley Editor (`@inkyquill/galley-editor`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
+Galley Editor (`@inky/galley-editor`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
 
 ## Commands
 
@@ -62,7 +62,7 @@ Lezer token classes (`tok-strong`, `tok-emphasis`, etc.) are applied via `classH
 
 ### Commands
 
-`src/commands.ts` exports `BUILTIN_COMMANDS` — a `Record<BuiltinCommand, CommandFn>` with formatting commands (toggleBold, toggleHeading, insertLink, etc.). Uses the `RegionSpec` + `toggleInlineFormatGlobally` pattern ported from Joplin.
+`src/commands/index.ts` exports `BUILTIN_COMMANDS` — a `Record<BuiltinCommand, CommandFn>` with formatting commands (toggleBold, toggleHeading, insertLink, etc.). Command behavior is implemented from Galley specs and local tests.
 
 ### Exports
 

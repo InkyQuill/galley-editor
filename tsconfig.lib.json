@@ -16,7 +16,6 @@
     "**/*.stories.tsx",
     "src/App.tsx",
     "src/main.tsx",
-    "3rdparty",
     "dist",
     "node_modules",
     "storybook-static"

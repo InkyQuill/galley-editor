@@ -9,8 +9,9 @@ A React component library exposing a half-WYSIWYG markdown editor (live preview,
 ## License & legal posture
 
 - **License:** MIT (`LICENSE` at repo root, `"license": "MIT"` in `package.json`).
-- **Reference material:** `3rdparty/editor/` contains a copy of Joplin's editor (© 2016-2025 Laurent Cozic, AGPL-3.0-or-later). It is **read-only reference**, never compiled, never published. Behavior in `src/` is authored from written prose specifications, not by reading or translating Joplin's source. See `CONTRIBUTING.md` for the clean-room workflow.
-- **No code from `3rdparty/`** ships in the published package. Mechanical safeguards: `tsconfig.exclude`, `.eslintignore`, `package.json` `files` allowlist, and a CI check that greps `dist/` for Joplin filenames.
+- **Reference material:** the early local editor reference tree was audited and removed before public release. See [editor-reference-audit.md](./editor-reference-audit.md).
+- **Clean-room rule:** behavior in `src/` is authored from written Galley specifications, not by copying or translating another editor's source. See `CONTRIBUTING.md` for the workflow.
+- **Published package scope:** `package.json` uses a `files` allowlist, and CI greps `dist/` for external editor source markers before publishing.
 
 ## Distribution
 
@@ -29,7 +30,8 @@ Each milestone is independently shippable to the private GitLab registry. Implem
 | 0.3.0 | Correctness & Theming | shipped 2026-04-29 | [v0.3-correctness.md](./v0.3-correctness.md) | v0.3.0 |
 | 0.4.0 | Smart Input | shipped 2026-04-29 | [v0.4-smart-input.md](./v0.4-smart-input.md) | v0.4.0 |
 | 0.5.0 | Editor Commands | shipped 2026-04-30 | [v0.5-editor-commands.md](./v0.5-editor-commands.md) | v0.5.0 |
-| 0.6.0 | Rendering Parity | in-progress | [v0.6-rendering-parity.md](./v0.6-rendering-parity.md) | — |
+| 0.6.0 | Rendering Parity | shipped 2026-04-30 | [v0.6-rendering-parity.md](./v0.6-rendering-parity.md) | v0.6.0 |
+| 0.7.0 | Public Repository Cleanup | in-progress | [v0.7-public-cleanup.md](./v0.7-public-cleanup.md) | — |
 | 1.0.0 | Public Release | draft | [v1.0-public-release.md](./v1.0-public-release.md) | — |
 
 **Status values:** `draft` (spec written, not started) → `in-progress` (work began) → `shipped vX.Y.Z on YYYY-MM-DD` (frozen; corrections go in the spec's Post-ship notes section).
@@ -42,7 +44,7 @@ These apply to every milestone and are not re-stated in individual specs.
 2. **`main` is always green.** Lint, typecheck, test, and `build:lib` must pass on every push. CI enforces this.
 3. **Test discipline (pragmatic).** Every bug fix ships with a regression test. Every new behavior ships with unit tests. Coverage target 70% (CI floor 65%); raised to 80% at v1.0. No TDD enforcement, no test-for-tests-sake.
 4. **Documentation evolves in lockstep.** When a milestone changes the API, the relevant `docs/*.md` is updated in the same merge request. `docs/api-reference.md` is fully rewritten in v1.0; intermediate milestones may leave it partially stale, but `CLAUDE.md` always reflects current internals.
-5. **Clean-room boundary.** All work in `src/` is authored from prose specs. The CI `forbid-3rdparty-import` check prevents accidental contamination of the build.
+5. **Clean-room boundary.** All work in `src/` is authored from prose specs. CI checks prevent accidental external editor source markers from leaking into the build.
 
 ## Open questions
 

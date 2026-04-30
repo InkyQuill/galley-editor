@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import GalleyEditor, { type GalleyHandle } from './GalleyEditor';
 import type { EditorView } from '@codemirror/view';
+import { GALLEY_VERSION } from '../version';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -197,8 +198,8 @@ describe('GalleyEditor React wrapper', () => {
     expect(footer).toBeInstanceOf(HTMLElement);
     expect(footer?.textContent).toContain('2 words');
     expect(footer?.textContent).toContain('11 characters');
-    expect(footer?.querySelector('.ge-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Galley Editor v.0.6.0 by Inky Quill');
-    expect(footer?.querySelector('.ge-footer-tooltip')?.textContent).toBe('Galley Editor v.0.6.0 by Inky Quill');
+    expect(footer?.querySelector('.ge-footer-logo-wrap')?.getAttribute('aria-label')).toBe(`Galley Editor v.${GALLEY_VERSION} by Inky Quill`);
+    expect(footer?.querySelector('.ge-footer-tooltip')?.textContent).toBe(`Galley Editor v.${GALLEY_VERSION} by Inky Quill`);
     expect(footer?.querySelector('.ge-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
   });
 

@@ -1,6 +1,6 @@
 # Galley Editor
 
-> ⚠️ **In active development.** v0.6.0 is the current private-registry build, with rendering parity, reference links, safe image rendering, bidi support, and hooks included. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+> ⚠️ **In active development.** v0.7.0 is the current public-repository cleanup build, with rendering parity, reference links, safe image rendering, bidi support, hooks, and a cleaned-up source tree. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
@@ -15,7 +15,7 @@ A React component that provides a half-WYSIWYG markdown editing experience. Buil
 
 ## Installation
 
-This package is currently published to a private GitLab Package Registry.
+This package is currently published to the GitLab Package Registry.
 
 1. Configure npm to resolve `@inky` against the GitLab registry. Copy [`.npmrc.example`](./.npmrc.example) to your project root as `.npmrc` and supply a token:
 
@@ -91,4 +91,4 @@ MIT — see [`LICENSE`](./LICENSE).
 
 Built on [CodeMirror 6](https://codemirror.net/) and [Lezer](https://lezer.codemirror.net/).
 
-Behavior in this library was inspired by studying [Joplin's editor](https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under AGPL-3.0-or-later. No Joplin source code is included in this package; see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room workflow.
+Behavior in this library was informed by studying existing markdown editors, including [Joplin's editor](https://github.com/laurent22/joplin), © 2016-2025 Laurent Cozic, licensed under AGPL-3.0-or-later. No Joplin source code is included in this package or repository; see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room workflow.

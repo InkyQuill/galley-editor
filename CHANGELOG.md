@@ -8,6 +8,19 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-04-30
+
+### Added
+- `docs/specs/editor-reference-audit.md` documenting implemented editor parity, out-of-scope reference features, and Galley-specific UX backlog.
+
+### Changed
+- Public clean-room guidance now reflects that external editor reference source has been audited and removed from the repository.
+- CI leak check now scans built output for external editor source markers instead of an internal `3rdparty/` path.
+
+### Removed
+- Removed the local `3rdparty/editor/` reference source tree from the public repository.
+- Removed remaining pre-rebrand image leftovers from the workspace.
+
 ## [0.6.0] — 2026-04-30
 
 ### Added
@@ -128,7 +141,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.6.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.7.0...HEAD
+[0.7.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.7.0
 [0.6.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.6.0
 [0.5.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.5.0
 [0.4.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.4.0

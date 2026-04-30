@@ -12,7 +12,6 @@ export default defineConfig([
     '.remember',
     '.worktrees',
     'coverage',
-    '3rdparty',
   ]),
   {
     files: ['**/*.{ts,tsx}'],

@@ -6,7 +6,7 @@ stages:
   - publish
 
 # One job runs everything that depends on node_modules: install, lint,
-# typecheck, unit tests, library build, and the 3rdparty leak check.
+# typecheck, unit tests, library build, and the external-source leak check.
 # Sequential in a fresh container — no node_modules artifact to share,
 # no cache to go stale, no inter-job state. The runner has only one
 # concurrent slot anyway, so we lose nothing by giving up parallelism.
@@ -19,8 +19,8 @@ test:
     - npm run test:coverage
     - npm run build:lib
     - |
-      if grep -rIE '(3rdparty|joplin|@joplin)' dist/ ; then
-        echo "ERROR: 3rdparty/Joplin reference material leaked into dist/." >&2
+      if grep -rIE '(joplin|@joplin)' dist/ ; then
+        echo "ERROR: external editor source marker leaked into dist/." >&2
         exit 1
       fi
       echo "dist/ is clean."
