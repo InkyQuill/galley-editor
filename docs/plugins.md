@@ -11,7 +11,7 @@ interface NeutrinoPlugin {
   /** Stable identifier. Built-ins use 'ne:headings', 'ne:emphasis', etc. */
   id: string;
   /** Return CM6 extensions that implement this plugin's behavior. */
-  extensions(classNames: NeutrinoClassNames): Extension[];
+  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
 }
 ```
 
@@ -30,11 +30,18 @@ interface NeutrinoPluginSpec {
     parentDepths: ReadonlyMap<string, number>,
   ): WidgetType | Decoration | null;
 
-  /** Custom range for the decoration. Return null to use the full node span. */
-  getDecorationRange?(node: SyntaxNodeRef, state: EditorState):
-    | [number]           // point/line decoration
-    | [number, number]   // range decoration
-    | null;              // use default (full node)
+  /** Range for line decorations. Every touched line receives the decoration. */
+  getLineRange?(node: SyntaxNodeRef, state: EditorState):
+    | { from: number; to: number }
+    | null;
+
+  /** Range for mark and replace decorations. Null uses the full node span. */
+  getMarkRange?(node: SyntaxNodeRef, state: EditorState):
+    | { from: number; to: number }
+    | null;
+
+  /** Position for point widgets. */
+  getPointPosition?(node: SyntaxNodeRef, state: EditorState): number | null;
 
   /** When to show raw markdown instead of the decoration. Defaults to 'line'. */
   getRevealStrategy?(node: SyntaxNodeRef, state: EditorState): RevealStrategy;
@@ -42,21 +49,28 @@ interface NeutrinoPluginSpec {
   /** Whether cursor proximity hides the decoration. Defaults to true. */
   hideWhenNearCursor?: boolean;
 
+  /** Skip selection-only rebuilds when the move cannot affect decorations. */
+  selectionAffectsDecorations?(prev: EditorSelection, next: EditorSelection): boolean;
+
   /** Force full re-render on specific transactions. */
   shouldForceRerender?(transaction: Transaction): boolean;
 }
 ```
 
+Only one of `getLineRange`, `getMarkRange`, and `getPointPosition` may be defined. The factories throw immediately when a spec defines more than one selector.
+
 ### `parentDepths`
 
 During tree iteration, the factory tracks how many times each node name has been entered but not yet left. This gives plugins awareness of **nesting depth**. For example, `parentDepths.get('BulletList')` tells the lists plugin the current nesting level so it can cycle visual bullet styles.
 
-### `getDecorationRange`
+### Range Selectors
 
-By default, the decoration covers the full node span `[node.from, node.to]`. Override this to:
-- Return `[pos]` for a **point decoration** (line decorations, widgets placed at a position)
-- Return `[from, to]` for a **range decoration** that differs from the node span
-- Return `null` to use the default full node/block range
+By default, mark and replacement decorations cover the full node span. Override the selector that matches the decoration intent:
+
+- `getLineRange`: applies a `Decoration.line` to every line touched by `{ from, to }`.
+- `getMarkRange`: applies mark and replace decorations to a continuous text range.
+- `getPointPosition`: places a point widget at a single position.
+- Returning `null` uses the default node range for line/mark selectors, or skips point widgets.
 
 ### Reveal Strategies
 
@@ -75,6 +89,7 @@ By default, the decoration covers the full node span `[node.from, node.to]`. Ove
 Creates a `ViewPlugin` that iterates **visible ranges only** (viewport optimization). Ideal for inline marks that appear frequently.
 
 - Rebuilds decorations on `docChanged`, `viewportChanged`, `selectionSet`
+- Can skip selection-only rebuilds with `selectionAffectsDecorations`
 - Only produces single-line decorations (cross-line ranges are dropped)
 - Returns a single `Extension`
 
@@ -84,6 +99,7 @@ Creates a `StateField` that iterates the **entire document**. Needed for multi-l
 
 - Uses proximity check: hides decorations when cursor is within 1 line (`BLOCK_CURSOR_LINE_PROXIMITY`)
 - Rebuilds on doc change, selection change, syntax tree change, or forced rerender
+- Can skip selection-only rebuilds with `selectionAffectsDecorations`
 - Returns an array of extensions
 
 ### When to Use Which
@@ -144,10 +160,13 @@ Two extensions:
 **File:** `src/plugins/links.ts`
 
 Two extensions:
-1. **Mark/URL hiding**: Hides `LinkMark` (`[`, `]`) and `URL` nodes that appear after the closing bracket. Uses `'select'` reveal -- only revealed when cursor directly overlaps.
-2. **Semantic class**: Adds `ne-link` to `Link` nodes. Always visible.
+1. **Reference registry**: Tracks `[ref]: url "title"` definitions in a state field.
+2. **Mark/URL hiding**: Hides `LinkMark`, inline `URL`, and reference `LinkLabel` nodes. Uses `'select'` reveal -- only revealed when cursor directly overlaps.
+3. **Definition hiding**: Hides reference definition lines when inactive.
+4. **Semantic class**: Adds `ne-link` and `data-ne-url` to resolved `Link` nodes. Always visible.
+5. **Click handler**: Cmd/Ctrl-click activates the resolved URL. `onLinkClick` runs first and can suppress default `window.open` by returning `true`.
 
-The URL hiding has special logic: it only hides URLs that come **after** the closing `]` bracket, ensuring the link text `[label]` is properly handled.
+Inline links, full reference links (`[label][ref]`), and shorthand reference links (`[ref]`) are supported.
 
 ### Lists (`ne:lists`)
 
@@ -188,6 +207,14 @@ Two `makeInlinePlugin` extensions:
 **File:** `src/plugins/tables.ts`
 
 The simplest built-in plugin. Uses `makeBlockPlugin` to add `ne-table` line decoration to `Table` nodes. Always visible (`hideWhenNearCursor: false`).
+
+### Images (`ne:images`)
+
+**File:** `src/plugins/images.ts`
+
+By default, markdown images render as safe alt text. The plugin hides `![`, `](`, URL/title syntax, and `)` when inactive; it does not create an `<img>` or fetch remote URLs unless the consumer provides `imageRenderer`.
+
+With `imageRenderer`, the plugin replaces the image syntax with a custom widget. Returning `null` falls back to the safe alt-text rendering.
 
 ## Building Custom Plugins
 

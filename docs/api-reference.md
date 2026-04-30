@@ -36,6 +36,9 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
+| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, images render as safe alt text and do not fetch URLs |
+| `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
+| `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
 | `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
 | `footer` | `boolean \| FooterOptions` | `true` | Show the built-in status footer with word count, character count, and logo |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
@@ -184,6 +187,35 @@ Direct access to the underlying CodeMirror `EditorView`, or `null` before the ed
 
 ---
 
+## Hook API
+
+### `useNeutrino(options?)`
+
+Hooks-first wrapper around the imperative handle. It owns a ref, tracks controlled content, and returns stable method wrappers.
+
+```tsx
+import { NeutrinoEditor, useNeutrino } from '@inky/neutrino-editor';
+
+function Editor() {
+  const editor = useNeutrino({
+    initialValue: '# Hello',
+    onChange: (value) => console.log(value),
+  });
+
+  return (
+    <NeutrinoEditor
+      ref={editor.ref}
+      value={editor.content}
+      onChange={editor.setContent}
+    />
+  );
+}
+```
+
+Returns `ref`, `content`, `setContent`, `insertText`, `focus`, `blur`, `select`, `getSelection`, `execCommand`, `undo`, and `redo`.
+
+---
+
 ## Types
 
 ### `RevealStrategy`
@@ -210,10 +242,12 @@ interface NeutrinoRenderContext {
   theme: 'light' | 'dark';
   mode?: NeutrinoMode;
   codeHighlighter?: CodeHighlighter;
+  imageRenderer?: ImageRenderer;
+  onLinkClick?: LinkClickHandler;
 }
 ```
 
-Built-in plugins use this to adapt rendering for preview mode and custom code highlighting. Third-party plugins can ignore the second argument.
+Built-in plugins use this to adapt rendering for preview mode, custom code highlighting, image widgets, and link activation. Third-party plugins can ignore the second argument.
 
 ### `NeutrinoMode`
 
@@ -283,12 +317,37 @@ interface NeutrinoSurfaceOptions {
 ```typescript
 interface NeutrinoPluginSpec {
   createDecoration(node: SyntaxNodeRef, state: EditorState, parentDepths: ReadonlyMap<string, number>): WidgetType | Decoration | null;
-  getDecorationRange?(node: SyntaxNodeRef, state: EditorState): [number] | [number, number] | null;
+  getLineRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
+  getMarkRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
+  getPointPosition?(node: SyntaxNodeRef, state: EditorState): number | null;
   getRevealStrategy?(node: SyntaxNodeRef, state: EditorState): RevealStrategy;
   hideWhenNearCursor?: boolean;
+  selectionAffectsDecorations?(prev: EditorSelection, next: EditorSelection): boolean;
   shouldForceRerender?(transaction: Transaction): boolean;
 }
 ```
+
+Only one of `getLineRange`, `getMarkRange`, and `getPointPosition` may be defined on a spec. The factory throws at construction time if multiple range selectors are present.
+
+### `ImageRenderer`
+
+```typescript
+type ImageRenderer = (image: {
+  alt: string;
+  url: string;
+  title?: string;
+}) => HTMLElement | null;
+```
+
+Returning `null` falls back to safe alt-text rendering.
+
+### `LinkClickHandler`
+
+```typescript
+type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
+```
+
+Returning `true` means the consumer handled the click and Neutrino will not call `window.open`.
 
 ### `NeutrinoClassNames`
 
@@ -477,7 +536,7 @@ Named export for heading navigation. Accepts hashes with or without a leading `#
 
 ### `BUILT_IN_PLUGINS: NeutrinoPlugin[]`
 
-Array of all 10 built-in plugins, in registration order:
+Array of all 11 built-in plugins, in registration order:
 
 1. `headingsPlugin` (`ne:headings`)
 2. `emphasisPlugin` (`ne:emphasis`)

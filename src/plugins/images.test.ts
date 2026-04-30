@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorSelection } from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('imagesPlugin', () => {
-  it('renders an inactive png markdown image as an image widget', () => {
+  it('renders inactive markdown images as safe alt text by default', () => {
     const doc = '![Sample PNG](assets/img.png)\n\nplain';
     const view = createEditorView({
       doc,
@@ -21,13 +21,11 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
-    expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample PNG');
-    expect(image?.getAttribute('src')).toBe('assets/img.png');
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
   });
 
-  it('renders an inactive svg markdown image as an image widget', () => {
+  it('renders svg markdown images as safe alt text by default', () => {
     const doc = '![Sample SVG](sample-diagram.svg)\n\nplain';
     const view = createEditorView({
       doc,
@@ -36,10 +34,8 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
-    expect(image).toBeInstanceOf(HTMLImageElement);
-    expect(image?.getAttribute('alt')).toBe('Sample SVG');
-    expect(image?.getAttribute('src')).toBe('sample-diagram.svg');
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('Sample SVG');
   });
 
   it('shows raw image markdown when the cursor is inside the image syntax', () => {
@@ -51,11 +47,11 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget')).toBeNull();
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('![Sample PNG](assets/img.png)');
   });
 
-  it('keeps the image rendered in preview mode when the cursor is inside the image syntax', () => {
+  it('keeps safe alt text in preview mode when the cursor is inside image syntax', () => {
     const doc = '![Sample PNG](assets/img.png)\n\nplain';
     const view = createEditorView({
       doc,
@@ -67,7 +63,47 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeInstanceOf(HTMLImageElement);
-    expect(lineElement(view, 1).textContent).not.toContain('![Sample PNG]');
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
+  });
+
+  it('uses a custom imageRenderer widget when provided', () => {
+    const renderer = vi.fn(({ alt, url }: { alt: string; url: string }) => {
+      const image = document.createElement('img');
+      image.alt = alt;
+      image.src = url;
+      return image;
+    });
+    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: renderer,
+      }),
+    });
+    views.push(view);
+
+    const image = view.dom.querySelector('.ne-image-widget img');
+    expect(image).toBeInstanceOf(HTMLImageElement);
+    expect(image?.getAttribute('alt')).toBe('Sample PNG');
+    expect(image?.getAttribute('src')).toBe('assets/img.png');
+  });
+
+  it('falls back to safe alt text when imageRenderer returns null', () => {
+    const doc = '![Sample PNG](assets/img.png)\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: imagesPlugin.extensions(resolveClassNames(), {
+        theme: 'light',
+        imageRenderer: () => null,
+      }),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('Sample PNG');
   });
 });

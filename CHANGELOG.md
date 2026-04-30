@@ -8,6 +8,20 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-30
+
+### Added
+- Reference-style link rendering for `[label][ref]`, shorthand `[ref]`, and `[ref]: url` definitions.
+- Cmd/Ctrl-click link activation with `onLinkClick` interception.
+- `imageRenderer` prop for opt-in custom markdown image widgets.
+- `bidi` prop for adding `dir="auto"` to editor lines.
+- `useNeutrino()` hook for hooks-first React consumers.
+- `selectionAffectsDecorations` plugin performance hook.
+
+### Changed
+- **Breaking:** `NeutrinoPluginSpec.getDecorationRange()` was removed and replaced with explicit `getLineRange`, `getMarkRange`, and `getPointPosition` methods.
+- Markdown images now render as safe alt text by default instead of fetching image URLs automatically.
+
 ## [0.5.0] — 2026-04-30
 
 ### Added
@@ -112,7 +126,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.5.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.6.0...HEAD
+[0.6.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.6.0
 [0.5.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.5.0
 [0.4.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.4.0
 [0.3.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.3.0

@@ -1,6 +1,7 @@
 // Component exports
 export { default as NeutrinoEditor } from './NeutrinoEditor';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { useNeutrino } from '../hooks/useNeutrino';
 
 // Types
 export type {
@@ -15,11 +16,16 @@ export type {
   NeutrinoSurfaceOptions,
   ToolbarIconName,
   ToolbarIconRenderer,
+  CodeHighlighter,
   BuiltinCommand,
   CommandFn,
   FindOpts,
   FindResult,
   RevealStrategy,
+  ImageRenderer,
+  LinkClickHandler,
+  UseNeutrinoOptions,
+  UseNeutrinoResult,
 } from '../types';
 
 // Rendering engine (for building custom plugins)

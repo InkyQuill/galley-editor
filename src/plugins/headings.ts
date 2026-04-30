@@ -13,10 +13,10 @@ const headingsPlugin: NeutrinoPlugin = {
         if (node.name !== 'HeaderMark') return null;
         return HIDE_DECORATION;
       },
-      getDecorationRange(node, state) {
+      getMarkRange(node, state) {
         // Include the space after the header mark
         if (state.doc.sliceString(node.to, node.to + 1) === ' ') {
-          return [node.from, node.to + 1];
+          return { from: node.from, to: node.to + 1 };
         }
         return null;
       },
@@ -42,9 +42,9 @@ const headingsPlugin: NeutrinoPlugin = {
           .join(' ');
         return Decoration.line({ class: cls });
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         const line = state.doc.lineAt(node.from);
-        return [line.from];
+        return { from: line.from, to: line.to };
       },
       getRevealStrategy: () => false, // Line classes are always visible
       hideWhenNearCursor: false,

@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactNode } from 'react';
-import type { EditorState, Extension, Transaction } from '@codemirror/state';
+import type { CSSProperties, ReactNode, RefObject } from 'react';
+import type { EditorSelection, EditorState, Extension, Transaction } from '@codemirror/state';
 import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
@@ -15,7 +15,17 @@ export interface NeutrinoRenderContext {
   theme: 'light' | 'dark';
   mode?: NeutrinoMode;
   codeHighlighter?: CodeHighlighter;
+  imageRenderer?: ImageRenderer;
+  onLinkClick?: LinkClickHandler;
 }
+
+export type ImageRenderer = (image: {
+  alt: string;
+  url: string;
+  title?: string;
+}) => HTMLElement | null;
+
+export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 
 export type ToolbarIconName =
   | 'bold'
@@ -78,20 +88,23 @@ export interface NeutrinoPluginSpec {
     parentDepths: ReadonlyMap<string, number>,
   ): WidgetType | Decoration | null;
 
-  /**
-   * Custom range for the decoration. Return null to use the full node span.
-   * Return [pos] for a point/line decoration, or [from, to] for a range.
-   */
-  getDecorationRange?(
-    node: SyntaxNodeRef,
-    state: EditorState,
-  ): [number] | [number, number] | null;
+  /** Range for line decorations. Every touched line receives the decoration. */
+  getLineRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
+
+  /** Range for mark and replace decorations. Null uses the full node span. */
+  getMarkRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
+
+  /** Position for point widgets. */
+  getPointPosition?(node: SyntaxNodeRef, state: EditorState): number | null;
 
   /** When to show raw markdown instead of the decoration. Defaults to 'line'. */
   getRevealStrategy?(node: SyntaxNodeRef, state: EditorState): RevealStrategy;
 
   /** Whether cursor proximity hides the decoration. Defaults to true. */
   hideWhenNearCursor?: boolean;
+
+  /** Performance hook for skipping selection-only decoration rebuilds. Defaults to true. */
+  selectionAffectsDecorations?(prev: EditorSelection, next: EditorSelection): boolean;
 
   /** Force full re-render on specific transactions (e.g. external resource reload). */
   shouldForceRerender?(transaction: Transaction): boolean;
@@ -245,6 +258,25 @@ export interface NeutrinoHandle {
   readonly view: EditorView | null;
 }
 
+export interface UseNeutrinoOptions {
+  initialValue?: string;
+  onChange?: (value: string) => void;
+}
+
+export interface UseNeutrinoResult {
+  ref: RefObject<NeutrinoHandle | null>;
+  content: string;
+  setContent(value: string): void;
+  insertText(text: string): void;
+  focus(): void;
+  blur(): void;
+  select(anchor: number, head?: number): void;
+  getSelection(): { from: number; to: number; anchor: number; head: number };
+  execCommand(name: BuiltinCommand | string, ...args: unknown[]): unknown;
+  undo(): void;
+  redo(): void;
+}
+
 // ── Editor props ────────────────────────────────────────────────────────────
 
 export interface NeutrinoEditorProps {
@@ -278,6 +310,12 @@ export interface NeutrinoEditorProps {
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   /** Optional code highlighter for inactive fenced code block rendering. */
   codeHighlighter?: CodeHighlighter;
+  /** Optional renderer for markdown images. Defaults to safe alt-text rendering. */
+  imageRenderer?: ImageRenderer;
+  /** Optional Cmd/Ctrl-click link handler. Return true to suppress default opening. */
+  onLinkClick?: LinkClickHandler;
+  /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
+  bidi?: boolean;
   /** Optional default command toolbar. Default: true. */
   toolbar?: boolean | NeutrinoToolbarOptions;
   /** Optional status footer. Default: true. */

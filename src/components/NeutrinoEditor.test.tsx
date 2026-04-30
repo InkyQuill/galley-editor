@@ -197,8 +197,8 @@ describe('NeutrinoEditor React wrapper', () => {
     expect(footer).toBeInstanceOf(HTMLElement);
     expect(footer?.textContent).toContain('2 words');
     expect(footer?.textContent).toContain('11 characters');
-    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.5.0 by Inky Quill');
-    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.5.0 by Inky Quill');
+    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.6.0 by Inky Quill');
+    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.6.0 by Inky Quill');
     expect(footer?.querySelector('.ne-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
   });
 

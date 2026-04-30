@@ -43,6 +43,9 @@ const dividersPlugin: NeutrinoPlugin = {
           }
           return null;
         },
+        getMarkRange(node) {
+          return { from: node.from, to: node.to };
+        },
         getRevealStrategy: () => revealStrategy,
       }),
       // Add line decoration
@@ -53,9 +56,9 @@ const dividersPlugin: NeutrinoPlugin = {
           }
           return null;
         },
-        getDecorationRange(node, state) {
+        getLineRange(node, state) {
           const line = state.doc.lineAt(node.from);
-          return [line.from];
+          return { from: line.from, to: line.to };
         },
       }),
     ];

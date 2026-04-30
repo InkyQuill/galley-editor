@@ -15,9 +15,8 @@ const blockquotePlugin: NeutrinoPlugin = {
         if (node.name !== 'Blockquote') return null;
         return lineDeco;
       },
-      getDecorationRange(node, state) {
-        const line = state.doc.lineAt(node.from);
-        return [line.from];
+      getLineRange(node) {
+        return { from: node.from, to: node.to };
       },
       hideWhenNearCursor: false, // Line classes always visible
     });

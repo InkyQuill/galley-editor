@@ -174,6 +174,55 @@ export const AllFeatures: Story = {
   render: AllFeaturesStory,
 };
 
+// ── Image Rendering ────────────────────────────────────────────────────────
+
+function ImageRenderingStory() {
+  const [value, setValue] = useState(`## Safe default
+
+![Generated landscape sample](${sampleLandscape})
+
+![Generated PNG sample](${samplePng})
+
+## Custom renderer
+
+Enable the renderer below to opt into thumbnails.`);
+  const [thumbnails, setThumbnails] = useState(false);
+
+  return (
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <label style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
+        <input
+          type="checkbox"
+          checked={thumbnails}
+          onChange={(event) => setThumbnails(event.currentTarget.checked)}
+        />
+        Use custom imageRenderer
+      </label>
+      <NeutrinoEditor
+        value={value}
+        onChange={setValue}
+        minRows={10}
+        imageRenderer={thumbnails
+          ? ({ alt, url }) => {
+            const image = document.createElement('img');
+            image.src = url;
+            image.alt = alt;
+            image.loading = 'lazy';
+            image.style.maxWidth = '280px';
+            image.style.borderRadius = '8px';
+            image.style.display = 'block';
+            return image;
+          }
+          : undefined}
+      />
+    </div>
+  );
+}
+
+export const ImageRendering: Story = {
+  render: ImageRenderingStory,
+};
+
 // ── With Toolbar ────────────────────────────────────────────────────────────
 
 function WithToolbarStory() {

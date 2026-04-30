@@ -107,27 +107,14 @@ const checkboxesPlugin: NeutrinoPlugin = {
               checkboxClass,
             );
           }
-          if (node.name === 'Task') {
-            const marker = node.node.getChild('TaskMarker');
-            if (marker) {
-              const content = state.doc.sliceString(marker.from, marker.to);
-              if (content.toLowerCase().includes('x')) {
-                return completedLineDeco;
-              }
-            }
-          }
           return null;
         },
-        getDecorationRange(node, state) {
+        getMarkRange(node) {
           if (node.name === 'TaskMarker') {
             const container = node.node.parent?.parent;
             const listMarker = container?.getChild('ListMark');
             if (!listMarker) return null;
-            return [listMarker.from, node.to];
-          }
-          if (node.name === 'Task') {
-            const taskLine = state.doc.lineAt(node.from);
-            return [taskLine.from];
+            return { from: listMarker.from, to: node.to };
           }
           return null;
         },
@@ -154,6 +141,21 @@ const checkboxesPlugin: NeutrinoPlugin = {
           }
           return 'line';
         },
+      }),
+      makeInlinePlugin({
+        createDecoration(node, state) {
+          if (node.name !== 'Task') return null;
+          const marker = node.node.getChild('TaskMarker');
+          if (!marker) return null;
+          const content = state.doc.sliceString(marker.from, marker.to);
+          return content.toLowerCase().includes('x') ? completedLineDeco : null;
+        },
+        getLineRange(node, state) {
+          const taskLine = state.doc.lineAt(node.from);
+          return { from: taskLine.from, to: taskLine.to };
+        },
+        getRevealStrategy: () => false,
+        hideWhenNearCursor: false,
       }),
     ];
   },

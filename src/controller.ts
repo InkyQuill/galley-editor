@@ -34,6 +34,7 @@ import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/vi
 import { buildCmTheme, type ColorScheme } from './theme';
 import { autosizeExtension } from './autosize';
 import { BUILT_IN_PLUGINS } from './plugins';
+import { biDirectionalTextExtension } from './plugins/bidi';
 import {
   BUILTIN_COMMANDS,
   DEFAULT_KEYMAP,
@@ -46,6 +47,8 @@ import {
   resolveClassNames,
   type CommandFn,
   type CodeHighlighter,
+  type ImageRenderer,
+  type LinkClickHandler,
   type NeutrinoClassNames,
   type NeutrinoHandle,
   type NeutrinoMode,
@@ -84,6 +87,9 @@ export interface ControllerSettings {
   tabIndents: boolean;
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
+  imageRenderer?: ImageRenderer;
+  onLinkClick?: LinkClickHandler;
+  bidi: boolean;
   mode: NeutrinoMode;
   plugins: NeutrinoPlugin[];
   disabledPlugins: string[];
@@ -404,6 +410,8 @@ export class EditorController implements NeutrinoHandle {
       theme: settings.theme === 'dark' ? 'dark' as const : 'light' as const,
       mode: settings.mode,
       codeHighlighter: settings.codeHighlighter,
+      imageRenderer: settings.imageRenderer,
+      onLinkClick: settings.onLinkClick,
     };
     const pluginExtensions = settings.mode === 'markdown'
       ? []
@@ -421,6 +429,7 @@ export class EditorController implements NeutrinoHandle {
       ...(settings.placeholder ? [cmPlaceholder(settings.placeholder)] : []),
       // All plugin extensions
       ...pluginExtensions,
+      ...(settings.bidi ? [biDirectionalTextExtension] : []),
       // Consumer's extra extensions (last, so they can override)
       ...settings.extraExtensions,
     ];

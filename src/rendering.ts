@@ -13,11 +13,10 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@codemirror/view';
-import { type EditorState, type Range, StateField } from '@codemirror/state';
+import { type EditorSelection, type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNodeRef } from '@lezer/common';
 import type { NeutrinoPluginSpec, RevealStrategy } from './types';
-import type { EditorSelection } from '@codemirror/state';
 
 // ── Shared constants ────────────────────────────────────────────────────────
 
@@ -49,6 +48,63 @@ export function nodeIntersectsSelection(
 
 function isLineDecoration(decoration: Decoration): boolean {
   return decoration.constructor === LINE_DECORATION_CONSTRUCTOR;
+}
+
+function validatePluginSpec(spec: NeutrinoPluginSpec): void {
+  const rangeSelectorCount = [
+    spec.getLineRange,
+    spec.getMarkRange,
+    spec.getPointPosition,
+  ].filter(Boolean).length;
+
+  if (rangeSelectorCount > 1) {
+    throw new Error(
+      'Only one of getLineRange, getMarkRange, or getPointPosition may be defined',
+    );
+  }
+}
+
+function defaultNodeRange(node: SyntaxNodeRef): { from: number; to: number } {
+  return { from: node.from, to: node.to };
+}
+
+function getMarkRange(
+  spec: NeutrinoPluginSpec,
+  node: SyntaxNodeRef,
+  state: EditorState,
+): { from: number; to: number } | null {
+  return spec.getMarkRange?.(node, state) ?? defaultNodeRange(node);
+}
+
+function getLineRange(
+  spec: NeutrinoPluginSpec,
+  node: SyntaxNodeRef,
+  state: EditorState,
+): { from: number; to: number } | null {
+  return spec.getLineRange?.(node, state) ?? defaultNodeRange(node);
+}
+
+function addLineDecorations(
+  decorations: Range<Decoration>[],
+  state: EditorState,
+  decoration: Decoration,
+  range: { from: number; to: number },
+): void {
+  const doc = state.doc;
+  const lineFrom = doc.lineAt(range.from);
+  const lineTo = doc.lineAt(Math.max(range.from, range.to));
+
+  for (let lineNumber = lineFrom.number; lineNumber <= lineTo.number; lineNumber++) {
+    decorations.push(decoration.range(doc.line(lineNumber).from));
+  }
+}
+
+function selectionAffectsDecorations(
+  spec: NeutrinoPluginSpec,
+  prev: EditorSelection,
+  next: EditorSelection,
+): boolean {
+  return spec.selectionAffectsDecorations?.(prev, next) ?? true;
 }
 
 // ── Inline plugin (ViewPlugin, viewport-only) ──────────────────────────────
@@ -104,25 +160,32 @@ export function buildInlineDecorationsForRanges(
         if (!result) return;
 
         let decoration: Decoration;
-        if (result instanceof WidgetType) {
+        if (result instanceof WidgetType && spec.getPointPosition) {
+          const position = spec.getPointPosition(node, state);
+          if (position === null) return;
+          widgets.push(Decoration.widget({ widget: result }).range(position));
+          return;
+        } else if (result instanceof WidgetType) {
           decoration = Decoration.replace({ widget: result });
         } else {
           decoration = result;
         }
 
-        const range =
-          spec.getDecorationRange?.(node, state) ?? [node.from, node.to];
-        const rangeLineFrom = doc.lineAt(range[0]);
-        const rangeLineTo =
-          range.length === 2 ? doc.lineAt(range[1]) : rangeLineFrom;
+        if (isLineDecoration(decoration)) {
+          const range = getLineRange(spec, node, state);
+          if (!range) return;
+          addLineDecorations(widgets, state, decoration, range);
+          return;
+        }
 
-        // Only apply inline decorations within a single line
+        const range = getMarkRange(spec, node, state);
+        if (!range) return;
+        const rangeLineFrom = doc.lineAt(range.from);
+        const rangeLineTo = doc.lineAt(range.to);
+
+        // Only apply inline marks/replacements within a single line.
         if (rangeLineFrom.number === rangeLineTo.number) {
-          if (range.length === 1) {
-            widgets.push(decoration.range(range[0]));
-          } else {
-            widgets.push(decoration.range(range[0], range[1]));
-          }
+          widgets.push(decoration.range(range.from, range.to));
         }
       },
       leave: (node) => {
@@ -138,6 +201,8 @@ export function buildInlineDecorationsForRanges(
 }
 
 export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
+  validatePluginSpec(spec);
+
   return ViewPlugin.fromClass(
     class {
       decorations: DecorationSet;
@@ -154,7 +219,12 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
         if (
           update.docChanged ||
           update.viewportChanged ||
-          update.selectionSet
+          (update.selectionSet &&
+            selectionAffectsDecorations(
+              spec,
+              update.startState.selection,
+              update.state.selection,
+            ))
         ) {
           this.decorations = buildInlineDecorationsForRanges(
             update.view,
@@ -204,34 +274,26 @@ function buildBlockDecorations(
 
       let decoration: Decoration;
       let isWidget = false;
-      if (result instanceof WidgetType) {
+      if (result instanceof WidgetType && spec.getPointPosition) {
+        const position = spec.getPointPosition(node, state);
+        if (position === null) return;
+        widgets.push(Decoration.widget({ widget: result, block: true }).range(position));
+        return;
+      } else if (result instanceof WidgetType) {
         decoration = Decoration.replace({ widget: result, block: true });
         isWidget = true;
       } else {
         decoration = result;
       }
 
-      let rangeFrom = nodeLineFrom.from;
-      let rangeTo = nodeLineTo.to;
-
-      if (spec.getDecorationRange) {
-        const range = spec.getDecorationRange(node, state);
-        if (range) {
-          rangeFrom = range[0];
-          rangeTo = range.length === 1 ? range[0] : range[1];
-        }
-      }
-
       if (!isWidget && isLineDecoration(decoration)) {
-        for (
-          let lineNumber = nodeLineFrom.number;
-          lineNumber <= nodeLineTo.number;
-          lineNumber++
-        ) {
-          widgets.push(decoration.range(doc.line(lineNumber).from));
-        }
+        const range = getLineRange(spec, node, state);
+        if (!range) return;
+        addLineDecorations(widgets, state, decoration, range);
       } else {
-        widgets.push(decoration.range(rangeFrom, rangeTo));
+        const range = getMarkRange(spec, node, state);
+        if (!range) return;
+        widgets.push(decoration.range(range.from, range.to));
       }
     },
     leave: (node) => {
@@ -246,6 +308,8 @@ function buildBlockDecorations(
 }
 
 export function makeBlockPlugin(spec: NeutrinoPluginSpec) {
+  validatePluginSpec(spec);
+
   const field = StateField.define<DecorationSet>({
     create(state) {
       return buildBlockDecorations(state, spec);
@@ -253,7 +317,13 @@ export function makeBlockPlugin(spec: NeutrinoPluginSpec) {
     update(decorations, tr) {
       decorations = decorations.map(tr.changes);
 
-      const selectionChanged = !tr.newSelection.eq(tr.startState.selection);
+      const selectionChanged =
+        !tr.newSelection.eq(tr.startState.selection) &&
+        selectionAffectsDecorations(
+          spec,
+          tr.startState.selection,
+          tr.state.selection,
+        );
       const treeChanged =
         syntaxTree(tr.state) !== syntaxTree(tr.startState);
       const forceRerender = spec.shouldForceRerender?.(tr) ?? false;

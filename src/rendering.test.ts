@@ -43,10 +43,10 @@ function headingBlockSpec(): NeutrinoPluginSpec {
       }
       return null;
     },
-    getDecorationRange(node, state) {
+    getLineRange(node, state) {
       if (node.name === 'ATXHeading1' || node.name === 'SetextHeading1') {
         const line = state.doc.lineAt(node.from);
-        return [line.from];
+        return { from: line.from, to: line.to };
       }
       return null;
     },
@@ -177,6 +177,14 @@ describe('nodeIntersectsSelection', () => {
 // ── makeInlinePlugin ───────────────────────────────────────────────────────
 
 describe('makeInlinePlugin', () => {
+  it('throws when multiple range selectors are defined', () => {
+    expect(() => makeInlinePlugin({
+      createDecoration: () => Decoration.mark({ class: 'x' }),
+      getMarkRange: () => ({ from: 0, to: 1 }),
+      getPointPosition: () => 0,
+    })).toThrow(/Only one/);
+  });
+
   it('returns a ViewPlugin extension', () => {
     const plugin = makeInlinePlugin(emphasisInlineSpec());
     expect(plugin).toBeDefined();
@@ -222,6 +230,52 @@ describe('makeInlinePlugin', () => {
     const plugin = makeInlinePlugin(spec);
     const view = tracked(createView('hello *world*', 0, [plugin]));
     expect(view.state.doc.toString()).toBe('hello *world*');
+  });
+
+  it('supports getPointPosition for point widgets', () => {
+    class TestWidget extends WidgetType {
+      toDOM() {
+        const span = document.createElement('span');
+        span.textContent = 'X';
+        return span;
+      }
+    }
+
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name === 'EmphasisMark') return new TestWidget();
+        return null;
+      },
+      getPointPosition(node) {
+        return node.from;
+      },
+      hideWhenNearCursor: false,
+    };
+
+    const view = tracked(createView('hello *world*', 0, [makeInlinePlugin(spec)]));
+    expect(view.dom.textContent).toContain('X');
+  });
+
+  it('skips selection-only rebuilds when selectionAffectsDecorations returns false', () => {
+    let decorationCount = 0;
+    const spec: NeutrinoPluginSpec = {
+      createDecoration(node) {
+        if (node.name !== 'EmphasisMark') return null;
+        decorationCount++;
+        return HIDE_DECORATION;
+      },
+      hideWhenNearCursor: false,
+      selectionAffectsDecorations: () => false,
+    };
+
+    const view = tracked(createView('hello *world*', 0, [makeInlinePlugin(spec)]));
+    const beforeSelectionChange = decorationCount;
+
+    view.dispatch({ selection: EditorSelection.cursor(1) });
+    expect(decorationCount).toBe(beforeSelectionChange);
+
+    view.dispatch({ changes: { from: 0, insert: '!' } });
+    expect(decorationCount).toBeGreaterThan(beforeSelectionChange);
   });
 
   it('respects hideWhenNearCursor: false', () => {
@@ -307,6 +361,14 @@ describe('makeInlinePlugin', () => {
 // ── makeBlockPlugin ────────────────────────────────────────────────────────
 
 describe('makeBlockPlugin', () => {
+  it('throws when multiple range selectors are defined', () => {
+    expect(() => makeBlockPlugin({
+      createDecoration: () => Decoration.line({ class: 'x' }),
+      getLineRange: () => ({ from: 0, to: 1 }),
+      getMarkRange: () => ({ from: 0, to: 1 }),
+    })).toThrow(/Only one/);
+  });
+
   it('returns an array of extensions', () => {
     const extensions = makeBlockPlugin(headingBlockSpec());
     expect(Array.isArray(extensions)).toBe(true);
@@ -340,9 +402,10 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         if (node.name === 'Blockquote') {
-          return [state.doc.lineAt(node.from).from];
+          const line = state.doc.lineAt(node.from);
+          return { from: line.from, to: line.to };
         }
         return null;
       },
@@ -359,7 +422,7 @@ describe('makeBlockPlugin', () => {
     expect(view.state.doc.line(1).text).toBe('> quote');
   });
 
-  it('expands line decorations across the full block when getDecorationRange returns a 2-tuple', () => {
+  it('expands line decorations across the full getLineRange span', () => {
     const spec: NeutrinoPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
@@ -367,10 +430,9 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         if (node.name === 'Blockquote') {
-          const firstLine = state.doc.lineAt(node.from);
-          return [firstLine.from, firstLine.to];
+          return { from: state.doc.lineAt(node.from).from, to: state.doc.lineAt(node.to).to };
         }
         return null;
       },
@@ -390,7 +452,7 @@ describe('makeBlockPlugin', () => {
     expect(lines.item(2).classList.contains('test-blockquote')).toBe(true);
   });
 
-  it('uses the full block when getDecorationRange returns null', () => {
+  it('uses the full block when getLineRange returns null', () => {
     const spec: NeutrinoPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
@@ -398,11 +460,11 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node) {
+      getLineRange(node) {
         if (node.name === 'Blockquote') {
           return null;
         }
-        return [node.from, node.to];
+        return { from: node.from, to: node.to };
       },
       hideWhenNearCursor: false,
     };
@@ -430,9 +492,10 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         if (node.name === 'Blockquote') {
-          return [state.doc.lineAt(node.from).from];
+          const line = state.doc.lineAt(node.from);
+          return { from: line.from, to: line.to };
         }
         return null;
       },
@@ -454,9 +517,10 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         if (node.name === 'Blockquote') {
-          return [state.doc.lineAt(node.from).from];
+          const line = state.doc.lineAt(node.from);
+          return { from: line.from, to: line.to };
         }
         return null;
       },
@@ -512,9 +576,10 @@ describe('makeBlockPlugin', () => {
         }
         return null;
       },
-      getDecorationRange(node, state) {
+      getLineRange(node, state) {
         if (node.name === 'Blockquote') {
-          return [state.doc.lineAt(node.from).from];
+          const line = state.doc.lineAt(node.from);
+          return { from: line.from, to: line.to };
         }
         return null;
       },

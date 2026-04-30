@@ -1,42 +1,53 @@
-import { WidgetType } from '@codemirror/view';
-import { makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import { Decoration, WidgetType } from '@codemirror/view';
+import type { EditorState } from '@codemirror/state';
+import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
+import type {
+  ImageRenderer,
+  NeutrinoClassNames,
+  NeutrinoPlugin,
+} from '../types';
 
 interface ParsedImage {
   alt: string;
-  src: string;
+  url: string;
+  title?: string;
 }
 
 class ImageWidget extends WidgetType {
   private readonly image: ParsedImage;
   private readonly imageClass: string;
+  private readonly renderer: ImageRenderer;
 
-  constructor(image: ParsedImage, imageClass: string) {
+  constructor(image: ParsedImage, imageClass: string, renderer: ImageRenderer) {
     super();
     this.image = image;
     this.imageClass = imageClass;
+    this.renderer = renderer;
   }
 
   eq(other: ImageWidget): boolean {
     return (
       other.image.alt === this.image.alt &&
-      other.image.src === this.image.src &&
-      other.imageClass === this.imageClass
+      other.image.url === this.image.url &&
+      other.image.title === this.image.title &&
+      other.imageClass === this.imageClass &&
+      other.renderer === this.renderer
     );
   }
 
   toDOM(): HTMLElement {
-    const figure = document.createElement('span');
-    figure.className = `${this.imageClass} ne-image-widget`;
+    const rendered = this.renderer(this.image);
+    if (!rendered) {
+      const span = document.createElement('span');
+      span.className = this.imageClass;
+      span.textContent = this.image.alt;
+      return span;
+    }
 
-    const image = document.createElement('img');
-    image.className = 'ne-image';
-    image.src = this.image.src;
-    image.alt = this.image.alt;
-    image.loading = 'lazy';
-    figure.append(image);
-
-    return figure;
+    const wrapper = document.createElement('span');
+    wrapper.className = `${this.imageClass} ne-image-widget`;
+    wrapper.append(rendered);
+    return wrapper;
   }
 
   ignoreEvent(): boolean {
@@ -45,12 +56,17 @@ class ImageWidget extends WidgetType {
 }
 
 function parseImage(raw: string): ParsedImage | null {
-  const match = /^!\[(?<alt>[^\]]*)\]\((?<src>[^)\s]+)(?:\s+"[^"]*")?\)$/.exec(raw);
+  const match = /^!\[(?<alt>[^\]]*)\]\((?<url>[^)\s]+)(?:\s+"(?<title>[^"]*)")?\)$/.exec(raw);
   if (!match?.groups) return null;
   return {
     alt: match.groups.alt,
-    src: match.groups.src,
+    url: match.groups.url,
+    ...(match.groups.title ? { title: match.groups.title } : {}),
   };
+}
+
+function selectionIntersects(from: number, to: number, state: EditorState): boolean {
+  return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
 }
 
 const imagesPlugin: NeutrinoPlugin = {
@@ -58,21 +74,55 @@ const imagesPlugin: NeutrinoPlugin = {
   extensions(classNames: NeutrinoClassNames, context) {
     const imageClass = classNames.image ?? 'ne-image-frame';
     const preview = context?.mode === 'preview';
+    const renderer = context?.imageRenderer;
 
-    return [
-      makeInlinePlugin({
-        createDecoration(node, state) {
-          if (node.name !== 'Image') return null;
-          const parsed = parseImage(state.sliceDoc(node.from, node.to));
-          if (!parsed) return null;
-          return new ImageWidget(parsed, imageClass);
-        },
-        getRevealStrategy: (node, state) =>
-          preview
-            ? false
-            : state.selection.ranges.some((range) => range.from <= node.to && range.to >= node.from),
-      }),
-    ];
+    const hideSyntaxExt = makeInlinePlugin({
+      createDecoration(node) {
+        const parent = node.node.parent;
+        if (!parent || parent.name !== 'Image') return null;
+        if (
+          node.name === 'LinkMark' ||
+          node.name === 'URL' ||
+          node.name === 'LinkTitle'
+        ) {
+          return HIDE_DECORATION;
+        }
+        return null;
+      },
+      getRevealStrategy(node, state) {
+        if (preview) return false;
+        const parent = node.node.parent;
+        if (!parent || parent.name !== 'Image') return 'select';
+        return selectionIntersects(parent.from, parent.to, state);
+      },
+    });
+
+    const classExt = makeInlinePlugin({
+      createDecoration(node) {
+        if (node.name !== 'Image') return null;
+        return Decoration.mark({ class: imageClass });
+      },
+      getRevealStrategy: () => false,
+      hideWhenNearCursor: false,
+    });
+
+    const widgetExt = makeInlinePlugin({
+      createDecoration(node, state) {
+        if (!renderer || node.name !== 'Image') return null;
+        const parsed = parseImage(state.sliceDoc(node.from, node.to));
+        if (!parsed) return null;
+        const rendered = renderer(parsed);
+        if (!rendered) return null;
+        return new ImageWidget(parsed, imageClass, () => rendered);
+      },
+      getMarkRange(node) {
+        return { from: node.from, to: node.to };
+      },
+      getRevealStrategy: (node, state) =>
+        preview ? false : selectionIntersects(node.from, node.to, state),
+    });
+
+    return [hideSyntaxExt, classExt, widgetExt];
   },
 };
 

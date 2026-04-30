@@ -85,6 +85,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       tabIndents = true,
       keymap,
       codeHighlighter,
+      imageRenderer,
+      onLinkClick,
+      bidi = false,
       toolbar = true,
       footer = true,
       mode,
@@ -197,6 +200,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       tabIndents,
       keymap,
       codeHighlighter,
+      imageRenderer,
+      onLinkClick,
+      bidi,
       mode: effectiveMode,
       plugins,
       disabledPlugins,
@@ -244,7 +250,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, effectiveMode, plugins, disabledPlugins, extensions]);
+    }, [editable, placeholder, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {

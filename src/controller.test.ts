@@ -20,6 +20,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     classNames: {},
     minRows: 3,
     tabIndents: true,
+    bidi: false,
     mode: 'live',
     plugins: [],
     disabledPlugins: [],

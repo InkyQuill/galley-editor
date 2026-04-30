@@ -29,7 +29,7 @@ Each milestone is independently shippable to the private GitLab registry. Implem
 | 0.3.0 | Correctness & Theming | shipped 2026-04-29 | [v0.3-correctness.md](./v0.3-correctness.md) | v0.3.0 |
 | 0.4.0 | Smart Input | shipped 2026-04-29 | [v0.4-smart-input.md](./v0.4-smart-input.md) | v0.4.0 |
 | 0.5.0 | Editor Commands | shipped 2026-04-30 | [v0.5-editor-commands.md](./v0.5-editor-commands.md) | v0.5.0 |
-| 0.6.0 | Rendering Parity | draft | [v0.6-rendering-parity.md](./v0.6-rendering-parity.md) | — |
+| 0.6.0 | Rendering Parity | in-progress | [v0.6-rendering-parity.md](./v0.6-rendering-parity.md) | — |
 | 1.0.0 | Public Release | draft | [v1.0-public-release.md](./v1.0-public-release.md) | — |
 
 **Status values:** `draft` (spec written, not started) → `in-progress` (work began) → `shipped vX.Y.Z on YYYY-MM-DD` (frozen; corrections go in the spec's Post-ship notes section).
