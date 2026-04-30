@@ -11,6 +11,21 @@ import { DEFAULT_KEYMAP } from './commands';
 const controllers: EditorController[] = [];
 const parents: HTMLElement[] = [];
 
+const fallbackDomRect = new DOMRect(0, 0, 0, 0);
+const fallbackDomRectList = {
+  0: fallbackDomRect,
+  length: 1,
+  item: (index: number) => index === 0 ? fallbackDomRect : null,
+  [Symbol.iterator]: function* iterate() {},
+} as DOMRectList;
+
+if (!Range.prototype.getClientRects) {
+  Range.prototype.getClientRects = () => fallbackDomRectList;
+}
+if (!Range.prototype.getBoundingClientRect) {
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
+}
+
 function defaultSettings(overrides: Partial<ControllerSettings> = {}): ControllerSettings {
   return {
     editable: true,
@@ -79,6 +94,60 @@ function dispatchScroll(view: EditorView): Event {
   });
   view.scrollDOM.dispatchEvent(event);
   return event;
+}
+
+function fileDataTransfer(file: File): DataTransfer {
+  if (typeof DataTransfer !== 'undefined') {
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    return transfer;
+  }
+
+  return {
+    files: [file],
+    getData: () => '',
+    types: [],
+  } as unknown as DataTransfer;
+}
+
+function pasteEvent(transfer: DataTransfer): ClipboardEvent {
+  const event = typeof ClipboardEvent !== 'undefined'
+    ? new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+    })
+    : new Event('paste', {
+      bubbles: true,
+      cancelable: true,
+    }) as ClipboardEvent;
+  Object.defineProperty(event, 'clipboardData', {
+    configurable: true,
+    value: transfer,
+  });
+  return event;
+}
+
+function dropEvent(transfer: DataTransfer): DragEvent {
+  const event = typeof DragEvent !== 'undefined'
+    ? new DragEvent('drop', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 0,
+      clientY: 0,
+    })
+    : new Event('drop', {
+      bubbles: true,
+      cancelable: true,
+    }) as DragEvent;
+  Object.defineProperty(event, 'dataTransfer', {
+    configurable: true,
+    value: transfer,
+  });
+  return event;
+}
+
+async function nextMicrotask(): Promise<void> {
+  await Promise.resolve();
 }
 
 interface InternalConfigState {
@@ -306,6 +375,76 @@ describe('EditorController runtime state', () => {
     });
 
     expect(controller.view).toBeDefined();
+  });
+
+  it('inserts markdown returned from a paste file handler', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(controller.getContent()).toContain('![upload](uploaded.png)');
+  });
+
+  it('leaves content unchanged when a paste file handler returns false', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => false as const);
+    const callbacks = { onFiles };
+    const controller = createController('unchanged', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('reports paste file handler errors without changing content', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const error = new Error('upload failed');
+    const onFiles = vi.fn(async () => {
+      throw error;
+    });
+    const onFileError = vi.fn();
+    const callbacks = { onFiles, onFileError };
+    const controller = createController('unchanged', callbacks);
+
+    const event = pasteEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFileError).toHaveBeenCalledOnce();
+    expect(onFileError).toHaveBeenCalledWith(error, expect.objectContaining({
+      files: [file],
+      source: 'paste',
+      event,
+      view: controller.view,
+    }));
+    expect(controller.getContent()).toBe('unchanged');
+  });
+
+  it('inserts markdown returned from a drop file handler', async () => {
+    const file = new File(['image'], 'demo.png', { type: 'image/png' });
+    const onFiles = vi.fn(() => '![upload](uploaded.png)');
+    const callbacks = { onFiles };
+    const controller = createController('before ', callbacks);
+
+    const event = dropEvent(fileDataTransfer(file));
+    controller.view.contentDOM.dispatchEvent(event);
+    await nextMicrotask();
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onFiles).toHaveBeenCalledOnce();
+    expect(controller.getContent()).toContain('![upload](uploaded.png)');
   });
 
   it('preserves multiple selection ranges when setContent clamps to the new document', () => {

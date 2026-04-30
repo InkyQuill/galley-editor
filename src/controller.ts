@@ -49,6 +49,7 @@ import {
   type CodeHighlighter,
   type GalleyFileHandler,
   type GalleyFileInput,
+  type GalleyFileSource,
   type ImageRenderer,
   type LinkClickHandler,
   type GalleyClassNames,
@@ -71,6 +72,8 @@ export interface EditorCallbacks {
   onBlur?: () => void;
   onScroll?: (fraction: number) => void;
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
+  onFiles?: GalleyFileHandler;
+  onFileError?: (error: unknown, input: GalleyFileInput) => void;
   onEnter?: (mod: boolean, shift: boolean) => boolean;
   onEscape?: () => boolean | void;
   onSubmit?: () => void;
@@ -282,10 +285,80 @@ export class EditorController implements GalleyHandle {
           this.dispatchScroll(getScrollFraction(view));
         },
         paste: (e, view) => {
+          const files = this.filesFromDataTransfer(e.clipboardData);
+          if (files.length > 0 && this.callbacks.onFiles) {
+            e.preventDefault();
+            void this.handleFiles(files, 'paste', e);
+          }
           this.callbacks.onPaste?.(e, view);
+        },
+        dragover: (e) => {
+          if (
+            this.callbacks.onFiles &&
+            this.filesFromDataTransfer(e.dataTransfer).length > 0
+          ) {
+            e.preventDefault();
+          }
+        },
+        drop: (e) => {
+          const files = this.filesFromDataTransfer(e.dataTransfer);
+          if (!this.callbacks.onFiles || files.length === 0) return;
+          e.preventDefault();
+          const pos = this.view.posAtCoords({ x: e.clientX, y: e.clientY });
+          const insertAt = pos ?? this.view.state.selection.main.from;
+          void this.handleFiles(files, 'drop', e, insertAt, insertAt);
         },
       }),
     ];
+  }
+
+  private getSelectionInfo() {
+    const sel = this.view.state.selection.main;
+    return { from: sel.from, to: sel.to, anchor: sel.anchor, head: sel.head };
+  }
+
+  private filesFromDataTransfer(dataTransfer: DataTransfer | null): File[] {
+    return Array.from(dataTransfer?.files ?? []);
+  }
+
+  private insertFileHandlerMarkdown(markdown: string | string[], from: number, to: number): void {
+    const text = Array.isArray(markdown) ? markdown.join('\n') : markdown;
+    if (!text) return;
+    this.view.dispatch({
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
+      scrollIntoView: true,
+    });
+  }
+
+  private async handleFiles(
+    files: File[],
+    source: GalleyFileSource,
+    event: ClipboardEvent | DragEvent,
+    from = this.view.state.selection.main.from,
+    to = this.view.state.selection.main.to,
+  ): Promise<void> {
+    const handler = this.callbacks.onFiles;
+    if (!handler || files.length === 0) return;
+
+    const input = {
+      files,
+      source,
+      event,
+      view: this.view,
+      selection: this.getSelectionInfo(),
+    };
+
+    try {
+      const result = await handler(input);
+      if (result === false || result === null) return;
+      this.insertFileHandlerMarkdown(result, from, to);
+    } catch (error) {
+      this.callbacks.onFileError?.(error, input);
+      if (!this.callbacks.onFileError) {
+        console.error('Galley file handler failed', error);
+      }
+    }
   }
 
   private handleEnter(cm: EditorView, mod: boolean, shift: boolean): boolean {
