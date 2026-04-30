@@ -1,12 +1,12 @@
-# Contributing to `@inky/neutrino-editor`
+# Contributing to `@inky/galley-editor`
 
 Thanks for your interest. This document covers how to develop, the clean-room rule for code in `src/`, and the PR checklist.
 
 ## Local development
 
 ```bash
-git clone https://git.inkyquill.net/inky/neutrino-editor.git
-cd neutrino-editor
+git clone https://git.inkyquill.net/inky/galley-editor.git
+cd galley-editor
 npm install --legacy-peer-deps
 npm run dev          # demo app
 npm run storybook    # component playground

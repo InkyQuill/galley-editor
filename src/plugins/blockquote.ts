@@ -1,11 +1,11 @@
 import { Decoration } from '@codemirror/view';
 import { HIDE_DECORATION, makeBlockPlugin, makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
-const blockquotePlugin: NeutrinoPlugin = {
-  id: 'ne:blockquote',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const blockClass = classNames.blockQuote ?? 'ne-blockquote';
+const blockquotePlugin: GalleyPlugin = {
+  id: 'ge:blockquote',
+  extensions(classNames: GalleyClassNames, context) {
+    const blockClass = classNames.blockQuote ?? 'ge-blockquote';
     const lineDeco = Decoration.line({ class: blockClass });
     const revealStrategy = context?.mode === 'preview' ? false : 'line';
 

@@ -2,7 +2,7 @@ import { type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
 type Alignment = 'left' | 'center' | 'right' | null;
 
@@ -53,7 +53,7 @@ function appendCell(
   const cell = document.createElement(tagName);
   cell.textContent = value;
   if (alignment) {
-    cell.classList.add(`ne-align-${alignment}`);
+    cell.classList.add(`ge-align-${alignment}`);
   }
   row.append(cell);
 }
@@ -77,13 +77,13 @@ class TableWidget extends WidgetType {
 
   toDOM(): HTMLElement {
     const wrapper = document.createElement('div');
-    wrapper.className = `ne-table-widget ${this.tableClass}`;
+    wrapper.className = `ge-table-widget ${this.tableClass}`;
 
     const scroll = document.createElement('div');
-    scroll.className = 'ne-table-scroll';
+    scroll.className = 'ge-table-scroll';
 
     const table = document.createElement('table');
-    table.className = 'ne-table-rendered';
+    table.className = 'ge-table-rendered';
 
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
@@ -148,10 +148,10 @@ function buildTableDecorations(
   return Decoration.set(widgets, true);
 }
 
-const tablesPlugin: NeutrinoPlugin = {
-  id: 'ne:tables',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const tableClass = classNames.table ?? 'ne-table';
+const tablesPlugin: GalleyPlugin = {
+  id: 'ge:tables',
+  extensions(classNames: GalleyClassNames, context) {
+    const tableClass = classNames.table ?? 'ge-table';
     const preview = context?.mode === 'preview';
 
     const field = StateField.define<DecorationSet>({

@@ -47,7 +47,7 @@ describe('linksPlugin', () => {
     views.push(view);
 
     expect(lineElement(view, 1).textContent).toBe('This is a link to something.');
-    expect(lineElement(view, 1).querySelector('.ne-link')).toBeInstanceOf(HTMLElement);
+    expect(lineElement(view, 1).querySelector('.ge-link')).toBeInstanceOf(HTMLElement);
     expect(lineElement(view, 3).textContent).toBe('');
   });
 
@@ -61,7 +61,7 @@ describe('linksPlugin', () => {
     views.push(view);
 
     expect(lineElement(view, 1).textContent).toBe('ref');
-    expect(lineElement(view, 1).querySelector('.ne-link')).toBeInstanceOf(HTMLElement);
+    expect(lineElement(view, 1).querySelector('.ge-link')).toBeInstanceOf(HTMLElement);
   });
 
   it('opens inline links on Cmd/Ctrl-click', () => {
@@ -75,7 +75,7 @@ describe('linksPlugin', () => {
     });
     views.push(view);
 
-    const link = lineElement(view, 1).querySelector('.ne-link');
+    const link = lineElement(view, 1).querySelector('.ge-link');
     link?.dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
 
     expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
@@ -96,7 +96,7 @@ describe('linksPlugin', () => {
     });
     views.push(view);
 
-    const link = lineElement(view, 1).querySelector('.ne-link');
+    const link = lineElement(view, 1).querySelector('.ge-link');
     link?.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
 
     expect(onLinkClick).toHaveBeenCalledWith('https://example.com', expect.any(MouseEvent));
@@ -114,7 +114,7 @@ describe('linksPlugin', () => {
     });
     views.push(view);
 
-    const link = lineElement(view, 1).querySelector('.ne-link');
+    const link = lineElement(view, 1).querySelector('.ge-link');
     link?.dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
 
     expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');

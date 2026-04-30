@@ -1,6 +1,6 @@
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
 /** @internal */
 export class CheckboxWidget extends WidgetType {
@@ -28,7 +28,7 @@ export class CheckboxWidget extends WidgetType {
 
   toDOM(view: EditorView) {
     const container = document.createElement('span');
-    container.className = `${this.checkboxClass} ne-depth-${this.depth}`;
+    container.className = `${this.checkboxClass} ge-depth-${this.depth}`;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -57,7 +57,7 @@ export class CheckboxWidget extends WidgetType {
   updateDOM(dom: HTMLElement) {
     const input = dom.querySelector('input');
     if (input) {
-      dom.className = `${this.checkboxClass} ne-depth-${this.depth}`;
+      dom.className = `${this.checkboxClass} ge-depth-${this.depth}`;
       input.checked = this.checked;
       input.ariaLabel = this.label;
       input.title = this.label;
@@ -71,11 +71,11 @@ export class CheckboxWidget extends WidgetType {
   }
 }
 
-const checkboxesPlugin: NeutrinoPlugin = {
-  id: 'ne:checkboxes',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const checkboxClass = classNames.checkbox ?? 'ne-checkbox';
-    const completedClass = classNames.completedTask ?? 'ne-completed-task';
+const checkboxesPlugin: GalleyPlugin = {
+  id: 'ge:checkboxes',
+  extensions(classNames: GalleyClassNames, context) {
+    const checkboxClass = classNames.checkbox ?? 'ge-checkbox';
+    const completedClass = classNames.completedTask ?? 'ge-completed-task';
     const completedLineDeco = Decoration.line({ class: completedClass });
     const preview = context?.mode === 'preview';
 

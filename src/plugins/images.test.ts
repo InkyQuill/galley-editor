@@ -21,7 +21,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
+    const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Sample PNG');
     expect(image?.getAttribute('src')).toBe('assets/img.png');
@@ -36,7 +36,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
+    const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Sample SVG');
     expect(image?.getAttribute('src')).toBe('sample-diagram.svg');
@@ -61,7 +61,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
+    const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Sample SVG');
     expect(renderer).toHaveBeenCalledWith({ alt: 'Sample SVG', url: dataUrl });
@@ -76,7 +76,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('![Sample PNG](assets/img.png)');
   });
 
@@ -92,7 +92,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
+    const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('src')).toBe('assets/img.png');
   });
@@ -115,7 +115,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    const image = view.dom.querySelector('.ne-image-widget img');
+    const image = view.dom.querySelector('.ge-image-widget img');
     expect(image).toBeInstanceOf(HTMLImageElement);
     expect(image?.getAttribute('alt')).toBe('Sample PNG');
     expect(image?.getAttribute('src')).toBe('assets/img.png');
@@ -133,7 +133,7 @@ describe('imagesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-image-widget img')).toBeNull();
+    expect(view.dom.querySelector('.ge-image-widget img')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('Sample PNG');
   });
 });

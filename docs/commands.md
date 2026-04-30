@@ -1,6 +1,6 @@
 # Commands
 
-Neutrino commands are available through the editor ref:
+Galley commands are available through the editor ref:
 
 ```tsx
 editorRef.current?.execCommand('toggleBold');
@@ -11,7 +11,7 @@ Custom commands registered with `registerCommand()` take precedence over built-i
 
 ## Default Keymap
 
-`DEFAULT_KEYMAP` exports Neutrino's command keybindings. The controller also keeps callback-driven editing keys such as Enter, Tab, Backspace, and Escape.
+`DEFAULT_KEYMAP` exports Galley's command keybindings. The controller also keeps callback-driven editing keys such as Enter, Tab, Backspace, and Escape.
 
 | Key | Command | Description |
 |---|---|---|
@@ -30,7 +30,7 @@ Custom commands registered with `registerCommand()` take precedence over built-i
 Use the function form to extend defaults:
 
 ```tsx
-<NeutrinoEditor
+<GalleyEditor
   keymap={(defaults) => [
     ...defaults,
     { key: 'Mod-Shift-K', run: (view) => insertCallout(view) },
@@ -41,7 +41,7 @@ Use the function form to extend defaults:
 Use the array form only for a full replacement:
 
 ```tsx
-<NeutrinoEditor keymap={[{ key: 'F8', run: runCustomCommand }]} />
+<GalleyEditor keymap={[{ key: 'F8', run: runCustomCommand }]} />
 ```
 
 ## Inline Formatting
@@ -133,7 +133,7 @@ Arguments: `label?: string`, `url?: string`
 Default keybinding: `Mod-K`
 
 ```ts
-editorRef.current?.execCommand('insertLink', 'Neutrino', 'https://example.com');
+editorRef.current?.execCommand('insertLink', 'Galley', 'https://example.com');
 ```
 
 ### `insertImage`
@@ -263,7 +263,7 @@ const matches = editorRef.current?.execCommand('findInDocument', 'todo', {
 Named export:
 
 ```ts
-import { findInDocument } from '@inky/neutrino-editor';
+import { findInDocument } from '@inky/galley-editor';
 
 const matches = findInDocument(view, 'heading', { caseSensitive: true });
 ```

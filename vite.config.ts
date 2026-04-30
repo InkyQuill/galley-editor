@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
       ? {
           lib: {
             entry: resolve(__dirname, 'src/components/index.ts'),
-            name: 'NeutrinoEditor',
+            name: 'GalleyEditor',
             fileName: 'index',
             formats: ['es'],
           },

@@ -22,11 +22,11 @@ describe('codeFencePlugin', () => {
     });
     views.push(view);
 
-    const block = view.dom.querySelector('.ne-code-block');
+    const block = view.dom.querySelector('.ge-code-block');
     expect(block).toBeInstanceOf(HTMLElement);
-    expect(block?.querySelector('.ne-code-language')?.textContent).toBe('ts');
-    expect(block?.querySelector('.ne-code-copy')?.textContent).toBe('Copy');
-    expect(block?.querySelector('.ne-token-keyword')?.textContent).toBe('const');
+    expect(block?.querySelector('.ge-code-language')?.textContent).toBe('ts');
+    expect(block?.querySelector('.ge-code-copy')?.textContent).toBe('Copy');
+    expect(block?.querySelector('.ge-token-keyword')?.textContent).toBe('const');
     expect(block?.textContent).toContain('answer');
   });
 
@@ -39,7 +39,7 @@ describe('codeFencePlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-code-block')).toBeNull();
+    expect(view.dom.querySelector('.ge-code-block')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('```ts');
   });
 
@@ -55,7 +55,7 @@ describe('codeFencePlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-code-block')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-code-block')).toBeInstanceOf(HTMLElement);
     expect(lineElement(view, 1).textContent).not.toContain('```');
   });
 
@@ -73,7 +73,7 @@ describe('codeFencePlugin', () => {
     });
     views.push(view);
 
-    const mark = view.dom.querySelector('.ne-code-body mark');
+    const mark = view.dom.querySelector('.ge-code-body mark');
     expect(mark).toBeInstanceOf(HTMLElement);
     expect(mark?.getAttribute('data-language')).toBe('js');
     expect(mark?.getAttribute('data-theme')).toBe('dark');
@@ -94,7 +94,7 @@ describe('codeFencePlugin', () => {
     });
     views.push(view);
 
-    const copy = view.dom.querySelector('.ne-code-copy');
+    const copy = view.dom.querySelector('.ge-code-copy');
     expect(copy).toBeInstanceOf(HTMLButtonElement);
 
     copy?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -102,6 +102,6 @@ describe('codeFencePlugin', () => {
     await Promise.resolve();
 
     expect(writeText).toHaveBeenCalledWith('const answer = 42;');
-    expect(view.dom.querySelector('.ne-code-block')).toBeInstanceOf(HTMLElement);
+    expect(view.dom.querySelector('.ge-code-block')).toBeInstanceOf(HTMLElement);
   });
 });

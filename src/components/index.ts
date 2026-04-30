@@ -1,23 +1,23 @@
 // Component exports
-export { default as NeutrinoEditor } from './NeutrinoEditor';
+export { default as GalleyEditor } from './GalleyEditor';
 export { default as ErrorBoundary } from './ErrorBoundary';
-export { useNeutrino } from '../hooks/useNeutrino';
+export { useGalley } from '../hooks/useGalley';
 
 // Types
 export type {
-  NeutrinoEditorProps,
-  NeutrinoHandle,
-  NeutrinoPlugin,
-  NeutrinoPluginSpec,
-  NeutrinoClassNames,
-  NeutrinoMode,
-  NeutrinoToolbarOptions,
-  NeutrinoToolbarContext,
-  NeutrinoToolbarSlot,
-  NeutrinoFooterOptions,
-  NeutrinoFooterContext,
-  NeutrinoFooterSlot,
-  NeutrinoSurfaceOptions,
+  GalleyEditorProps,
+  GalleyHandle,
+  GalleyPlugin,
+  GalleyPluginSpec,
+  GalleyClassNames,
+  GalleyMode,
+  GalleyToolbarOptions,
+  GalleyToolbarContext,
+  GalleyToolbarSlot,
+  GalleyFooterOptions,
+  GalleyFooterContext,
+  GalleyFooterSlot,
+  GalleySurfaceOptions,
   ToolbarIconName,
   ToolbarIconRenderer,
   CodeHighlighter,
@@ -28,8 +28,8 @@ export type {
   RevealStrategy,
   ImageRenderer,
   LinkClickHandler,
-  UseNeutrinoOptions,
-  UseNeutrinoResult,
+  UseGalleyOptions,
+  UseGalleyResult,
 } from '../types';
 
 // Rendering engine (for building custom plugins)
@@ -67,6 +67,6 @@ export {
   findInDocument,
 } from '../commands';
 export type {
-  NeutrinoKeyBinding,
+  GalleyKeyBinding,
   SortSelectedLinesOptions,
 } from '../commands';

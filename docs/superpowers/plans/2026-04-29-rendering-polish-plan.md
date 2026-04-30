@@ -18,8 +18,8 @@
 - Modify: `src/plugins/links.ts`
 - Test: `src/plugins/links.test.ts`
 
-- [x] Add `CodeHighlighter` and `NeutrinoRenderContext` types.
-- [x] Add optional `codeHighlighter` prop to `NeutrinoEditorProps` and `ControllerSettings`.
+- [x] Add `CodeHighlighter` and `GalleyRenderContext` types.
+- [x] Add optional `codeHighlighter` prop to `GalleyEditorProps` and `ControllerSettings`.
 - [x] Pass `{ theme: resolved theme, codeHighlighter }` into built-in and custom plugin `extensions`.
 - [x] Write a failing link test where cursor inside the link label reveals all hidden syntax.
 - [x] Change the link hide reveal strategy to use the parent link as the active reveal boundary.
@@ -29,64 +29,64 @@
 
 **Files:**
 - Modify: `src/plugins/code-fence.ts`
-- Modify: `src/neutrino-base.css`
+- Modify: `src/galley-base.css`
 - Test: `src/plugins/code-fence.test.ts`
 
 - [x] Write failing tests for inactive code-fence widget rendering, active raw rendering, and custom highlighter usage.
 - [x] Replace line-only code fence styling with a `WidgetType` that renders the inactive fence as a block widget.
 - [x] Add dependency-free token highlighting for common JavaScript/TypeScript/JSON/CSS/HTML patterns.
 - [x] Add copy button DOM behavior.
-- [x] Add CSS classes for `.ne-code-block`, `.ne-code-block-header`, `.ne-code-language`, `.ne-code-copy`, `.ne-code-body`, and token spans.
+- [x] Add CSS classes for `.ge-code-block`, `.ge-code-block-header`, `.ge-code-language`, `.ge-code-copy`, `.ge-code-body`, and token spans.
 - [x] Run `npm test -- src/plugins/code-fence.test.ts`.
 
 ### Task 3: Table Widget
 
 **Files:**
 - Modify: `src/plugins/tables.ts`
-- Modify: `src/neutrino-base.css`
+- Modify: `src/galley-base.css`
 - Test: `src/plugins/tables.test.ts`
 
 - [x] Write failing tests for inactive table widget rendering and active raw rendering.
 - [x] Parse simple GFM pipe tables into headers, alignments, and body rows.
 - [x] Render inactive tables as a block widget with a real `<table>`.
-- [x] Add CSS classes for `.ne-table-widget`, `.ne-table-scroll`, `.ne-table-rendered`, and alignment states.
+- [x] Add CSS classes for `.ge-table-widget`, `.ge-table-scroll`, `.ge-table-rendered`, and alignment states.
 - [x] Run `npm test -- src/plugins/tables.test.ts`.
 
 ### Task 4: Footer and Theme
 
 **Files:**
 - Modify: `src/types.ts`
-- Modify: `src/components/NeutrinoEditor.tsx`
-- Modify: `src/components/NeutrinoEditor.test.tsx`
-- Modify: `src/neutrino-base.css`
+- Modify: `src/components/GalleyEditor.tsx`
+- Modify: `src/components/GalleyEditor.test.tsx`
+- Modify: `src/galley-base.css`
 - Modify: `vite.config.ts` if SVG import typing requires it
 
 - [x] Write failing component tests for footer default rendering, live counts, tooltip, and `footer={false}`.
-- [x] Add `footer` prop and count helper in `NeutrinoEditor.tsx`.
+- [x] Add `footer` prop and count helper in `GalleyEditor.tsx`.
 - [x] Render footer below the CodeMirror container with the root logo and styled package version tooltip.
 - [x] Expand base CSS variables and default surface styling for light/dark mode.
-- [x] Run `npm test -- src/components/NeutrinoEditor.test.tsx`.
+- [x] Run `npm test -- src/components/GalleyEditor.test.tsx`.
 
 ### Task 5: Default Toolbar
 
 **Files:**
 - Modify: `src/types.ts`
-- Modify: `src/components/NeutrinoEditor.tsx`
-- Modify: `src/components/NeutrinoEditor.test.tsx`
-- Modify: `src/neutrino-base.css`
+- Modify: `src/components/GalleyEditor.tsx`
+- Modify: `src/components/GalleyEditor.test.tsx`
+- Modify: `src/galley-base.css`
 
 - [x] Write failing component tests for toolbar default rendering and `toolbar={false}`.
 - [x] Add `toolbar?: boolean` prop.
 - [x] Render a compact top toolbar that calls existing commands through the controller ref.
 - [x] Style the toolbar to match the provided reference direction.
-- [x] Run `npm test -- src/components/NeutrinoEditor.test.tsx`.
+- [x] Run `npm test -- src/components/GalleyEditor.test.tsx`.
 
 ### Task 6: Storybook and Docs
 
 **Files:**
 - Create: `src/stories/assets/sample-landscape.svg`
 - Create: `src/stories/assets/sample-diagram.svg`
-- Modify: `src/components/NeutrinoEditor.stories.tsx`
+- Modify: `src/components/GalleyEditor.stories.tsx`
 - Modify: `docs/api-reference.md`
 - Modify: `CHANGELOG.md`
 

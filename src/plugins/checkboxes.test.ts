@@ -27,7 +27,7 @@ describe('checkboxesPlugin', () => {
     });
     views.push(view);
 
-    const checkbox = view.dom.querySelector('.ne-checkbox input');
+    const checkbox = view.dom.querySelector('.ge-checkbox input');
     expect(checkbox).toBeInstanceOf(HTMLInputElement);
 
     (checkbox as HTMLInputElement).checked = true;
@@ -63,7 +63,7 @@ describe('checkboxesPlugin', () => {
     });
     views.push(view);
 
-    const checkbox = view.dom.querySelector('.ne-checkbox input');
+    const checkbox = view.dom.querySelector('.ge-checkbox input');
     expect(checkbox).toBeInstanceOf(HTMLInputElement);
 
     (checkbox as HTMLInputElement).checked = false;
@@ -93,7 +93,7 @@ describe('checkboxesPlugin', () => {
     });
     views.push(view);
 
-    const checkbox = view.dom.querySelector('.ne-checkbox input');
+    const checkbox = view.dom.querySelector('.ge-checkbox input');
     expect(checkbox).toBeInstanceOf(HTMLInputElement);
 
     (checkbox as HTMLInputElement).checked = false;
@@ -103,8 +103,8 @@ describe('checkboxesPlugin', () => {
   });
 
   it('updates checkbox DOM metadata when reused', () => {
-    const previousWidget = new CheckboxWidget(false, 1, ' old task', 'ne-checkbox');
-    const nextWidget = new CheckboxWidget(true, 2, ' new task', 'ne-checkbox-next');
+    const previousWidget = new CheckboxWidget(false, 1, ' old task', 'ge-checkbox');
+    const nextWidget = new CheckboxWidget(true, 2, ' new task', 'ge-checkbox-next');
     const dom = previousWidget.toDOM({} as EditorView);
     const reusableWidget = nextWidget as unknown as {
       updateDOM(dom: HTMLElement, view: EditorView, from: CheckboxWidget): boolean;
@@ -114,7 +114,7 @@ describe('checkboxesPlugin', () => {
 
     const input = dom.querySelector('input');
     expect(input).toBeInstanceOf(HTMLInputElement);
-    expect(dom.className).toBe('ne-checkbox-next ne-depth-2');
+    expect(dom.className).toBe('ge-checkbox-next ge-depth-2');
     expect((input as HTMLInputElement).checked).toBe(true);
     expect((input as HTMLInputElement).ariaLabel).toBe(' new task');
     expect((input as HTMLInputElement).title).toBe(' new task');

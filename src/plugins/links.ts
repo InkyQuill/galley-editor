@@ -6,8 +6,8 @@ import type { SyntaxNodeRef } from '@lezer/common';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
 import type {
   LinkClickHandler,
-  NeutrinoPlugin,
-  NeutrinoClassNames,
+  GalleyPlugin,
+  GalleyClassNames,
 } from '../types';
 
 interface LinkDefinition {
@@ -107,12 +107,12 @@ function shouldActivateLink(event: MouseEvent): boolean {
   return event.metaKey || event.ctrlKey;
 }
 
-const linksPlugin: NeutrinoPlugin = {
-  id: 'ne:links',
-  extensions(classNames: NeutrinoClassNames, context) {
+const linksPlugin: GalleyPlugin = {
+  id: 'ge:links',
+  extensions(classNames: GalleyClassNames, context) {
     const preview = context?.mode === 'preview';
-    const linkClass = classNames.link ?? 'ne-link';
-    const linkSelectorClass = linkClass.split(/\s+/).find(Boolean) ?? 'ne-link';
+    const linkClass = classNames.link ?? 'ge-link';
+    const linkSelectorClass = linkClass.split(/\s+/).find(Boolean) ?? 'ge-link';
 
     // Hide URL and link marks with 'select' reveal (only reveal when cursor overlaps)
     const markExt = makeInlinePlugin({
@@ -155,7 +155,7 @@ const linksPlugin: NeutrinoPlugin = {
           const url = resolveLinkUrl(state, node.from, node.to);
           return Decoration.mark({
             class: linkClass,
-            attributes: url ? { 'data-ne-url': url } : {},
+            attributes: url ? { 'data-ge-url': url } : {},
           });
         }
         return null;
@@ -182,7 +182,7 @@ const linksPlugin: NeutrinoPlugin = {
         const target = event.target as Element | null;
         const link = target?.closest(`.${linkSelectorClass}`);
         if (!link) return false;
-        const url = link.getAttribute('data-ne-url');
+        const url = link.getAttribute('data-ge-url');
         if (!url) return false;
 
         event.preventDefault();

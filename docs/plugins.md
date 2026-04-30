@@ -1,17 +1,17 @@
 # Plugin System
 
-Neutrino Editor uses a plugin system to implement all markdown rendering features. Every visual transformation -- from hiding `**` delimiters to rendering interactive checkboxes -- is a plugin.
+Galley Editor uses a plugin system to implement all markdown rendering features. Every visual transformation -- from hiding `**` delimiters to rendering interactive checkboxes -- is a plugin.
 
 ## Plugin Interface
 
-A plugin implements the `NeutrinoPlugin` interface:
+A plugin implements the `GalleyPlugin` interface:
 
 ```typescript
-interface NeutrinoPlugin {
-  /** Stable identifier. Built-ins use 'ne:headings', 'ne:emphasis', etc. */
+interface GalleyPlugin {
+  /** Stable identifier. Built-ins use 'ge:headings', 'ge:emphasis', etc. */
   id: string;
   /** Return CM6 extensions that implement this plugin's behavior. */
-  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
+  extensions(classNames: GalleyClassNames, context?: GalleyRenderContext): Extension[];
 }
 ```
 
@@ -19,10 +19,10 @@ The `extensions()` method receives resolved CSS class names and returns one or m
 
 ## Plugin Spec (Low-Level)
 
-The rendering factories (`makeInlinePlugin` and `makeBlockPlugin`) accept a `NeutrinoPluginSpec`:
+The rendering factories (`makeInlinePlugin` and `makeBlockPlugin`) accept a `GalleyPluginSpec`:
 
 ```typescript
-interface NeutrinoPluginSpec {
+interface GalleyPluginSpec {
   /** Return a Decoration or WidgetType to apply at this node, or null to skip. */
   createDecoration(
     node: SyntaxNodeRef,
@@ -115,47 +115,47 @@ Creates a `StateField` that iterates the **entire document**. Needed for multi-l
 
 ## Built-in Plugins
 
-### Headings (`ne:headings`)
+### Headings (`ge:headings`)
 
 **File:** `src/plugins/headings.ts`
 
 Two extensions:
 1. **Mark hiding**: Hides `HeaderMark` nodes (`#`, `##`, etc.) including the trailing space. Uses `'active'` reveal so marks appear when the cursor enters the heading.
-2. **Line classes**: Adds `ne-heading ne-h1` through `ne-heading ne-h6` line decorations. Always visible (`hideWhenNearCursor: false`).
+2. **Line classes**: Adds `ge-heading ge-h1` through `ge-heading ge-h6` line decorations. Always visible (`hideWhenNearCursor: false`).
 
-### Emphasis (`ne:emphasis`)
+### Emphasis (`ge:emphasis`)
 
 **File:** `src/plugins/emphasis.ts`
 
 Two extensions:
 1. **Mark hiding**: Hides `EmphasisMark` (`*`, `_`) and `StrikethroughMark` (`~~`). Uses `'active'` reveal.
-2. **Semantic classes**: Adds `ne-bold` to `StrongEmphasis`, `ne-italic` to `Emphasis`, `ne-strikethrough` to `Strikethrough`. Always visible.
+2. **Semantic classes**: Adds `ge-bold` to `StrongEmphasis`, `ge-italic` to `Emphasis`, `ge-strikethrough` to `Strikethrough`. Always visible.
 
-### Inline Code (`ne:code-inline`)
+### Inline Code (`ge:code-inline`)
 
 **File:** `src/plugins/code-inline.ts`
 
 Two extensions:
 1. **Mark hiding**: Hides `CodeMark` backticks (only for `InlineCode`, not `FencedCode`). Uses `'active'` reveal.
-2. **Semantic class**: Adds `ne-code-inline` to `InlineCode` nodes. Always visible.
+2. **Semantic class**: Adds `ge-code-inline` to `InlineCode` nodes. Always visible.
 
-### Code Fences (`ne:code-fence`)
+### Code Fences (`ge:code-fence`)
 
 **File:** `src/plugins/code-fence.ts`
 
-Custom `StateField` (not `makeBlockPlugin`). Iterates `FencedCode` nodes and applies `ne-code-fence` line decoration to **every line** in the block. Hides when cursor is within 1 line or inside the block.
+Custom `StateField` (not `makeBlockPlugin`). Iterates `FencedCode` nodes and applies `ge-code-fence` line decoration to **every line** in the block. Hides when cursor is within 1 line or inside the block.
 
 `makeBlockPlugin` also expands line decorations across every line in a block in v0.3. This plugin remains a custom StateField to keep the code-fence-specific cursor proximity and inside-block hiding behavior localized.
 
-### Blockquotes (`ne:blockquote`)
+### Blockquotes (`ge:blockquote`)
 
 **File:** `src/plugins/blockquote.ts`
 
 Two extensions:
-1. **Block line class**: Uses `makeBlockPlugin` to add `ne-blockquote` line decoration. Always visible.
+1. **Block line class**: Uses `makeBlockPlugin` to add `ge-blockquote` line decoration. Always visible.
 2. **Mark hiding**: Uses `makeInlinePlugin` to hide `QuoteMark` (`>`). Uses `'line'` reveal.
 
-### Links (`ne:links`)
+### Links (`ge:links`)
 
 **File:** `src/plugins/links.ts`
 
@@ -163,56 +163,56 @@ Two extensions:
 1. **Reference registry**: Tracks `[ref]: url "title"` definitions in a state field.
 2. **Mark/URL hiding**: Hides `LinkMark`, inline `URL`, and reference `LinkLabel` nodes. Uses `'select'` reveal -- only revealed when cursor directly overlaps.
 3. **Definition hiding**: Hides reference definition lines when inactive.
-4. **Semantic class**: Adds `ne-link` and `data-ne-url` to resolved `Link` nodes. Always visible.
+4. **Semantic class**: Adds `ge-link` and `data-ge-url` to resolved `Link` nodes. Always visible.
 5. **Click handler**: Cmd/Ctrl-click activates the resolved URL. `onLinkClick` runs first and can suppress default `window.open` by returning `true`.
 
 Inline links, full reference links (`[label][ref]`), and shorthand reference links (`[ref]`) are supported.
 
-### Lists (`ne:lists`)
+### Lists (`ge:lists`)
 
 **File:** `src/plugins/lists.ts`
 
 One extension using `makeInlinePlugin`:
 - Replaces `ListMark` nodes (`-`, `*`) in `BulletList > ListItem` with a `BulletMarkerWidget`
-- Widget cycles through 3 visual depth styles (`ne-depth-0`, `ne-depth-1`, `ne-depth-2`) based on nesting
-- Widget structure: outer `span.ne-list-marker` > sizing `span` (preserves width) + visual dot `span`
+- Widget cycles through 3 visual depth styles (`ge-depth-0`, `ge-depth-1`, `ge-depth-2`) based on nesting
+- Widget structure: outer `span.ge-list-marker` > sizing `span` (preserves width) + visual dot `span`
 - Uses `'active'` reveal
 
 Does not affect ordered lists or task list markers (those are handled by checkboxes plugin).
 
-### Checkboxes (`ne:checkboxes`)
+### Checkboxes (`ge:checkboxes`)
 
 **File:** `src/plugins/checkboxes.ts`
 
 The most complex built-in plugin. Uses `makeInlinePlugin` plus a DOM event handler:
 
-1. **Event handler**: Captures `mousedown` on checkbox inputs inside `.ne-checkbox` containers to allow click-through
+1. **Event handler**: Captures `mousedown` on checkbox inputs inside `.ge-checkbox` containers to allow click-through
 2. **Checkbox widget**: Replaces `TaskMarker` (`[ ]` / `[x]`) plus the preceding `ListMark` with an interactive `CheckboxWidget`
    - Renders an `<input type="checkbox">` inside a styled container
    - On toggle: updates the line text, changing `[ ]` to `[x]` or vice versa
    - Tracks nesting depth via `parentDepths.get('ListItem')`
-3. **Completed task line class**: Adds `ne-completed-task` line decoration to `Task` nodes where the marker contains `x`
+3. **Completed task line class**: Adds `ge-completed-task` line decoration to `Task` nodes where the marker contains `x`
 4. **Custom reveal strategy**: Uses boolean reveal based on whether the cursor overlaps the combined range from list mark to task marker
 
-### Dividers (`ne:dividers`)
+### Dividers (`ge:dividers`)
 
 **File:** `src/plugins/dividers.ts`
 
 Two `makeInlinePlugin` extensions:
-1. **Widget replacement**: Replaces `HorizontalRule` nodes with a `DividerWidget` that renders `<hr class="ne-divider-widget">`. Default `'line'` reveal.
-2. **Line decoration**: Adds `ne-divider` line class to `HorizontalRule` lines.
+1. **Widget replacement**: Replaces `HorizontalRule` nodes with a `DividerWidget` that renders `<hr class="ge-divider-widget">`. Default `'line'` reveal.
+2. **Line decoration**: Adds `ge-divider` line class to `HorizontalRule` lines.
 
-### Tables (`ne:tables`)
+### Tables (`ge:tables`)
 
 **File:** `src/plugins/tables.ts`
 
-The simplest built-in plugin. Uses `makeBlockPlugin` to add `ne-table` line decoration to `Table` nodes. Always visible (`hideWhenNearCursor: false`).
+The simplest built-in plugin. Uses `makeBlockPlugin` to add `ge-table` line decoration to `Table` nodes. Always visible (`hideWhenNearCursor: false`).
 
-### Images (`ne:images`)
+### Images (`ge:images`)
 
 **File:** `src/plugins/images.ts`
 
-By default, markdown images render as built-in image widgets. The plugin replaces inactive image syntax with an `<img>` wrapped in `.ne-image-widget`.
+By default, markdown images render as built-in image widgets. The plugin replaces inactive image syntax with an `<img>` wrapped in `.ge-image-widget`.
 
 With `imageRenderer`, consumers can replace the built-in image element with a custom widget. Returning `null` falls back to rendered alt text without an image element.
 
@@ -222,12 +222,12 @@ With `imageRenderer`, consumers can replace the built-in image element with a cu
 
 ```typescript
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin } from '@inky/neutrino-editor';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '@inky/neutrino-editor';
+import { makeInlinePlugin } from '@inky/galley-editor';
+import type { GalleyPlugin, GalleyClassNames } from '@inky/galley-editor';
 
-const todoHighlightPlugin: NeutrinoPlugin = {
+const todoHighlightPlugin: GalleyPlugin = {
   id: 'custom:todo-highlight',
-  extensions(classNames: NeutrinoClassNames) {
+  extensions(classNames: GalleyClassNames) {
     return [
       makeInlinePlugin({
         createDecoration(node, state) {
@@ -249,8 +249,8 @@ const todoHighlightPlugin: NeutrinoPlugin = {
 
 ```typescript
 import { WidgetType } from '@codemirror/view';
-import { makeInlinePlugin } from '@inky/neutrino-editor';
-import type { NeutrinoPlugin } from '@inky/neutrino-editor';
+import { makeInlinePlugin } from '@inky/galley-editor';
+import type { GalleyPlugin } from '@inky/galley-editor';
 
 class EmojiWidget extends WidgetType {
   constructor(private emoji: string) { super(); }
@@ -263,7 +263,7 @@ class EmojiWidget extends WidgetType {
   }
 }
 
-const emojiPlugin: NeutrinoPlugin = {
+const emojiPlugin: GalleyPlugin = {
   id: 'custom:emoji',
   extensions() {
     return [
@@ -285,7 +285,7 @@ const emojiPlugin: NeutrinoPlugin = {
 ### Registering Custom Plugins
 
 ```tsx
-<NeutrinoEditor
+<GalleyEditor
   value={value}
   onChange={setValue}
   plugins={[todoHighlightPlugin, emojiPlugin]}
@@ -295,24 +295,24 @@ const emojiPlugin: NeutrinoPlugin = {
 ### Disabling Built-in Plugins
 
 ```tsx
-<NeutrinoEditor
+<GalleyEditor
   value={value}
   onChange={setValue}
-  disabledPlugins={['ne:emphasis', 'ne:links']}
+  disabledPlugins={['ge:emphasis', 'ge:links']}
 />
 ```
 
 Built-in plugin IDs:
-- `ne:headings`
-- `ne:emphasis`
-- `ne:code-inline`
-- `ne:code-fence`
-- `ne:blockquote`
-- `ne:links`
-- `ne:lists`
-- `ne:checkboxes`
-- `ne:dividers`
-- `ne:tables`
+- `ge:headings`
+- `ge:emphasis`
+- `ge:code-inline`
+- `ge:code-fence`
+- `ge:blockquote`
+- `ge:links`
+- `ge:lists`
+- `ge:checkboxes`
+- `ge:dividers`
+- `ge:tables`
 
 ## Plugin Execution Order
 

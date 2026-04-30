@@ -1,16 +1,16 @@
 # Architecture
 
-This document describes the internal architecture of Neutrino Editor, a half-WYSIWYG markdown editor built on CodeMirror 6.
+This document describes the internal architecture of Galley Editor, a half-WYSIWYG markdown editor built on CodeMirror 6.
 
 ## Overview
 
-Neutrino Editor renders markdown with **live preview**: when the cursor is away from a markdown node, its formatting marks (e.g. `**`, `#`, `` ` ``) are hidden and semantic CSS classes are applied. When the cursor enters the node, raw markdown is revealed for editing. This is similar to Obsidian's "live preview" mode.
+Galley Editor renders markdown with **live preview**: when the cursor is away from a markdown node, its formatting marks (e.g. `**`, `#`, `` ` ``) are hidden and semantic CSS classes are applied. When the cursor enters the node, raw markdown is revealed for editing. This is similar to Obsidian's "live preview" mode.
 
 The editor uses Lezer's markdown parser directly via CodeMirror's language support -- there is no separate markdown-to-HTML conversion step. All rendering is done through CodeMirror decorations.
 
 ```
                      ┌─────────────────────────────────┐
-                     │        NeutrinoEditor.tsx        │
+                     │        GalleyEditor.tsx        │
                      │     (React forwardRef wrapper)   │
                      └──────────────┬──────────────────┘
                                     │ creates once on mount
@@ -72,7 +72,7 @@ This means adding or changing event handlers never triggers a re-initialization 
 ```
 src/
 ├── components/
-│   ├── NeutrinoEditor.tsx   # React wrapper (forwardRef)
+│   ├── GalleyEditor.tsx   # React wrapper (forwardRef)
 │   ├── ErrorBoundary.tsx    # Error boundary component
 │   └── index.ts             # Public API barrel export
 ├── plugins/
@@ -93,7 +93,7 @@ src/
 ├── types.ts                 # All TypeScript interfaces and types
 ├── theme.ts                 # Color scheme resolution + CM6 theme
 ├── autosize.ts              # Dynamic height extension
-└── neutrino-base.css        # Optional base styles
+└── galley-base.css        # Optional base styles
 ```
 
 ## Rendering Pipeline
@@ -180,14 +180,14 @@ Consumers register custom commands via `handle.registerCommand(name, fn)` and in
 
 ## React Integration
 
-### NeutrinoEditor Component
+### GalleyEditor Component
 
 The component is a thin `forwardRef` wrapper around `EditorController`:
 
 1. **Mount effect** (empty deps): Creates the controller once, sets up the callback proxy
 2. **Settings effect**: Calls `controller.updateSettings()` when any settings prop changes
 3. **Value sync effect**: Syncs the controlled `value` prop to the editor content
-4. **Imperative handle**: Exposes all `NeutrinoHandle` methods via `useImperativeHandle`
+4. **Imperative handle**: Exposes all `GalleyHandle` methods via `useImperativeHandle`
 
 The DOM structure is:
 ```html
@@ -213,7 +213,7 @@ The theme system is **style-agnostic**:
 - `resolveColorScheme('auto')` checks `prefers-color-scheme` media query
 - The `dark` flag is passed to `EditorView.theme()` so CM6 can scope dark-mode selectors
 
-All visual styling is done externally via CSS targeting `ne-*` and `tok-*` classes.
+All visual styling is done externally via CSS targeting `ge-*` and `tok-*` classes.
 
 ## Autosize
 

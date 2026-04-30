@@ -1,4 +1,4 @@
-# Neutrino Editor
+# Galley Editor
 
 > ⚠️ **In active development.** v0.6.0 is the current private-registry build, with rendering parity, reference links, safe image rendering, bidi support, and hooks included. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
@@ -29,28 +29,28 @@ This package is currently published to a private GitLab Package Registry.
 2. Install:
 
    ```bash
-   npm install @inky/neutrino-editor
+   npm install @inky/galley-editor
    ```
 
 3. Import in your code (CSS import is optional — see [Styling](docs/styling.md)):
 
    ```tsx
-   import { NeutrinoEditor } from '@inky/neutrino-editor';
-   import '@inky/neutrino-editor/style.css';
+   import { GalleyEditor } from '@inky/galley-editor';
+   import '@inky/galley-editor/style.css';
    ```
 
 ## Quick Start
 
 ```tsx
 import React, { useState } from 'react';
-import { NeutrinoEditor } from '@inky/neutrino-editor';
-import '@inky/neutrino-editor/style.css';
+import { GalleyEditor } from '@inky/galley-editor';
+import '@inky/galley-editor/style.css';
 
 function App() {
   const [markdown, setMarkdown] = useState('# Hello\n\nStart typing...');
 
   return (
-    <NeutrinoEditor
+    <GalleyEditor
       value={markdown}
       onChange={setMarkdown}
       placeholder="Start typing your markdown here..."
@@ -72,8 +72,8 @@ function App() {
 ## Development
 
 ```bash
-git clone https://git.inkyquill.net/inky/neutrino-editor.git
-cd neutrino-editor
+git clone https://git.inkyquill.net/inky/galley-editor.git
+cd galley-editor
 npm install --legacy-peer-deps
 npm run dev          # demo app
 npm run storybook    # component playground

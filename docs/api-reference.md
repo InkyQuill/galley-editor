@@ -1,17 +1,17 @@
 # API Reference
 
-Complete reference for all public exports from `@inky/neutrino-editor`.
+Complete reference for all public exports from `@inky/galley-editor`.
 
 ## Components
 
-### `NeutrinoEditor`
+### `GalleyEditor`
 
 The main editor component. A React `forwardRef` wrapper around `EditorController`.
 
 ```tsx
-import { NeutrinoEditor } from '@inky/neutrino-editor';
+import { GalleyEditor } from '@inky/galley-editor';
 
-<NeutrinoEditor
+<GalleyEditor
   ref={editorRef}
   value={markdown}
   onChange={setMarkdown}
@@ -19,7 +19,7 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 />
 ```
 
-#### Props (`NeutrinoEditorProps`)
+#### Props (`GalleyEditorProps`)
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -31,20 +31,20 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `maxRows` | `number` | `undefined` | Maximum rows before scrolling (unlimited if omitted) |
 | `className` | `string` | `''` | CSS class for the outer wrapper `<div>` |
 | `editorClassName` | `string` | `''` | CSS class applied to the CodeMirror `.cm-editor` element |
-| `classNames` | `NeutrinoClassNames` | `DEFAULT_CLASS_NAMES` | Override semantic CSS class names |
+| `classNames` | `GalleyClassNames` | `DEFAULT_CLASS_NAMES` | Override semantic CSS class names |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme |
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
-| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, Neutrino renders image widgets with built-in `<img>` elements |
+| `imageRenderer` | `ImageRenderer` | `undefined` | Optional custom renderer for markdown image widgets. Without it, Galley renders image widgets with built-in `<img>` elements |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
-| `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
-| `footer` | `boolean \| NeutrinoFooterOptions` | `true` | Show and customize the built-in status footer with word count, character count, logo, and consumer widgets |
+| `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Show and customize the built-in command toolbar |
+| `footer` | `boolean \| GalleyFooterOptions` | `true` | Show and customize the built-in status footer with word count, character count, logo, and consumer widgets |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
-| `onModeChange` | `(mode: NeutrinoMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |
-| `surface` | `NeutrinoSurfaceOptions` | `undefined` | Shell styling hooks for gradients, frosted glass, and padding overrides |
-| `plugins` | `NeutrinoPlugin[]` | `[]` | Additional plugins alongside built-ins |
+| `onModeChange` | `(mode: GalleyMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |
+| `surface` | `GalleySurfaceOptions` | `undefined` | Shell styling hooks for gradients, frosted glass, and padding overrides |
+| `plugins` | `GalleyPlugin[]` | `[]` | Additional plugins alongside built-ins |
 | `disabledPlugins` | `string[]` | `[]` | Built-in plugin IDs to disable |
 | `extensions` | `Extension[]` | `[]` | Additional CM6 extensions (appended last) |
 
@@ -66,10 +66,10 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 React error boundary for graceful error handling.
 
 ```tsx
-import { ErrorBoundary } from '@inky/neutrino-editor';
+import { ErrorBoundary } from '@inky/galley-editor';
 
 <ErrorBoundary fallback={<div>Editor failed to load</div>}>
-  <NeutrinoEditor value={value} onChange={setValue} />
+  <GalleyEditor value={value} onChange={setValue} />
 </ErrorBoundary>
 ```
 
@@ -82,13 +82,13 @@ import { ErrorBoundary } from '@inky/neutrino-editor';
 
 ---
 
-## Imperative Handle (`NeutrinoHandle`)
+## Imperative Handle (`GalleyHandle`)
 
 Access via React ref:
 
 ```tsx
-const ref = useRef<NeutrinoHandle>(null);
-<NeutrinoEditor ref={ref} ... />
+const ref = useRef<GalleyHandle>(null);
+<GalleyEditor ref={ref} ... />
 ```
 
 ### Content Methods
@@ -189,21 +189,21 @@ Direct access to the underlying CodeMirror `EditorView`, or `null` before the ed
 
 ## Hook API
 
-### `useNeutrino(options?)`
+### `useGalley(options?)`
 
 Hooks-first wrapper around the imperative handle. It owns a ref, tracks controlled content, and returns stable method wrappers.
 
 ```tsx
-import { NeutrinoEditor, useNeutrino } from '@inky/neutrino-editor';
+import { GalleyEditor, useGalley } from '@inky/galley-editor';
 
 function Editor() {
-  const editor = useNeutrino({
+  const editor = useGalley({
     initialValue: '# Hello',
     onChange: (value) => console.log(value),
   });
 
   return (
-    <NeutrinoEditor
+    <GalleyEditor
       ref={editor.ref}
       value={editor.content}
       onChange={editor.setContent}
@@ -226,21 +226,21 @@ type RevealStrategy = 'line' | 'select' | 'active' | boolean;
 
 Controls when raw markdown is shown instead of rendered decoration. See [Plugins > Reveal Strategies](./plugins.md#reveal-strategies).
 
-### `NeutrinoPlugin`
+### `GalleyPlugin`
 
 ```typescript
-interface NeutrinoPlugin {
+interface GalleyPlugin {
   id: string;
-  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
+  extensions(classNames: GalleyClassNames, context?: GalleyRenderContext): Extension[];
 }
 ```
 
-### `NeutrinoRenderContext`
+### `GalleyRenderContext`
 
 ```typescript
-interface NeutrinoRenderContext {
+interface GalleyRenderContext {
   theme: 'light' | 'dark';
-  mode?: NeutrinoMode;
+  mode?: GalleyMode;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
   onLinkClick?: LinkClickHandler;
@@ -249,10 +249,10 @@ interface NeutrinoRenderContext {
 
 Built-in plugins use this to adapt rendering for preview mode, custom code highlighting, image widgets, and link activation. Third-party plugins can ignore the second argument.
 
-### `NeutrinoMode`
+### `GalleyMode`
 
 ```typescript
-type NeutrinoMode = 'live' | 'markdown' | 'preview';
+type GalleyMode = 'live' | 'markdown' | 'preview';
 ```
 
 - `live`: default half-WYSIWYG editing. Markdown syntax reveals around the cursor.
@@ -261,7 +261,7 @@ type NeutrinoMode = 'live' | 'markdown' | 'preview';
 
 `editable={false}` always uses `preview` mode, even if `mode` is set to another value.
 
-### `NeutrinoToolbarOptions`
+### `GalleyToolbarOptions`
 
 ```typescript
 type ToolbarIconName =
@@ -273,15 +273,15 @@ type ToolbarIconName =
 type ToolbarIconRenderer = (input: {
   name: ToolbarIconName;
   label: string;
-  mode: NeutrinoMode;
+  mode: GalleyMode;
 }) => ReactNode;
 
-interface NeutrinoToolbarOptions {
+interface GalleyToolbarOptions {
   enabled?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
-  before?: NeutrinoToolbarSlot;
-  after?: NeutrinoToolbarSlot;
+  before?: GalleyToolbarSlot;
+  after?: GalleyToolbarSlot;
 }
 ```
 
@@ -290,7 +290,7 @@ Use `icons` to pass inline SVG elements, Lucide React components, or render func
 ```tsx
 import { Bold, Italic } from 'lucide-react';
 
-<NeutrinoEditor
+<GalleyEditor
   toolbar={{
     icons: {
       bold: <Bold size={16} />,
@@ -298,7 +298,7 @@ import { Bold, Italic } from 'lucide-react';
     },
     after: ({ execCommand, canEdit }) => (
       <button
-        className="ne-toolbar-button"
+        className="ge-toolbar-button"
         disabled={!canEdit}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => execCommand('insertHr')}
@@ -312,24 +312,24 @@ import { Bold, Italic } from 'lucide-react';
 
 Toolbar slot render functions receive `{ value, mode, canEdit, editor, execCommand, setMode, cycleMode }`.
 
-### `NeutrinoFooterOptions`
+### `GalleyFooterOptions`
 
 ```typescript
-interface NeutrinoFooterOptions {
+interface GalleyFooterOptions {
   wordCount?: boolean;
   characterCount?: boolean;
   logo?: boolean;
-  before?: NeutrinoFooterSlot;
-  after?: NeutrinoFooterSlot;
+  before?: GalleyFooterSlot;
+  after?: GalleyFooterSlot;
 }
 ```
 
 Footer slot render functions receive `{ value, mode, wordCount, characterCount, editor }`.
 
-### `NeutrinoSurfaceOptions`
+### `GalleySurfaceOptions`
 
 ```typescript
-interface NeutrinoSurfaceOptions {
+interface GalleySurfaceOptions {
   className?: string;
   style?: React.CSSProperties;
   contentPadding?: string;
@@ -338,12 +338,12 @@ interface NeutrinoSurfaceOptions {
 }
 ```
 
-`surface.style` is applied to the editor shell, so consumers can set gradients, `backdropFilter`, box shadows, or custom CSS variables. Padding helpers map to `--ne-content-padding`, `--ne-toolbar-padding`, and `--ne-footer-padding`.
+`surface.style` is applied to the editor shell, so consumers can set gradients, `backdropFilter`, box shadows, or custom CSS variables. Padding helpers map to `--ge-content-padding`, `--ge-toolbar-padding`, and `--ge-footer-padding`.
 
-### `NeutrinoPluginSpec`
+### `GalleyPluginSpec`
 
 ```typescript
-interface NeutrinoPluginSpec {
+interface GalleyPluginSpec {
   createDecoration(node: SyntaxNodeRef, state: EditorState, parentDepths: ReadonlyMap<string, number>): WidgetType | Decoration | null;
   getLineRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
   getMarkRange?(node: SyntaxNodeRef, state: EditorState): { from: number; to: number } | null;
@@ -375,35 +375,35 @@ Returning `null` falls back to rendered alt text without an image element.
 type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 ```
 
-Returning `true` means the consumer handled the click and Neutrino will not call `window.open`.
+Returning `true` means the consumer handled the click and Galley will not call `window.open`.
 
-### `NeutrinoClassNames`
+### `GalleyClassNames`
 
 Override semantic CSS class names applied to rendered elements:
 
 ```typescript
-interface NeutrinoClassNames {
-  bold?: string;          // default: 'ne-bold'
-  italic?: string;        // default: 'ne-italic'
-  strikethrough?: string; // default: 'ne-strikethrough'
-  inlineCode?: string;    // default: 'ne-code-inline'
-  link?: string;          // default: 'ne-link'
-  heading?: string;       // default: 'ne-heading'
-  h1?: string;            // default: 'ne-h1'
-  h2?: string;            // default: 'ne-h2'
-  h3?: string;            // default: 'ne-h3'
-  h4?: string;            // default: 'ne-h4'
-  h5?: string;            // default: 'ne-h5'
-  h6?: string;            // default: 'ne-h6'
-  blockCode?: string;     // default: 'ne-code-fence'
-  blockQuote?: string;    // default: 'ne-blockquote'
-  table?: string;         // default: 'ne-table'
-  image?: string;         // default: 'ne-image-frame'
-  divider?: string;       // default: 'ne-divider'
-  dividerWidget?: string; // default: 'ne-divider-widget'
-  checkbox?: string;      // default: 'ne-checkbox'
-  completedTask?: string; // default: 'ne-completed-task'
-  listMarker?: string;    // default: 'ne-list-marker'
+interface GalleyClassNames {
+  bold?: string;          // default: 'ge-bold'
+  italic?: string;        // default: 'ge-italic'
+  strikethrough?: string; // default: 'ge-strikethrough'
+  inlineCode?: string;    // default: 'ge-code-inline'
+  link?: string;          // default: 'ge-link'
+  heading?: string;       // default: 'ge-heading'
+  h1?: string;            // default: 'ge-h1'
+  h2?: string;            // default: 'ge-h2'
+  h3?: string;            // default: 'ge-h3'
+  h4?: string;            // default: 'ge-h4'
+  h5?: string;            // default: 'ge-h5'
+  h6?: string;            // default: 'ge-h6'
+  blockCode?: string;     // default: 'ge-code-fence'
+  blockQuote?: string;    // default: 'ge-blockquote'
+  table?: string;         // default: 'ge-table'
+  image?: string;         // default: 'ge-image-frame'
+  divider?: string;       // default: 'ge-divider'
+  dividerWidget?: string; // default: 'ge-divider-widget'
+  checkbox?: string;      // default: 'ge-checkbox'
+  completedTask?: string; // default: 'ge-completed-task'
+  listMarker?: string;    // default: 'ge-list-marker'
 }
 ```
 
@@ -463,11 +463,11 @@ Used by inactive fenced code blocks. String results are treated as highlighted H
 
 ## Rendering Utilities
 
-### `makeInlinePlugin(spec: NeutrinoPluginSpec): Extension`
+### `makeInlinePlugin(spec: GalleyPluginSpec): Extension`
 
 Creates a `ViewPlugin` that iterates visible ranges to produce inline decorations. See [Plugins > Factory Functions](./plugins.md#factory-functions).
 
-### `makeBlockPlugin(spec: NeutrinoPluginSpec): Extension[]`
+### `makeBlockPlugin(spec: GalleyPluginSpec): Extension[]`
 
 Creates a `StateField` that iterates the full document to produce block decorations. See [Plugins > Factory Functions](./plugins.md#factory-functions).
 
@@ -562,21 +562,21 @@ Named export for heading navigation. Accepts hashes with or without a leading `#
 
 ## Plugins
 
-### `BUILT_IN_PLUGINS: NeutrinoPlugin[]`
+### `BUILT_IN_PLUGINS: GalleyPlugin[]`
 
 Array of all 11 built-in plugins, in registration order:
 
-1. `headingsPlugin` (`ne:headings`)
-2. `emphasisPlugin` (`ne:emphasis`)
-3. `codeInlinePlugin` (`ne:code-inline`)
-4. `codeFencePlugin` (`ne:code-fence`)
-5. `blockquotePlugin` (`ne:blockquote`)
-6. `linksPlugin` (`ne:links`)
-7. `imagesPlugin` (`ne:images`)
-8. `listsPlugin` (`ne:lists`)
-9. `checkboxesPlugin` (`ne:checkboxes`)
-10. `dividersPlugin` (`ne:dividers`)
-11. `tablesPlugin` (`ne:tables`)
+1. `headingsPlugin` (`ge:headings`)
+2. `emphasisPlugin` (`ge:emphasis`)
+3. `codeInlinePlugin` (`ge:code-inline`)
+4. `codeFencePlugin` (`ge:code-fence`)
+5. `blockquotePlugin` (`ge:blockquote`)
+6. `linksPlugin` (`ge:links`)
+7. `imagesPlugin` (`ge:images`)
+8. `listsPlugin` (`ge:lists`)
+9. `checkboxesPlugin` (`ge:checkboxes`)
+10. `dividersPlugin` (`ge:dividers`)
+11. `tablesPlugin` (`ge:tables`)
 
 Each plugin is also exported individually for selective inclusion.
 
@@ -589,7 +589,7 @@ Each plugin is also exported individually for selective inclusion.
 Optional stylesheet with minimal visual defaults. Import it for quick setup:
 
 ```typescript
-import '@inky/neutrino-editor/style.css';
+import '@inky/galley-editor/style.css';
 ```
 
 See [Styling Guide](./styling.md) for details on all classes and customization.

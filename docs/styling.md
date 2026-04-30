@@ -1,9 +1,9 @@
 # Styling Guide
 
-Neutrino Editor styles rendered markdown with semantic classes and a CSS custom property contract. Import the base stylesheet for defaults, then override `--ne-*` variables from your app.
+Galley Editor styles rendered markdown with semantic classes and a CSS custom property contract. Import the base stylesheet for defaults, then override `--ge-*` variables from your app.
 
 ```ts
-import '@inky/neutrino-editor/style.css';
+import '@inky/galley-editor/style.css';
 ```
 
 The `theme` prop resolves to `data-theme="light"` or `data-theme="dark"` on the editor wrapper, so the same variables drive rendered markdown and CodeMirror chrome.
@@ -13,83 +13,83 @@ The `theme` prop resolves to `data-theme="light"` or `data-theme="dark"` on the 
 The base stylesheet defines these defaults under `:root, [data-theme="light"]`:
 
 ```css
---ne-color-text: #1a1a1a;
---ne-color-text-muted: #6b7280;
---ne-color-bg: #ffffff;
---ne-color-surface: #f8fafc;
---ne-color-surface-elevated: #ffffff;
---ne-color-border: #dbe4ef;
---ne-color-link: #2563eb;
---ne-color-link-hover: #1d4ed8;
---ne-color-code-fg: #1a1a1a;
---ne-color-code-bg: rgba(127, 127, 127, 0.12);
---ne-color-code-fence-bg: rgba(127, 127, 127, 0.08);
---ne-color-blockquote-border: rgba(127, 127, 127, 0.4);
---ne-color-blockquote-fg: #4b5563;
---ne-color-divider: rgba(127, 127, 127, 0.3);
---ne-color-table-border: rgba(127, 127, 127, 0.3);
---ne-color-checkbox-accent: #2563eb;
---ne-color-selection: rgba(37, 99, 235, 0.2);
---ne-color-caret: currentColor;
---ne-color-focus-ring: #2563eb;
---ne-color-tooltip-bg: #0f172a;
---ne-color-tooltip-fg: #ffffff;
---ne-color-scrollbar-track: transparent;
---ne-color-scrollbar-thumb: rgba(100, 116, 139, 0.34);
---ne-color-scrollbar-thumb-hover: rgba(100, 116, 139, 0.54);
+--ge-color-text: #1a1a1a;
+--ge-color-text-muted: #6b7280;
+--ge-color-bg: #ffffff;
+--ge-color-surface: #f8fafc;
+--ge-color-surface-elevated: #ffffff;
+--ge-color-border: #dbe4ef;
+--ge-color-link: #2563eb;
+--ge-color-link-hover: #1d4ed8;
+--ge-color-code-fg: #1a1a1a;
+--ge-color-code-bg: rgba(127, 127, 127, 0.12);
+--ge-color-code-fence-bg: rgba(127, 127, 127, 0.08);
+--ge-color-blockquote-border: rgba(127, 127, 127, 0.4);
+--ge-color-blockquote-fg: #4b5563;
+--ge-color-divider: rgba(127, 127, 127, 0.3);
+--ge-color-table-border: rgba(127, 127, 127, 0.3);
+--ge-color-checkbox-accent: #2563eb;
+--ge-color-selection: rgba(37, 99, 235, 0.2);
+--ge-color-caret: currentColor;
+--ge-color-focus-ring: #2563eb;
+--ge-color-tooltip-bg: #0f172a;
+--ge-color-tooltip-fg: #ffffff;
+--ge-color-scrollbar-track: transparent;
+--ge-color-scrollbar-thumb: rgba(100, 116, 139, 0.34);
+--ge-color-scrollbar-thumb-hover: rgba(100, 116, 139, 0.54);
 
---ne-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
---ne-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
---ne-font-size: 1rem;
---ne-line-height: 1.6;
---ne-h1-size: 2em;
---ne-h1-weight: 700;
---ne-h1-leading: 1.2;
---ne-h2-size: 1.5em;
---ne-h2-weight: 700;
---ne-h2-leading: 1.3;
---ne-h3-size: 1.25em;
---ne-h3-weight: 700;
---ne-h3-leading: 1.4;
---ne-h4-size: 1.1em;
---ne-h4-weight: 700;
---ne-h4-leading: 1.4;
---ne-h5-size: 1em;
---ne-h5-weight: 700;
---ne-h5-leading: 1.4;
---ne-h6-size: 0.9em;
---ne-h6-weight: 700;
---ne-h6-leading: 1.4;
+--ge-font-body: ui-sans-serif, system-ui, -apple-system, sans-serif;
+--ge-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+--ge-font-size: 1rem;
+--ge-line-height: 1.6;
+--ge-h1-size: 2em;
+--ge-h1-weight: 700;
+--ge-h1-leading: 1.2;
+--ge-h2-size: 1.5em;
+--ge-h2-weight: 700;
+--ge-h2-leading: 1.3;
+--ge-h3-size: 1.25em;
+--ge-h3-weight: 700;
+--ge-h3-leading: 1.4;
+--ge-h4-size: 1.1em;
+--ge-h4-weight: 700;
+--ge-h4-leading: 1.4;
+--ge-h5-size: 1em;
+--ge-h5-weight: 700;
+--ge-h5-leading: 1.4;
+--ge-h6-size: 0.9em;
+--ge-h6-weight: 700;
+--ge-h6-leading: 1.4;
 
---ne-radius-code: 3px;
---ne-radius-editor: 8px;
---ne-radius-block: 6px;
---ne-spacing-block: 0.5em;
---ne-spacing-inline-padding: 0.125em 0.25em;
---ne-blockquote-indent: 1em;
---ne-content-padding: 42px 56px;
---ne-toolbar-padding: 10px 14px;
---ne-footer-padding: 4px 10px;
---ne-backdrop-filter: none;
---ne-scrollbar-size: 10px;
---ne-scrollbar-radius: 999px;
---ne-code-font-size: 0.9em;
---ne-shadow-editor: 0 12px 30px rgba(15, 23, 42, 0.06);
+--ge-radius-code: 3px;
+--ge-radius-editor: 8px;
+--ge-radius-block: 6px;
+--ge-spacing-block: 0.5em;
+--ge-spacing-inline-padding: 0.125em 0.25em;
+--ge-blockquote-indent: 1em;
+--ge-content-padding: 42px 56px;
+--ge-toolbar-padding: 10px 14px;
+--ge-footer-padding: 4px 10px;
+--ge-backdrop-filter: none;
+--ge-scrollbar-size: 10px;
+--ge-scrollbar-radius: 999px;
+--ge-code-font-size: 0.9em;
+--ge-shadow-editor: 0 12px 30px rgba(15, 23, 42, 0.06);
 ```
 
 Dark mode overrides only the color variables that need different values:
 
 ```css
 [data-theme="dark"] {
-  --ne-color-text: #e5e7eb;
-  --ne-color-text-muted: #9ca3af;
-  --ne-color-code-fg: #e5e7eb;
-  --ne-color-link: #60a5fa;
-  --ne-color-link-hover: #93c5fd;
-  --ne-color-blockquote-fg: #9ca3af;
-  --ne-color-checkbox-accent: #60a5fa;
-  --ne-color-selection: rgba(96, 165, 250, 0.3);
-  --ne-color-focus-ring: #60a5fa;
+  --ge-color-text: #e5e7eb;
+  --ge-color-text-muted: #9ca3af;
+  --ge-color-code-fg: #e5e7eb;
+  --ge-color-link: #60a5fa;
+  --ge-color-link-hover: #93c5fd;
+  --ge-color-blockquote-fg: #9ca3af;
+  --ge-color-checkbox-accent: #60a5fa;
+  --ge-color-selection: rgba(96, 165, 250, 0.3);
+  --ge-color-focus-ring: #60a5fa;
 }
 ```
 
@@ -98,32 +98,32 @@ Dark mode overrides only the color variables that need different values:
 Scope overrides with `className` on the editor wrapper:
 
 ```tsx
-<NeutrinoEditor className="notes-editor" theme="auto" value={value} onChange={setValue} />
+<GalleyEditor className="notes-editor" theme="auto" value={value} onChange={setValue} />
 ```
 
 ```css
 .notes-editor {
-  --ne-color-text: #172033;
-  --ne-color-link: #0f766e;
-  --ne-color-link-hover: #115e59;
-  --ne-color-code-bg: color-mix(in srgb, currentColor 8%, transparent);
-  --ne-color-focus-ring: #0f766e;
-  --ne-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
-  --ne-font-size: 0.975rem;
+  --ge-color-text: #172033;
+  --ge-color-link: #0f766e;
+  --ge-color-link-hover: #115e59;
+  --ge-color-code-bg: color-mix(in srgb, currentColor 8%, transparent);
+  --ge-color-focus-ring: #0f766e;
+  --ge-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+  --ge-font-size: 0.975rem;
 }
 
 .notes-editor[data-theme="dark"] {
-  --ne-color-text: #e6edf7;
-  --ne-color-link: #5eead4;
-  --ne-color-link-hover: #99f6e4;
-  --ne-color-focus-ring: #5eead4;
+  --ge-color-text: #e6edf7;
+  --ge-color-link: #5eead4;
+  --ge-color-link-hover: #99f6e4;
+  --ge-color-focus-ring: #5eead4;
 }
 ```
 
 Use `editorClassName` when you need to style the CodeMirror `.cm-editor` element itself:
 
 ```tsx
-<NeutrinoEditor className="notes-editor" editorClassName="notes-editor-frame" />
+<GalleyEditor className="notes-editor" editorClassName="notes-editor-frame" />
 ```
 
 ```css
@@ -137,18 +137,18 @@ Use `editorClassName` when you need to style the CodeMirror `.cm-editor` element
 
 The built-in toolbar and footer expose stable slot containers for consumer UI:
 
-- `.ne-toolbar-slot`, `.ne-toolbar-slot-before`, `.ne-toolbar-slot-after`
-- `.ne-footer-slot`, `.ne-footer-slot-before`, `.ne-footer-slot-after`
-- `.ne-footer-end`
+- `.ge-toolbar-slot`, `.ge-toolbar-slot-before`, `.ge-toolbar-slot-after`
+- `.ge-footer-slot`, `.ge-footer-slot-before`, `.ge-footer-slot-after`
+- `.ge-footer-end`
 
 Slot content inherits the editor variables, so custom controls can use the same classes as built-ins:
 
 ```tsx
-<NeutrinoEditor
+<GalleyEditor
   toolbar={{
     after: ({ execCommand, canEdit }) => (
       <button
-        className="ne-toolbar-button"
+        className="ge-toolbar-button"
         disabled={!canEdit}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => execCommand('insertHr')}
@@ -169,25 +169,25 @@ Use `surface.contentPadding`, `surface.toolbarPadding`, and `surface.footerPaddi
 
 ## Scrollbars
 
-The CodeMirror scroller uses native scrollbars styled through the Neutrino CSS variable contract. The default track is transparent for an overlay-like feel, and the thumb is fully themeable:
+The CodeMirror scroller uses native scrollbars styled through the Galley CSS variable contract. The default track is transparent for an overlay-like feel, and the thumb is fully themeable:
 
 ```css
 .my-editor-theme {
-  --ne-scrollbar-size: 12px;
-  --ne-scrollbar-radius: 999px;
-  --ne-color-scrollbar-track: transparent;
-  --ne-color-scrollbar-thumb: rgba(15, 23, 42, 0.24);
-  --ne-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.44);
+  --ge-scrollbar-size: 12px;
+  --ge-scrollbar-radius: 999px;
+  --ge-color-scrollbar-track: transparent;
+  --ge-color-scrollbar-thumb: rgba(15, 23, 42, 0.24);
+  --ge-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.44);
 }
 ```
 
 ## Tailwind V4
 
-Tailwind v4 theme variables are CSS variables, so map your app tokens into the Neutrino contract. Keep `@theme` top-level, then assign `--ne-*` variables in a normal selector.
+Tailwind v4 theme variables are CSS variables, so map your app tokens into the Galley contract. Keep `@theme` top-level, then assign `--ge-*` variables in a normal selector.
 
 ```css
 @import "tailwindcss";
-@import "@inky/neutrino-editor/style.css";
+@import "@inky/galley-editor/style.css";
 
 @theme static {
   --color-editor-text: var(--color-slate-950);
@@ -199,18 +199,18 @@ Tailwind v4 theme variables are CSS variables, so map your app tokens into the N
   --font-editor-mono: var(--font-mono);
 }
 
-.neutrino-tailwind {
-  --ne-color-text: var(--color-editor-text);
-  --ne-color-text-muted: var(--color-editor-muted);
-  --ne-color-link: var(--color-editor-link);
-  --ne-color-link-hover: var(--color-editor-link-hover);
-  --ne-color-focus-ring: var(--color-editor-ring);
-  --ne-color-checkbox-accent: var(--color-editor-link);
-  --ne-font-body: var(--font-editor-body);
-  --ne-font-mono: var(--font-editor-mono);
+.galley-tailwind {
+  --ge-color-text: var(--color-editor-text);
+  --ge-color-text-muted: var(--color-editor-muted);
+  --ge-color-link: var(--color-editor-link);
+  --ge-color-link-hover: var(--color-editor-link-hover);
+  --ge-color-focus-ring: var(--color-editor-ring);
+  --ge-color-checkbox-accent: var(--color-editor-link);
+  --ge-font-body: var(--font-editor-body);
+  --ge-font-mono: var(--font-editor-mono);
 }
 
-.neutrino-tailwind[data-theme="dark"] {
+.galley-tailwind[data-theme="dark"] {
   --color-editor-text: var(--color-slate-100);
   --color-editor-muted: var(--color-slate-400);
   --color-editor-link: var(--color-sky-400);
@@ -223,16 +223,16 @@ You can still wrap the editor with typography utilities when they fit your app:
 
 ```tsx
 <div className="prose max-w-none dark:prose-invert">
-  <NeutrinoEditor className="neutrino-tailwind" value={value} onChange={setValue} />
+  <GalleyEditor className="galley-tailwind" value={value} onChange={setValue} />
 </div>
 ```
 
 ## Class Names
 
-The `classNames` prop is the escape hatch for design systems that do not want `ne-*` classes at all. Unspecified keys keep their defaults.
+The `classNames` prop is the escape hatch for design systems that do not want `ge-*` classes at all. Unspecified keys keep their defaults.
 
 ```tsx
-<NeutrinoEditor
+<GalleyEditor
   value={value}
   onChange={setValue}
   classNames={{
@@ -269,8 +269,8 @@ The wrapper structure is:
 
 ```html
 <div class="{className}" data-theme="light">
-  <div class="ne-editor-shell">
-    <div class="ne-toolbar">...</div>
+  <div class="ge-editor-shell">
+    <div class="ge-toolbar">...</div>
     <div class="cm-editor cm-light {editorClassName}">
       <div class="cm-scroller">
         <div class="cm-content">
@@ -278,21 +278,21 @@ The wrapper structure is:
         </div>
       </div>
     </div>
-    <div class="ne-footer">...</div>
+    <div class="ge-footer">...</div>
   </div>
 </div>
 ```
 
 ## Class Reference
 
-Inline classes: `ne-bold`, `ne-italic`, `ne-strikethrough`, `ne-code-inline`, `ne-link`.
+Inline classes: `ge-bold`, `ge-italic`, `ge-strikethrough`, `ge-code-inline`, `ge-link`.
 
-Block line classes: `ne-heading`, `ne-h1` through `ne-h6`, `ne-code-fence`, `ne-blockquote`, `ne-table`, `ne-divider`, `ne-completed-task`.
+Block line classes: `ge-heading`, `ge-h1` through `ge-h6`, `ge-code-fence`, `ge-blockquote`, `ge-table`, `ge-divider`, `ge-completed-task`.
 
-Widget classes: `ne-checkbox`, `ne-list-marker`, `ne-list-marker-sizing`, `ne-list-marker-dot`, `ne-divider-widget`.
+Widget classes: `ge-checkbox`, `ge-list-marker`, `ge-list-marker-sizing`, `ge-list-marker-dot`, `ge-divider-widget`.
 
-Chrome classes: `ne-editor-shell`, `ne-toolbar`, `ne-toolbar-button`, `ne-toolbar-select`, `ne-toolbar-separator`, `ne-toolbar-slot`, `ne-footer`, `ne-footer-stats`, `ne-footer-slot`, `ne-footer-end`, `ne-footer-logo-wrap`, `ne-footer-tooltip`.
+Chrome classes: `ge-editor-shell`, `ge-toolbar`, `ge-toolbar-button`, `ge-toolbar-select`, `ge-toolbar-separator`, `ge-toolbar-slot`, `ge-footer`, `ge-footer-stats`, `ge-footer-slot`, `ge-footer-end`, `ge-footer-logo-wrap`, `ge-footer-tooltip`.
 
-Depth classes: `ne-depth-0`, `ne-depth-1`, `ne-depth-2`. Depth classes cycle every 3 nesting levels.
+Depth classes: `ge-depth-0`, `ge-depth-1`, `ge-depth-2`. Depth classes cycle every 3 nesting levels.
 
 Lezer token classes: `tok-heading`, `tok-strong`, `tok-emphasis`, `tok-strikethrough`, `tok-link`, `tok-url`, `tok-meta`, `tok-comment`, `tok-monospace`.

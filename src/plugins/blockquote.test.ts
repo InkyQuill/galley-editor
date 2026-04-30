@@ -21,8 +21,8 @@ describe('blockquotePlugin', () => {
     });
     views.push(view);
 
-    expect(lineElement(view, 1).classList.contains('ne-blockquote')).toBe(true);
-    expect(lineElement(view, 2).classList.contains('ne-blockquote')).toBe(true);
-    expect(lineElement(view, 3).classList.contains('ne-blockquote')).toBe(true);
+    expect(lineElement(view, 1).classList.contains('ge-blockquote')).toBe(true);
+    expect(lineElement(view, 2).classList.contains('ge-blockquote')).toBe(true);
+    expect(lineElement(view, 3).classList.contains('ge-blockquote')).toBe(true);
   });
 });

@@ -1,13 +1,13 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type {
   BuiltinCommand,
-  NeutrinoHandle,
-  UseNeutrinoOptions,
-  UseNeutrinoResult,
+  GalleyHandle,
+  UseGalleyOptions,
+  UseGalleyResult,
 } from '../types';
 
-export function useNeutrino(options: UseNeutrinoOptions = {}): UseNeutrinoResult {
-  const ref = useRef<NeutrinoHandle | null>(null);
+export function useGalley(options: UseGalleyOptions = {}): UseGalleyResult {
+  const ref = useRef<GalleyHandle | null>(null);
   const onChangeRef = useRef(options.onChange);
 
   const [content, setContentState] = useState(options.initialValue ?? '');

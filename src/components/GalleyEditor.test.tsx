@@ -1,7 +1,7 @@
 import { act, useLayoutEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import NeutrinoEditor, { type NeutrinoHandle } from './NeutrinoEditor';
+import GalleyEditor, { type GalleyHandle } from './GalleyEditor';
 import type { EditorView } from '@codemirror/view';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -101,19 +101,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('NeutrinoEditor React wrapper', () => {
+describe('GalleyEditor React wrapper', () => {
   it('updates editorClassName on the CodeMirror editor element', () => {
-    const { container, root } = mount(<NeutrinoEditor value="hello" editorClassName="a" theme="light" />);
+    const { container, root } = mount(<GalleyEditor value="hello" editorClassName="a" theme="light" />);
     const editor = container.querySelector('.cm-editor');
 
     expect(editor).toBeInstanceOf(HTMLElement);
     expect(Array.from(editor?.classList ?? [])).toContain('a');
 
-    rerender(root, <NeutrinoEditor value="hello" editorClassName="b" theme="light" />);
+    rerender(root, <GalleyEditor value="hello" editorClassName="b" theme="light" />);
     expect(editor?.classList.contains('a')).toBe(false);
     expect(editor?.classList.contains('b')).toBe(true);
 
-    rerender(root, <NeutrinoEditor value="hello" editorClassName="" theme="light" />);
+    rerender(root, <GalleyEditor value="hello" editorClassName="" theme="light" />);
     expect(editor?.classList.contains('a')).toBe(false);
     expect(editor?.classList.contains('b')).toBe(false);
   });
@@ -122,12 +122,12 @@ describe('NeutrinoEditor React wrapper', () => {
     const focusCalls: string[] = [];
 
     function Parent() {
-      const editorRef = useRef<NeutrinoHandle>(null);
+      const editorRef = useRef<GalleyHandle>(null);
       useLayoutEffect(() => {
         editorRef.current?.focus();
         focusCalls.push('called');
       }, []);
-      return <NeutrinoEditor ref={editorRef} value="hello" theme="light" />;
+      return <GalleyEditor ref={editorRef} value="hello" theme="light" />;
     }
 
     expect(() => mount(<Parent />)).not.toThrow();
@@ -138,11 +138,11 @@ describe('NeutrinoEditor React wrapper', () => {
     let observedView: EditorView | null | undefined;
 
     function Parent() {
-      const editorRef = useRef<NeutrinoHandle>(null);
+      const editorRef = useRef<GalleyHandle>(null);
       useLayoutEffect(() => {
         observedView = editorRef.current?.view;
       }, []);
-      return <NeutrinoEditor ref={editorRef} value="hello" theme="light" />;
+      return <GalleyEditor ref={editorRef} value="hello" theme="light" />;
     }
 
     mount(<Parent />);
@@ -151,7 +151,7 @@ describe('NeutrinoEditor React wrapper', () => {
   });
 
   it('renders the resolved dark theme on the wrapper', () => {
-    const { container } = mount(<NeutrinoEditor value="hello" theme="dark" />);
+    const { container } = mount(<GalleyEditor value="hello" theme="dark" />);
     const wrapper = container.firstElementChild;
 
     expect(wrapper).toBeInstanceOf(HTMLElement);
@@ -160,7 +160,7 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('updates auto theme when the preferred color scheme changes', () => {
     const mediaList = mockPrefersDark(false);
-    const { container, root } = mount(<NeutrinoEditor value="hello" theme="auto" />);
+    const { container, root } = mount(<GalleyEditor value="hello" theme="auto" />);
     const wrapper = container.firstElementChild;
     const editor = container.querySelector('.cm-editor');
 
@@ -191,38 +191,38 @@ describe('NeutrinoEditor React wrapper', () => {
   });
 
   it('renders the default footer with word count, character count, and logo tooltip', () => {
-    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" />);
-    const footer = container.querySelector('.ne-footer');
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" />);
+    const footer = container.querySelector('.ge-footer');
 
     expect(footer).toBeInstanceOf(HTMLElement);
     expect(footer?.textContent).toContain('2 words');
     expect(footer?.textContent).toContain('11 characters');
-    expect(footer?.querySelector('.ne-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Neutrino Editor v.0.6.0 by Inky Quill');
-    expect(footer?.querySelector('.ne-footer-tooltip')?.textContent).toBe('Neutrino Editor v.0.6.0 by Inky Quill');
-    expect(footer?.querySelector('.ne-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
+    expect(footer?.querySelector('.ge-footer-logo-wrap')?.getAttribute('aria-label')).toBe('Galley Editor v.0.6.0 by Inky Quill');
+    expect(footer?.querySelector('.ge-footer-tooltip')?.textContent).toBe('Galley Editor v.0.6.0 by Inky Quill');
+    expect(footer?.querySelector('.ge-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
   });
 
   it('updates footer counts when controlled value changes', () => {
-    const { container, root } = mount(<NeutrinoEditor value="One" theme="light" />);
+    const { container, root } = mount(<GalleyEditor value="One" theme="light" />);
 
-    expect(container.querySelector('.ne-footer')?.textContent).toContain('1 word');
-    expect(container.querySelector('.ne-footer')?.textContent).toContain('3 characters');
+    expect(container.querySelector('.ge-footer')?.textContent).toContain('1 word');
+    expect(container.querySelector('.ge-footer')?.textContent).toContain('3 characters');
 
-    rerender(root, <NeutrinoEditor value="One two three" theme="light" />);
+    rerender(root, <GalleyEditor value="One two three" theme="light" />);
 
-    expect(container.querySelector('.ne-footer')?.textContent).toContain('3 words');
-    expect(container.querySelector('.ne-footer')?.textContent).toContain('13 characters');
+    expect(container.querySelector('.ge-footer')?.textContent).toContain('3 words');
+    expect(container.querySelector('.ge-footer')?.textContent).toContain('13 characters');
   });
 
   it('does not render the footer when footer=false', () => {
-    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" footer={false} />);
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" footer={false} />);
 
-    expect(container.querySelector('.ne-footer')).toBeNull();
+    expect(container.querySelector('.ge-footer')).toBeNull();
   });
 
   it('renders custom footer widgets with count context', () => {
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="Hello world"
         theme="light"
         footer={{
@@ -241,22 +241,22 @@ describe('NeutrinoEditor React wrapper', () => {
   });
 
   it('renders the default toolbar', () => {
-    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" />);
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" />);
 
-    expect(container.querySelector('.ne-toolbar')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
     expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
   });
 
   it('does not render the toolbar when toolbar=false', () => {
-    const { container } = mount(<NeutrinoEditor value="Hello world" theme="light" toolbar={false} />);
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={false} />);
 
-    expect(container.querySelector('.ne-toolbar')).toBeNull();
+    expect(container.querySelector('.ge-toolbar')).toBeNull();
   });
 
   it('accepts custom toolbar icons as React nodes', () => {
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="Hello world"
         theme="light"
         toolbar={{
@@ -273,7 +273,7 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('accepts custom toolbar icons as render functions', () => {
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="Hello world"
         theme="light"
         toolbar={{
@@ -289,7 +289,7 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('renders custom toolbar slots with command context', () => {
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="Hello world"
         theme="light"
         toolbar={{
@@ -309,7 +309,7 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('applies surface class names, styles, and padding variables to the shell', () => {
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="Hello world"
         theme="light"
         surface={{
@@ -324,33 +324,33 @@ describe('NeutrinoEditor React wrapper', () => {
         }}
       />,
     );
-    const shell = container.querySelector('.ne-editor-shell') as HTMLElement | null;
+    const shell = container.querySelector('.ge-editor-shell') as HTMLElement | null;
 
     expect(shell).toBeInstanceOf(HTMLElement);
     expect(shell?.classList.contains('glass-editor')).toBe(true);
-    expect(shell?.style.getPropertyValue('--ne-content-padding')).toBe('24px');
-    expect(shell?.style.getPropertyValue('--ne-toolbar-padding')).toBe('8px');
-    expect(shell?.style.getPropertyValue('--ne-footer-padding')).toBe('6px');
+    expect(shell?.style.getPropertyValue('--ge-content-padding')).toBe('24px');
+    expect(shell?.style.getPropertyValue('--ge-toolbar-padding')).toBe('8px');
+    expect(shell?.style.getPropertyValue('--ge-footer-padding')).toBe('6px');
     expect(shell?.style.background).toContain('linear-gradient');
     expect(shell?.style.backdropFilter).toBe('blur(18px)');
   });
 
   it('renders raw markdown in markdown mode', () => {
-    const { container } = mount(<NeutrinoEditor value="# Title\n\n**Bold**" theme="light" mode="markdown" />);
+    const { container } = mount(<GalleyEditor value="# Title\n\n**Bold**" theme="light" mode="markdown" />);
 
     expect(container.firstElementChild?.getAttribute('data-mode')).toBe('markdown');
-    expect(container.querySelector('.ne-h1')).toBeNull();
-    expect(container.querySelector('.ne-bold')).toBeNull();
+    expect(container.querySelector('.ge-h1')).toBeNull();
+    expect(container.querySelector('.ge-bold')).toBeNull();
     expect(container.querySelector('.cm-content')?.textContent).toContain('# Title');
     expect(container.querySelector('.cm-content')?.textContent).toContain('**Bold**');
   });
 
   it('renders preview mode without revealing markdown syntax at the cursor', () => {
-    const { container } = mount(<NeutrinoEditor value="# Title\n\n**Bold**" theme="light" mode="preview" />);
+    const { container } = mount(<GalleyEditor value="# Title\n\n**Bold**" theme="light" mode="preview" />);
 
     expect(container.firstElementChild?.getAttribute('data-mode')).toBe('preview');
-    expect(container.querySelector('.ne-h1')).toBeInstanceOf(HTMLElement);
-    expect(container.querySelector('.ne-bold')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.ge-h1')).toBeInstanceOf(HTMLElement);
+    expect(container.querySelector('.ge-bold')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('.cm-content')?.textContent).toContain('Title');
     expect(container.querySelector('.cm-content')?.textContent).toContain('Bold');
     expect(container.querySelector('.cm-content')?.textContent).not.toContain('#');
@@ -359,7 +359,7 @@ describe('NeutrinoEditor React wrapper', () => {
 
   it('forces preview mode when editable=false', () => {
     const { container } = mount(
-      <NeutrinoEditor value="# Title" theme="light" editable={false} mode="markdown" />,
+      <GalleyEditor value="# Title" theme="light" editable={false} mode="markdown" />,
     );
 
     expect(container.firstElementChild?.getAttribute('data-mode')).toBe('preview');
@@ -370,13 +370,13 @@ describe('NeutrinoEditor React wrapper', () => {
   it('cycles editor modes from the toolbar button', () => {
     const changes: string[] = [];
     const { container } = mount(
-      <NeutrinoEditor
+      <GalleyEditor
         value="# Title"
         theme="light"
         onModeChange={(mode) => changes.push(mode)}
       />,
     );
-    const modeButton = container.querySelector('.ne-mode-toggle') as HTMLButtonElement | null;
+    const modeButton = container.querySelector('.ge-mode-toggle') as HTMLButtonElement | null;
 
     expect(container.firstElementChild?.getAttribute('data-mode')).toBe('live');
     expect(modeButton).toBeInstanceOf(HTMLButtonElement);

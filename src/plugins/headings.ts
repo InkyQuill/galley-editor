@@ -1,10 +1,10 @@
 import { Decoration } from '@codemirror/view';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
-const headingsPlugin: NeutrinoPlugin = {
-  id: 'ne:headings',
-  extensions(classNames: NeutrinoClassNames, context) {
+const headingsPlugin: GalleyPlugin = {
+  id: 'ge:headings',
+  extensions(classNames: GalleyClassNames, context) {
     const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide header marks (##) with 'active' reveal
@@ -30,14 +30,14 @@ const headingsPlugin: NeutrinoPlugin = {
         if (!levelMatch) return null;
         const level = parseInt(levelMatch[1], 10);
         const levelClasses: Record<number, string> = {
-          1: classNames.h1 ?? 'ne-h1',
-          2: classNames.h2 ?? 'ne-h2',
-          3: classNames.h3 ?? 'ne-h3',
-          4: classNames.h4 ?? 'ne-h4',
-          5: classNames.h5 ?? 'ne-h5',
-          6: classNames.h6 ?? 'ne-h6',
+          1: classNames.h1 ?? 'ge-h1',
+          2: classNames.h2 ?? 'ge-h2',
+          3: classNames.h3 ?? 'ge-h3',
+          4: classNames.h4 ?? 'ge-h4',
+          5: classNames.h5 ?? 'ge-h5',
+          6: classNames.h6 ?? 'ge-h6',
         };
-        const cls = [classNames.heading ?? 'ne-heading', levelClasses[level] ?? '']
+        const cls = [classNames.heading ?? 'ge-heading', levelClasses[level] ?? '']
           .filter(Boolean)
           .join(' ');
         return Decoration.line({ class: cls });

@@ -4,9 +4,9 @@ import { syntaxTree } from '@codemirror/language';
 import { BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
 import type {
   CodeHighlighter,
-  NeutrinoPlugin,
-  NeutrinoClassNames,
-  NeutrinoRenderContext,
+  GalleyPlugin,
+  GalleyClassNames,
+  GalleyRenderContext,
 } from '../types';
 
 /**
@@ -33,11 +33,11 @@ function defaultHighlight(code: string): string {
   return escaped
     .replace(
       /\b(const|let|var|function|return|if|else|for|while|interface|type|class|extends|import|export|from|async|await|new|true|false|null|undefined)\b/g,
-      '<span class="ne-token-keyword">$1</span>',
+      '<span class="ge-token-keyword">$1</span>',
     )
-    .replace(/(&quot;.*?&quot;|'.*?'|`.*?`)/g, '<span class="ne-token-string">$1</span>')
-    .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="ne-token-number">$1</span>')
-    .replace(/(\/\/.*)$/gm, '<span class="ne-token-comment">$1</span>');
+    .replace(/(&quot;.*?&quot;|'.*?'|`.*?`)/g, '<span class="ge-token-string">$1</span>')
+    .replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="ge-token-number">$1</span>')
+    .replace(/(\/\/.*)$/gm, '<span class="ge-token-comment">$1</span>');
 }
 
 function parseFence(raw: string): ParsedFence {
@@ -66,12 +66,12 @@ function highlightedContent(
 class CodeFenceWidget extends WidgetType {
   private readonly parsed: ParsedFence;
   private readonly blockClass: string;
-  private readonly context: NeutrinoRenderContext;
+  private readonly context: GalleyRenderContext;
 
   constructor(
     parsed: ParsedFence,
     blockClass: string,
-    context: NeutrinoRenderContext,
+    context: GalleyRenderContext,
   ) {
     super();
     this.parsed = parsed;
@@ -90,17 +90,17 @@ class CodeFenceWidget extends WidgetType {
 
   toDOM(): HTMLElement {
     const wrapper = document.createElement('div');
-    wrapper.className = `ne-code-block ${this.blockClass}`;
+    wrapper.className = `ge-code-block ${this.blockClass}`;
 
     const header = document.createElement('div');
-    header.className = 'ne-code-block-header';
+    header.className = 'ge-code-block-header';
 
     const language = document.createElement('span');
-    language.className = 'ne-code-language';
+    language.className = 'ge-code-language';
     language.textContent = this.parsed.language;
 
     const copy = document.createElement('button');
-    copy.className = 'ne-code-copy';
+    copy.className = 'ge-code-copy';
     copy.type = 'button';
     copy.textContent = 'Copy';
     copy.addEventListener('mousedown', (event) => {
@@ -123,7 +123,7 @@ class CodeFenceWidget extends WidgetType {
     header.append(language, copy);
 
     const pre = document.createElement('pre');
-    pre.className = 'ne-code-body';
+    pre.className = 'ge-code-body';
     const code = document.createElement('code');
     const highlighted = highlightedContent(
       this.context.codeHighlighter,
@@ -144,14 +144,14 @@ class CodeFenceWidget extends WidgetType {
   ignoreEvent(event: Event): boolean {
     const target = event.target;
     if (!(target instanceof Element)) return false;
-    return target.closest('.ne-code-block-header') !== null;
+    return target.closest('.ge-code-block-header') !== null;
   }
 }
 
 function buildCodeFenceDecorations(
   state: EditorState,
   blockClass: string,
-  context: NeutrinoRenderContext,
+  context: GalleyRenderContext,
 ): DecorationSet {
   const doc = state.doc;
   const cursorLine = doc.lineAt(state.selection.main.anchor);
@@ -189,10 +189,10 @@ function buildCodeFenceDecorations(
   return Decoration.set(widgets, true);
 }
 
-const codeFencePlugin: NeutrinoPlugin = {
-  id: 'ne:code-fence',
-  extensions(classNames: NeutrinoClassNames, context = { theme: 'light' as const, mode: 'live' as const }) {
-    const blockClass = classNames.blockCode ?? 'ne-code-fence';
+const codeFencePlugin: GalleyPlugin = {
+  id: 'ge:code-fence',
+  extensions(classNames: GalleyClassNames, context = { theme: 'light' as const, mode: 'live' as const }) {
+    const blockClass = classNames.blockCode ?? 'ge-code-fence';
 
     const field = StateField.define<DecorationSet>({
       create(state) {

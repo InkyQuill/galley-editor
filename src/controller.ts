@@ -49,10 +49,10 @@ import {
   type CodeHighlighter,
   type ImageRenderer,
   type LinkClickHandler,
-  type NeutrinoClassNames,
-  type NeutrinoHandle,
-  type NeutrinoMode,
-  type NeutrinoPlugin,
+  type GalleyClassNames,
+  type GalleyHandle,
+  type GalleyMode,
+  type GalleyPlugin,
 } from './types';
 
 // ── Callback refs (stable references that the static extensions call into) ──
@@ -81,7 +81,7 @@ export interface ControllerSettings {
   placeholder: string;
   theme: ColorScheme;
   editorClassName: string;
-  classNames: NeutrinoClassNames;
+  classNames: GalleyClassNames;
   minRows: number;
   maxRows?: number;
   tabIndents: boolean;
@@ -90,8 +90,8 @@ export interface ControllerSettings {
   imageRenderer?: ImageRenderer;
   onLinkClick?: LinkClickHandler;
   bidi: boolean;
-  mode: NeutrinoMode;
-  plugins: NeutrinoPlugin[];
+  mode: GalleyMode;
+  plugins: GalleyPlugin[];
   disabledPlugins: string[];
   extraExtensions: Extension[];
 }
@@ -172,7 +172,7 @@ function editorClassNameExtension(className: string): Extension {
 
 // ── EditorController ────────────────────────────────────────────────────────
 
-export class EditorController implements NeutrinoHandle {
+export class EditorController implements GalleyHandle {
   readonly view: EditorView;
 
   private readonly dynamicCompartment = new Compartment();
@@ -482,7 +482,7 @@ export class EditorController implements NeutrinoHandle {
     }
   }
 
-  // ── NeutrinoHandle implementation ─────────────────────────────────────
+  // ── GalleyHandle implementation ─────────────────────────────────────
 
   getContent(): string {
     return this.view.state.doc.toString();
@@ -537,7 +537,7 @@ export class EditorController implements NeutrinoHandle {
     if (builtin) {
       return builtin(this.view, ...args);
     }
-    console.warn(`[NeutrinoEditor] Unknown command: ${name}`);
+    console.warn(`[GalleyEditor] Unknown command: ${name}`);
     return undefined;
   }
 

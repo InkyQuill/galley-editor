@@ -34,13 +34,13 @@ surface?: {
 }
 ```
 
-`surface.style` is applied to `.ne-editor-shell`, so gradients, `backdropFilter`, frosted glass, and custom shadows can be set directly. Padding helpers set CSS variables on the shell:
+`surface.style` is applied to `.ge-editor-shell`, so gradients, `backdropFilter`, frosted glass, and custom shadows can be set directly. Padding helpers set CSS variables on the shell:
 
-- `--ne-content-padding`
-- `--ne-toolbar-padding`
-- `--ne-footer-padding`
+- `--ge-content-padding`
+- `--ge-toolbar-padding`
+- `--ge-footer-padding`
 
-The base stylesheet defines those variables, plus `--ne-backdrop-filter`, as part of the canonical theme contract.
+The base stylesheet defines those variables, plus `--ge-backdrop-filter`, as part of the canonical theme contract.
 
 ### Rendering Modes
 
@@ -54,7 +54,7 @@ Public API:
 
 ```ts
 mode?: 'live' | 'markdown' | 'preview';
-onModeChange?: (mode: NeutrinoMode) => void;
+onModeChange?: (mode: GalleyMode) => void;
 ```
 
 If `mode` is omitted, the toolbar mode toggle manages local mode state. If `mode` is provided, the toggle calls `onModeChange` and waits for the parent to update the prop.
@@ -66,14 +66,14 @@ If `mode` is omitted, the toolbar mode toggle manages local mode state. If `mode
 The logo tooltip text becomes:
 
 ```text
-Neutrino Editor v.{version} by Inky Quill
+Galley Editor v.{version} by Inky Quill
 ```
 
 The logo remains an inline React SVG component using `currentColor`.
 
 ## Architecture
 
-`NeutrinoEditor` resolves an `effectiveMode` from `editable`, `mode`, and local mode state. The value is passed into `EditorController` settings and through `NeutrinoRenderContext`.
+`GalleyEditor` resolves an `effectiveMode` from `editable`, `mode`, and local mode state. The value is passed into `EditorController` settings and through `GalleyRenderContext`.
 
 `EditorController` skips render plugins in `markdown` mode. In `preview` mode, the editor is read-only and plugins receive `mode: 'preview'`; built-in plugins use that context to suppress their reveal strategies.
 

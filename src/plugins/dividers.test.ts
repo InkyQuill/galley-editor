@@ -21,7 +21,7 @@ describe('dividersPlugin', () => {
     });
     views.push(view);
 
-    const divider = view.dom.querySelector('hr.ne-divider-widget');
+    const divider = view.dom.querySelector('hr.ge-divider-widget');
 
     expect(divider).toBeInstanceOf(HTMLHRElement);
     expect(divider?.getAttribute('aria-hidden')).toBe('true');

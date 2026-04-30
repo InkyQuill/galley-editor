@@ -1,25 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState, useCallback } from 'react';
-import NeutrinoEditor from './NeutrinoEditor';
+import GalleyEditor from './GalleyEditor';
 import ErrorBoundary from './ErrorBoundary';
-import type { NeutrinoHandle, NeutrinoMode } from '../types';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyHandle, GalleyMode } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import { EditorView } from '@codemirror/view';
-import '../neutrino-base.css';
+import '../galley-base.css';
 import samplePng from '../../assets/img.png';
 import sampleDiagram from '../stories/assets/sample-diagram.svg';
 import sampleLandscape from '../stories/assets/sample-landscape.svg';
 
 const meta = {
-  title: 'Components/NeutrinoEditor',
-  component: NeutrinoEditor,
+  title: 'Components/GalleyEditor',
+  component: GalleyEditor,
   parameters: {
     layout: 'padded',
   },
   tags: ['autodocs'],
-} satisfies Meta<typeof NeutrinoEditor>;
+} satisfies Meta<typeof GalleyEditor>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -27,7 +27,7 @@ type ThemeChoice = 'light' | 'dark' | 'auto';
 
 // ── Sample content ──────────────────────────────────────────────────────────
 
-const sampleMarkdown = `# Neutrino Editor
+const sampleMarkdown = `# Galley Editor
 
 A **half-WYSIWYG** markdown editor that renders blocks as HTML when you're not editing them.
 
@@ -104,9 +104,9 @@ You can also use ***bold italic*** text and combine ~~**strikethrough bold**~~ f
 - [x] Task: Add tests
 
 \`\`\`typescript
-interface NeutrinoPlugin {
+interface GalleyPlugin {
   id: string;
-  extensions(classNames: NeutrinoClassNames): Extension[];
+  extensions(classNames: GalleyClassNames): Extension[];
 }
 \`\`\`
 
@@ -132,7 +132,7 @@ function DefaultStory() {
   const [value, setValue] = useState(sampleMarkdown);
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         placeholder="Start typing your markdown here..."
@@ -156,7 +156,7 @@ function AllFeaturesStory() {
   const [value, setValue] = useState(allFeaturesMarkdown);
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         minRows={15}
@@ -198,7 +198,7 @@ Enable the renderer below to opt into thumbnails.`);
         />
         Use custom imageRenderer
       </label>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         minRows={10}
@@ -227,7 +227,7 @@ export const ImageRendering: Story = {
 
 function WithToolbarStory() {
   const [value, setValue] = useState('# Try the Toolbar\n\nSelect some text and click a button!');
-  const ref = useRef<NeutrinoHandle>(null);
+  const ref = useRef<GalleyHandle>(null);
 
   const btn = (label: string, cmd: string) => (
     <button
@@ -304,7 +304,7 @@ function WithToolbarStory() {
         {btn('Undo', 'undo')}
         {btn('Redo', 'redo')}
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         ref={ref}
         value={value}
         onChange={setValue}
@@ -335,7 +335,7 @@ function DarkThemeStory() {
       backgroundColor: '#18181b',
       borderRadius: '8px',
     }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         theme="dark"
@@ -347,7 +347,7 @@ function DarkThemeStory() {
 
 /**
  * The editor with `theme="dark"`. The wrapper resolves to
- * `data-theme="dark"`, so `neutrino-base.css` applies its dark variable
+ * `data-theme="dark"`, so `galley-base.css` applies its dark variable
  * overrides.
  */
 export const DarkTheme: Story = {
@@ -363,40 +363,40 @@ function CssVariableOverridesStory() {
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <style>{`
         .recipe-css-vars {
-          --ne-color-text: #18202f;
-          --ne-color-text-muted: #657089;
-          --ne-color-bg: #fbfcff;
-          --ne-color-link: #0f766e;
-          --ne-color-link-hover: #115e59;
-          --ne-color-code-fg: #18202f;
-          --ne-color-code-bg: rgba(15, 118, 110, 0.12);
-          --ne-color-code-fence-bg: rgba(15, 118, 110, 0.08);
-          --ne-color-blockquote-border: rgba(15, 118, 110, 0.45);
-          --ne-color-blockquote-fg: #475569;
-          --ne-color-divider: rgba(15, 118, 110, 0.28);
-          --ne-color-table-border: rgba(15, 118, 110, 0.24);
-          --ne-color-checkbox-accent: #0f766e;
-          --ne-color-selection: rgba(15, 118, 110, 0.2);
-          --ne-color-focus-ring: #0f766e;
-          --ne-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
-          --ne-font-size: 0.975rem;
+          --ge-color-text: #18202f;
+          --ge-color-text-muted: #657089;
+          --ge-color-bg: #fbfcff;
+          --ge-color-link: #0f766e;
+          --ge-color-link-hover: #115e59;
+          --ge-color-code-fg: #18202f;
+          --ge-color-code-bg: rgba(15, 118, 110, 0.12);
+          --ge-color-code-fence-bg: rgba(15, 118, 110, 0.08);
+          --ge-color-blockquote-border: rgba(15, 118, 110, 0.45);
+          --ge-color-blockquote-fg: #475569;
+          --ge-color-divider: rgba(15, 118, 110, 0.28);
+          --ge-color-table-border: rgba(15, 118, 110, 0.24);
+          --ge-color-checkbox-accent: #0f766e;
+          --ge-color-selection: rgba(15, 118, 110, 0.2);
+          --ge-color-focus-ring: #0f766e;
+          --ge-font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+          --ge-font-size: 0.975rem;
           border: 1px solid rgba(15, 118, 110, 0.2);
           border-radius: 8px;
         }
         .recipe-css-vars[data-theme="dark"] {
-          --ne-color-text: #e6edf7;
-          --ne-color-text-muted: #9fb0c7;
-          --ne-color-bg: #101820;
-          --ne-color-code-fg: #e6edf7;
-          --ne-color-link: #5eead4;
-          --ne-color-link-hover: #99f6e4;
-          --ne-color-blockquote-fg: #b6c3d4;
-          --ne-color-checkbox-accent: #5eead4;
-          --ne-color-selection: rgba(94, 234, 212, 0.26);
-          --ne-color-focus-ring: #5eead4;
+          --ge-color-text: #e6edf7;
+          --ge-color-text-muted: #9fb0c7;
+          --ge-color-bg: #101820;
+          --ge-color-code-fg: #e6edf7;
+          --ge-color-link: #5eead4;
+          --ge-color-link-hover: #99f6e4;
+          --ge-color-blockquote-fg: #b6c3d4;
+          --ge-color-checkbox-accent: #5eead4;
+          --ge-color-selection: rgba(94, 234, 212, 0.26);
+          --ge-color-focus-ring: #5eead4;
         }
       `}</style>
-      <NeutrinoEditor
+      <GalleyEditor
         className="recipe-css-vars"
         value={value}
         onChange={setValue}
@@ -409,7 +409,7 @@ function CssVariableOverridesStory() {
 
 /**
  * A scoped plain-CSS recipe: pass `className` to the wrapper and override
- * `--ne-*` variables there. Dark overrides target the same wrapper when its
+ * `--ge-*` variables there. Dark overrides target the same wrapper when its
  * resolved `data-theme` is `dark`.
  */
 export const CssVariableOverrides: Story = {
@@ -434,16 +434,16 @@ function TailwindTokenMappingStory() {
           --color-editor-ring: #2563eb;
           --font-editor-body: ui-sans-serif, system-ui, sans-serif;
           --font-editor-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
-          --ne-color-text: var(--color-editor-text);
-          --ne-color-text-muted: var(--color-editor-muted);
-          --ne-color-link: var(--color-editor-link);
-          --ne-color-link-hover: var(--color-editor-link-hover);
-          --ne-color-code-bg: var(--color-editor-code-bg);
-          --ne-color-code-fence-bg: var(--color-editor-code-fence-bg);
-          --ne-color-checkbox-accent: var(--color-editor-link);
-          --ne-color-focus-ring: var(--color-editor-ring);
-          --ne-font-body: var(--font-editor-body);
-          --ne-font-mono: var(--font-editor-mono);
+          --ge-color-text: var(--color-editor-text);
+          --ge-color-text-muted: var(--color-editor-muted);
+          --ge-color-link: var(--color-editor-link);
+          --ge-color-link-hover: var(--color-editor-link-hover);
+          --ge-color-code-bg: var(--color-editor-code-bg);
+          --ge-color-code-fence-bg: var(--color-editor-code-fence-bg);
+          --ge-color-checkbox-accent: var(--color-editor-link);
+          --ge-color-focus-ring: var(--color-editor-ring);
+          --ge-font-body: var(--font-editor-body);
+          --ge-font-mono: var(--font-editor-mono);
           border: 1px solid #dbe4f0;
           border-radius: 8px;
         }
@@ -457,7 +457,7 @@ function TailwindTokenMappingStory() {
           --color-editor-ring: #38bdf8;
         }
       `}</style>
-      <NeutrinoEditor
+      <GalleyEditor
         className="recipe-tailwind-tokens"
         value={value}
         onChange={setValue}
@@ -470,7 +470,7 @@ function TailwindTokenMappingStory() {
 
 /**
  * Runtime equivalent of the Tailwind v4 recipe: app tokens such as
- * `--color-editor-link` map into Neutrino's `--ne-*` variables.
+ * `--color-editor-link` map into Galley's `--ge-*` variables.
  */
 export const TailwindTokenMapping: Story = {
   render: TailwindTokenMappingStory,
@@ -511,7 +511,7 @@ function ThemeSelectorStory() {
           </button>
         ))}
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         className="recipe-theme-selector"
         value={value}
         onChange={setValue}
@@ -536,7 +536,7 @@ function FooterDisabledStory() {
   const [value, setValue] = useState(sampleMarkdown);
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         footer={false}
@@ -557,11 +557,11 @@ export const FooterDisabled: Story = {
 
 function ModeSwitchingStory() {
   const [value, setValue] = useState(allFeaturesMarkdown);
-  const [mode, setMode] = useState<NeutrinoMode>('live');
+  const [mode, setMode] = useState<GalleyMode>('live');
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         mode={mode}
@@ -592,7 +592,7 @@ function CustomToolbarIconsStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         minRows={10}
@@ -626,22 +626,22 @@ function CustomChromeSlotsStory() {
   return (
     <div style={{ maxWidth: '880px', margin: '0 auto' }}>
       <style>{`
-        .recipe-custom-chrome .ne-toolbar-button.ne-save-button {
+        .recipe-custom-chrome .ge-toolbar-button.ge-save-button {
           background: #111827;
           color: #ffffff;
           gap: 6px;
           padding: 0 12px;
         }
-        .recipe-custom-chrome .ne-toolbar-button.ne-save-button:hover,
-        .recipe-custom-chrome .ne-toolbar-button.ne-save-button:focus-visible {
+        .recipe-custom-chrome .ge-toolbar-button.ge-save-button:hover,
+        .recipe-custom-chrome .ge-toolbar-button.ge-save-button:focus-visible {
           background: #374151;
         }
-        .recipe-custom-chrome .ne-status-pill {
+        .recipe-custom-chrome .ge-status-pill {
           align-items: center;
-          background: color-mix(in srgb, var(--ne-color-link) 12%, transparent);
-          border: 1px solid color-mix(in srgb, var(--ne-color-link) 28%, transparent);
+          background: color-mix(in srgb, var(--ge-color-link) 12%, transparent);
+          border: 1px solid color-mix(in srgb, var(--ge-color-link) 28%, transparent);
           border-radius: 999px;
-          color: var(--ne-color-link);
+          color: var(--ge-color-link);
           display: inline-flex;
           font-size: 0.75rem;
           font-weight: 650;
@@ -649,18 +649,18 @@ function CustomChromeSlotsStory() {
           padding: 0 9px;
         }
       `}</style>
-      <NeutrinoEditor
+      <GalleyEditor
         className="recipe-custom-chrome"
         value={value}
         onChange={setValue}
         minRows={8}
         toolbar={{
-          before: <span className="ne-status-pill">Draft</span>,
+          before: <span className="ge-status-pill">Draft</span>,
           after: ({ execCommand, canEdit }) => (
             <>
               <button
                 type="button"
-                className="ne-toolbar-button"
+                className="ge-toolbar-button"
                 aria-label="Insert section divider"
                 disabled={!canEdit}
                 onMouseDown={(event) => event.preventDefault()}
@@ -670,7 +670,7 @@ function CustomChromeSlotsStory() {
               </button>
               <button
                 type="button"
-                className="ne-toolbar-button ne-save-button"
+                className="ge-toolbar-button ge-save-button"
                 aria-label="Save draft"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => setSavedAt(new Date().toLocaleTimeString())}
@@ -681,7 +681,7 @@ function CustomChromeSlotsStory() {
           ),
         }}
         footer={{
-          before: <span className="ne-status-pill">Local draft</span>,
+          before: <span className="ge-status-pill">Local draft</span>,
           after: ({ mode, wordCount }) => (
             <span>
               {mode} · {wordCount} words · {savedAt}
@@ -733,19 +733,19 @@ ${allFeaturesMarkdown}`);
     >
       <style>{`
         .recipe-frosted-surface {
-          --ne-color-bg: rgba(255, 255, 255, 0.48);
-          --ne-color-surface: rgba(255, 255, 255, 0.36);
-          --ne-color-surface-elevated: rgba(255, 255, 255, 0.52);
-          --ne-color-border: rgba(255, 255, 255, 0.62);
-          --ne-color-scrollbar-thumb: rgba(15, 23, 42, 0.22);
-          --ne-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.42);
-          --ne-scrollbar-size: 12px;
+          --ge-color-bg: rgba(255, 255, 255, 0.48);
+          --ge-color-surface: rgba(255, 255, 255, 0.36);
+          --ge-color-surface-elevated: rgba(255, 255, 255, 0.52);
+          --ge-color-border: rgba(255, 255, 255, 0.62);
+          --ge-color-scrollbar-thumb: rgba(15, 23, 42, 0.22);
+          --ge-color-scrollbar-thumb-hover: rgba(15, 23, 42, 0.42);
+          --ge-scrollbar-size: 12px;
           box-shadow:
             0 24px 60px rgba(15, 23, 42, 0.16),
             inset 0 1px 0 rgba(255, 255, 255, 0.72);
         }
       `}</style>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         minRows={10}
@@ -779,7 +779,7 @@ function WithPlaceholderStory() {
   const [value, setValue] = useState('');
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         placeholder="Type your markdown here..."
@@ -807,7 +807,7 @@ export const ReadOnly: Story = {
   render: () => {
     return (
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <NeutrinoEditor
+        <GalleyEditor
           value={sampleMarkdown}
           editable={false}
           minRows={10}
@@ -827,7 +827,7 @@ function AutosizeStory() {
         Editor height: minRows=3, maxRows=15. Add more lines to see it grow.
       </div>
       <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-        <NeutrinoEditor
+        <GalleyEditor
           value={value}
           onChange={setValue}
           minRows={3}
@@ -858,7 +858,7 @@ function WithEventHandlersStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         minRows={6}
@@ -910,12 +910,12 @@ export const WithEventHandlers: Story = {
 
 function ImperativeHandleStory() {
   const [value, setValue] = useState('# Imperative API\n\nUse the buttons below to control the editor programmatically.');
-  const ref = useRef<NeutrinoHandle>(null);
+  const ref = useRef<GalleyHandle>(null);
   const [output, setOutput] = useState('');
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor ref={ref} value={value} onChange={setValue} minRows={6} />
+      <GalleyEditor ref={ref} value={value} onChange={setValue} minRows={6} />
       <div style={{ marginTop: '12px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         <button onClick={() => setOutput(ref.current?.getContent() ?? '')}>
           getContent()
@@ -973,7 +973,7 @@ function ImperativeHandleStory() {
 }
 
 /**
- * Demonstrates the imperative handle API (`NeutrinoHandle`). Use the buttons
+ * Demonstrates the imperative handle API (`GalleyHandle`). Use the buttons
  * to call methods like `getContent()`, `setContent()`, `insertText()`,
  * `focus()`, `blur()`, `select()`, `getSelection()`, `scrollTo()`, etc.
  */
@@ -985,7 +985,7 @@ export const ImperativeHandle: Story = {
 
 function CustomCommandsStory() {
   const [value, setValue] = useState('# Custom Commands\n\nSelect text and use the toolbar buttons.');
-  const ref = useRef<NeutrinoHandle>(null);
+  const ref = useRef<GalleyHandle>(null);
   const [registered, setRegistered] = useState(false);
 
   const registerCommands = () => {
@@ -1013,7 +1013,7 @@ function CustomCommandsStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor ref={ref} value={value} onChange={setValue} minRows={6} />
+      <GalleyEditor ref={ref} value={value} onChange={setValue} minRows={6} />
       <div style={{ marginTop: '12px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
         {!registered && (
           <button onClick={registerCommands} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer' }}>
@@ -1059,9 +1059,9 @@ function DisabledPluginsStory() {
   const [disabled, setDisabled] = useState<string[]>([]);
 
   const pluginIds = [
-    'ne:headings', 'ne:emphasis', 'ne:code-inline', 'ne:code-fence',
-    'ne:blockquote', 'ne:links', 'ne:images', 'ne:lists', 'ne:checkboxes',
-    'ne:dividers', 'ne:tables',
+    'ge:headings', 'ge:emphasis', 'ge:code-inline', 'ge:code-fence',
+    'ge:blockquote', 'ge:links', 'ge:images', 'ge:lists', 'ge:checkboxes',
+    'ge:dividers', 'ge:tables',
   ];
 
   const toggle = (id: string) => {
@@ -1091,12 +1091,12 @@ function DisabledPluginsStory() {
                 fontFamily: 'monospace',
               }}
             >
-              {id.replace('ne:', '')} {disabled.includes(id) ? 'OFF' : 'ON'}
+              {id.replace('ge:', '')} {disabled.includes(id) ? 'OFF' : 'ON'}
             </button>
           ))}
         </div>
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         disabledPlugins={disabled}
@@ -1120,7 +1120,7 @@ export const DisabledPlugins: Story = {
 function CustomClassNamesStory() {
   const [value, setValue] = useState('# Custom Classes\n\n**Bold text** and *italic text* with custom CSS class names.\n\n- [x] Completed task\n- [ ] Pending task');
 
-  const customNames: NeutrinoClassNames = {
+  const customNames: GalleyClassNames = {
     bold: 'custom-bold',
     italic: 'custom-italic',
     h1: 'custom-h1',
@@ -1144,7 +1144,7 @@ function CustomClassNamesStory() {
         <div>&nbsp;&nbsp;completedTask: 'custom-completed' <span style={{ color: '#6b7280' }}>(opacity 0.3)</span></div>
         <div>{'}'}</div>
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         classNames={customNames}
@@ -1155,7 +1155,7 @@ function CustomClassNamesStory() {
 }
 
 /**
- * Shows how to override the default `ne-*` CSS classes with custom names
+ * Shows how to override the default `ge-*` CSS classes with custom names
  * via the `classNames` prop. This is useful when integrating into a design
  * system that has its own class naming conventions.
  */
@@ -1172,7 +1172,7 @@ export const ClassNamesOverrides: Story = {
 
 // ── Custom Plugin ───────────────────────────────────────────────────────────
 
-const highlightPlugin: NeutrinoPlugin = {
+const highlightPlugin: GalleyPlugin = {
   id: 'custom:highlight',
   extensions() {
     return [
@@ -1212,7 +1212,7 @@ function CustomPluginStory() {
         This plugin uses <code>makeInlinePlugin</code> to detect <code>Emphasis</code> nodes
         inside <code>StrongEmphasis</code> parents.
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         plugins={[highlightPlugin]}
@@ -1257,7 +1257,7 @@ function CustomExtensionsStory() {
         <strong>Custom extensions:</strong> Added <code>Ctrl+Shift+D</code> to duplicate the current line.
         Extensions are appended after all internal extensions, so they can override built-in behavior.
       </div>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         extensions={[lineNumbers, customKeymap]}
@@ -1292,7 +1292,7 @@ function ControlledValueStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor value={value} onChange={handleChange} minRows={6} />
+      <GalleyEditor value={value} onChange={handleChange} minRows={6} />
       <div style={{ marginTop: '12px', display: 'flex', gap: '16px', fontSize: '13px', color: '#6b7280' }}>
         <span>Characters: {charCount}</span>
         <span>Lines: {lineCount}</span>
@@ -1340,7 +1340,7 @@ function EditorClassNameStory() {
           box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
         }
       `}</style>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         className="my-wrapper"
@@ -1375,7 +1375,7 @@ function ErrorBoundaryStory() {
         It shows a fallback UI with error details and a "Try Again" button.
       </div>
       <ErrorBoundary>
-        <NeutrinoEditor value={value} onChange={setValue} minRows={6} />
+        <GalleyEditor value={value} onChange={setValue} minRows={6} />
       </ErrorBoundary>
     </div>
   );
@@ -1411,7 +1411,7 @@ function CustomFallbackStory() {
           </div>
         }
       >
-        <NeutrinoEditor value={value} onChange={setValue} minRows={6} />
+        <GalleyEditor value={value} onChange={setValue} minRows={6} />
       </ErrorBoundary>
     </div>
   );
@@ -1429,7 +1429,7 @@ export const CustomErrorFallback: Story = {
 
 function RuntimeExtensionStory() {
   const [value, setValue] = useState('# Runtime Extensions\n\nClick the button to add a word count extension at runtime.\n\nThe extension can be removed after adding it.');
-  const ref = useRef<NeutrinoHandle>(null);
+  const ref = useRef<GalleyHandle>(null);
   const [handle, setHandle] = useState<{ remove: () => void } | null>(null);
   const [wordCount, setWordCount] = useState(0);
 
@@ -1458,7 +1458,7 @@ function RuntimeExtensionStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor ref={ref} value={value} onChange={setValue} minRows={6} />
+      <GalleyEditor ref={ref} value={value} onChange={setValue} minRows={6} />
       <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
         {!handle ? (
           <button onClick={addExtension} style={{ background: '#22c55e', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer' }}>
@@ -1492,11 +1492,11 @@ function SelectionTrackingStory() {
   const [value, setValue] = useState('# Selection Tracking\n\nSelect some text to see the selection details below.\n\nTry selecting across **bold text** and [links](https://example.com).');
   const [selection, setSelection] = useState({ from: 0, to: 0, anchor: 0, head: 0 });
   const [selectedText, setSelectedText] = useState('');
-  const ref = useRef<NeutrinoHandle>(null);
+  const ref = useRef<GalleyHandle>(null);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         ref={ref}
         value={value}
         onChange={setValue}
@@ -1546,7 +1546,7 @@ function PasteHandlerStory() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <NeutrinoEditor
+      <GalleyEditor
         value={value}
         onChange={setValue}
         onPaste={(event) => {

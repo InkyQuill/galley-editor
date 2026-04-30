@@ -32,7 +32,7 @@ export { swapLineDown, swapLineUp } from './editing/swapLine';
 export { findInDocument } from './navigation/findInDocument';
 export { jumpToHash, slugifyHeading } from './navigation/jumpToHash';
 
-export type NeutrinoKeyBinding = KeyBinding & {
+export type GalleyKeyBinding = KeyBinding & {
   command?: BuiltinCommand;
   args?: unknown[];
   description?: string;
@@ -43,7 +43,7 @@ function commandBinding(
   command: BuiltinCommand,
   description: string,
   ...args: unknown[]
-): NeutrinoKeyBinding {
+): GalleyKeyBinding {
   return {
     key,
     command,
@@ -53,7 +53,7 @@ function commandBinding(
   };
 }
 
-export const DEFAULT_KEYMAP: NeutrinoKeyBinding[] = [
+export const DEFAULT_KEYMAP: GalleyKeyBinding[] = [
   commandBinding('Mod-d', 'duplicateLine', 'Duplicate the current line or selected lines'),
   commandBinding('Alt-ArrowUp', 'swapLineUp', 'Swap the current line upward'),
   commandBinding('Alt-ArrowDown', 'swapLineDown', 'Swap the current line downward'),

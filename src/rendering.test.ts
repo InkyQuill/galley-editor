@@ -11,7 +11,7 @@ import {
   makeInlinePlugin,
   makeBlockPlugin,
 } from './rendering';
-import type { NeutrinoPluginSpec } from './types';
+import type { GalleyPluginSpec } from './types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ function mockNode(from: number, to: number): SyntaxNodeRef {
 }
 
 /** A trivial spec that marks every "Heading" node with a line decoration. */
-function headingBlockSpec(): NeutrinoPluginSpec {
+function headingBlockSpec(): GalleyPluginSpec {
   return {
     createDecoration(node) {
       if (node.name === 'ATXHeading1' || node.name === 'SetextHeading1') {
@@ -54,7 +54,7 @@ function headingBlockSpec(): NeutrinoPluginSpec {
 }
 
 /** A trivial inline spec that hides EmphasisMark nodes. */
-function emphasisInlineSpec(): NeutrinoPluginSpec {
+function emphasisInlineSpec(): GalleyPluginSpec {
   return {
     createDecoration(node) {
       if (node.name === 'EmphasisMark') {
@@ -218,7 +218,7 @@ describe('makeInlinePlugin', () => {
       }
     }
 
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'EmphasisMark') {
           return new TestWidget();
@@ -241,7 +241,7 @@ describe('makeInlinePlugin', () => {
       }
     }
 
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'EmphasisMark') return new TestWidget();
         return null;
@@ -258,7 +258,7 @@ describe('makeInlinePlugin', () => {
 
   it('skips selection-only rebuilds when selectionAffectsDecorations returns false', () => {
     let decorationCount = 0;
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name !== 'EmphasisMark') return null;
         decorationCount++;
@@ -279,7 +279,7 @@ describe('makeInlinePlugin', () => {
   });
 
   it('respects hideWhenNearCursor: false', () => {
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'EmphasisMark') {
           return HIDE_DECORATION;
@@ -296,7 +296,7 @@ describe('makeInlinePlugin', () => {
   });
 
   it('respects custom getRevealStrategy returning boolean', () => {
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'EmphasisMark') {
           return HIDE_DECORATION;
@@ -321,7 +321,7 @@ describe('makeInlinePlugin', () => {
       depth: number | undefined;
       map: ReadonlyMap<string, number>;
     }> = [];
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node, _state, parentDepths) {
         if (node.name === 'ListMark') {
           observations.push({
@@ -395,7 +395,7 @@ describe('makeBlockPlugin', () => {
 
   it('applies decorations when cursor is far from the block', () => {
     // Spec that always decorates Blockquote nodes
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           return Decoration.line({ class: 'test-blockquote' });
@@ -423,7 +423,7 @@ describe('makeBlockPlugin', () => {
   });
 
   it('expands line decorations across the full getLineRange span', () => {
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           return Decoration.line({ class: 'test-blockquote' });
@@ -453,7 +453,7 @@ describe('makeBlockPlugin', () => {
   });
 
   it('uses the full block when getLineRange returns null', () => {
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           return Decoration.line({ class: 'test-blockquote' });
@@ -484,7 +484,7 @@ describe('makeBlockPlugin', () => {
 
   it('hides decorations when cursor is near the block', () => {
     const decorationCreated: boolean[] = [];
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           decorationCreated.push(true);
@@ -509,7 +509,7 @@ describe('makeBlockPlugin', () => {
 
   it('respects shouldForceRerender', () => {
     let rerenderCount = 0;
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           rerenderCount++;
@@ -552,7 +552,7 @@ describe('makeBlockPlugin', () => {
       }
     }
 
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'HorizontalRule') {
           return new BlockWidget();
@@ -569,7 +569,7 @@ describe('makeBlockPlugin', () => {
   });
 
   it('respects hideWhenNearCursor: false', () => {
-    const spec: NeutrinoPluginSpec = {
+    const spec: GalleyPluginSpec = {
       createDecoration(node) {
         if (node.name === 'Blockquote') {
           return Decoration.line({ class: 'test-blockquote' });

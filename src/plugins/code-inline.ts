@@ -1,10 +1,10 @@
 import { Decoration } from '@codemirror/view';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
-const codeInlinePlugin: NeutrinoPlugin = {
-  id: 'ne:code-inline',
-  extensions(classNames: NeutrinoClassNames, context) {
+const codeInlinePlugin: GalleyPlugin = {
+  id: 'ge:code-inline',
+  extensions(classNames: GalleyClassNames, context) {
     const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide backtick marks with 'active' reveal
@@ -25,7 +25,7 @@ const codeInlinePlugin: NeutrinoPlugin = {
       createDecoration(node) {
         if (node.name === 'InlineCode') {
           return Decoration.mark({
-            class: classNames.inlineCode ?? 'ne-code-inline',
+            class: classNames.inlineCode ?? 'ge-code-inline',
           });
         }
         return null;

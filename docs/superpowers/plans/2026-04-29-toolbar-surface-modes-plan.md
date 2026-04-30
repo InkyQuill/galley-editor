@@ -13,14 +13,14 @@
 ### Task 1: React API Tests
 
 **Files:**
-- Modify: `src/components/NeutrinoEditor.test.tsx`
+- Modify: `src/components/GalleyEditor.test.tsx`
 - Modify: `src/theme.test.ts`
 
 - [x] **Step 1: Write failing tests**
 
 Add tests for:
 
-- footer tooltip text `Neutrino Editor v.0.4.0 by Inky Quill`
+- footer tooltip text `Galley Editor v.0.4.0 by Inky Quill`
 - toolbar icon override via React node
 - toolbar icon override via render function
 - `surface` class/style/padding variables
@@ -35,7 +35,7 @@ Add tests for:
 Run:
 
 ```bash
-npm test -- src/components/NeutrinoEditor.test.tsx src/theme.test.ts
+npm test -- src/components/GalleyEditor.test.tsx src/theme.test.ts
 ```
 
 Expected: FAIL because the public props and behavior do not exist yet.
@@ -44,22 +44,22 @@ Expected: FAIL because the public props and behavior do not exist yet.
 
 **Files:**
 - Modify: `src/types.ts`
-- Modify: `src/components/NeutrinoEditor.tsx`
+- Modify: `src/components/GalleyEditor.tsx`
 
 - [x] **Step 1: Add types**
 
-Add `NeutrinoMode`, `ToolbarIconName`, `ToolbarIconRenderer`, `NeutrinoToolbarOptions`, `NeutrinoFooterOptions`, and `NeutrinoSurfaceOptions`.
+Add `GalleyMode`, `ToolbarIconName`, `ToolbarIconRenderer`, `GalleyToolbarOptions`, `GalleyFooterOptions`, and `GalleySurfaceOptions`.
 
 - [x] **Step 2: Implement wrapper behavior**
 
-Resolve `effectiveMode`, support controlled and uncontrolled mode switching, render custom toolbar icons, apply `surface` class/style/variables to `.ne-editor-shell`, and update the tooltip string.
+Resolve `effectiveMode`, support controlled and uncontrolled mode switching, render custom toolbar icons, apply `surface` class/style/variables to `.ge-editor-shell`, and update the tooltip string.
 
 - [x] **Step 3: Run focused wrapper tests**
 
 Run:
 
 ```bash
-npm test -- src/components/NeutrinoEditor.test.tsx src/theme.test.ts
+npm test -- src/components/GalleyEditor.test.tsx src/theme.test.ts
 ```
 
 Expected: PASS.
@@ -85,7 +85,7 @@ Expected: PASS.
 
 - [x] **Step 1: Pass mode to plugins**
 
-Add `mode` to `ControllerSettings` and `NeutrinoRenderContext`. Skip plugin extensions in markdown mode and make preview mode read-only.
+Add `mode` to `ControllerSettings` and `GalleyRenderContext`. Skip plugin extensions in markdown mode and make preview mode read-only.
 
 - [x] **Step 2: Suppress reveal in preview**
 
@@ -108,8 +108,8 @@ Expected: PASS.
 ### Task 4: Styling, Docs, and Stories
 
 **Files:**
-- Modify: `src/neutrino-base.css`
-- Modify: `src/components/NeutrinoEditor.stories.tsx`
+- Modify: `src/galley-base.css`
+- Modify: `src/components/GalleyEditor.stories.tsx`
 - Modify: `docs/api-reference.md`
 - Modify: `CHANGELOG.md`
 - Create: `docs/superpowers/specs/2026-04-29-toolbar-surface-modes-design.md`
@@ -119,10 +119,10 @@ Expected: PASS.
 
 Define and use:
 
-- `--ne-content-padding`
-- `--ne-toolbar-padding`
-- `--ne-footer-padding`
-- `--ne-backdrop-filter`
+- `--ge-content-padding`
+- `--ge-toolbar-padding`
+- `--ge-footer-padding`
+- `--ge-backdrop-filter`
 
 - [x] **Step 2: Add Storybook examples**
 

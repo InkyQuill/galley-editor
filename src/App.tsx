@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react';
-import { NeutrinoEditor, ErrorBoundary } from './components';
-import type { NeutrinoHandle } from './types';
-import './neutrino-base.css';
+import { GalleyEditor, ErrorBoundary } from './components';
+import type { GalleyHandle } from './types';
+import './galley-base.css';
 
-const sampleMarkdown = `# Neutrino Editor
+const sampleMarkdown = `# Galley Editor
 
 A **half-WYSIWYG** markdown editor that renders blocks as HTML when you're not editing them.
 
@@ -44,7 +44,7 @@ function App() {
   const [markdown, setMarkdown] = useState(sampleMarkdown);
   const [log, setLog] = useState<string[]>([]);
   const [theme, setTheme] = useState<'auto' | 'light' | 'dark'>('auto');
-  const editorRef = useRef<NeutrinoHandle>(null);
+  const editorRef = useRef<GalleyHandle>(null);
 
   const addLog = (message: string) => {
     setLog((prev) => [...prev.slice(-49), `${new Date().toLocaleTimeString()}: ${message}`]);
@@ -59,7 +59,7 @@ function App() {
   return (
     <div style={{ minHeight: '100vh', padding: '20px', backgroundColor: '#f5f5f5' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '20px' }}>Neutrino Editor Test</h1>
+        <h1 style={{ marginBottom: '20px' }}>Galley Editor Test</h1>
 
         {/* Toolbar */}
         <div style={{ marginBottom: '8px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -86,7 +86,7 @@ function App() {
 
         <div style={{ marginBottom: '20px', padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
           <ErrorBoundary>
-            <NeutrinoEditor
+            <GalleyEditor
               ref={editorRef}
               value={markdown}
               onChange={setMarkdown}

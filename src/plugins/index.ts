@@ -1,4 +1,4 @@
-import type { NeutrinoPlugin } from '../types';
+import type { GalleyPlugin } from '../types';
 import headingsPlugin from './headings';
 import emphasisPlugin from './emphasis';
 import codeInlinePlugin from './code-inline';
@@ -11,7 +11,7 @@ import checkboxesPlugin from './checkboxes';
 import dividersPlugin from './dividers';
 import tablesPlugin from './tables';
 
-export const BUILT_IN_PLUGINS: NeutrinoPlugin[] = [
+export const BUILT_IN_PLUGINS: GalleyPlugin[] = [
   headingsPlugin,
   emphasisPlugin,
   codeInlinePlugin,

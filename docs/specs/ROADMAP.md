@@ -1,4 +1,4 @@
-# Roadmap — `@inky/neutrino-editor`
+# Roadmap — `@inky/galley-editor`
 
 Single source of truth for the production-readiness plan. Every milestone has a dedicated spec document linked below; this file tracks status, links, and high-level scope.
 
@@ -14,7 +14,7 @@ A React component library exposing a half-WYSIWYG markdown editor (live preview,
 
 ## Distribution
 
-- **Registry:** GitLab Package Registry on `git.inkyquill.net`, project `inky/neutrino-editor`.
+- **Registry:** GitLab Package Registry on `git.inkyquill.net`, project `inky/galley-editor`.
 - **Scope:** `@inky`.
 - **Auth:** CI publishes via `CI_JOB_TOKEN` on tag pushes matching `v*.*.*`. Consumers configure `.npmrc` with a personal `read_package_registry`-scoped token.
 - **Public publish (npmjs):** deferred to v1.0.0; the build is produced by CI but the actual `npm publish --registry=https://registry.npmjs.org` is a separate human action.
@@ -51,7 +51,7 @@ These need decisions before the relevant milestone starts.
 | Question | Blocking | Owner |
 |---|---|---|
 | Author name + canonical email for `LICENSE` and `package.json` `author` field | v0.2 | maintainer |
-| Repository URL — confirm `https://git.inkyquill.net/inky/neutrino-editor.git` is final | v0.2 | maintainer |
+| Repository URL — confirm `https://git.inkyquill.net/inky/galley-editor.git` is final | v0.2 | maintainer |
 | Whether to ship a public GitHub mirror at v1.0 | v1.0 | maintainer |
 | Whether to publish to npmjs at v1.0 or stay private | v1.0 | maintainer |
 

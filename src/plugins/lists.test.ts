@@ -21,7 +21,7 @@ describe('listsPlugin', () => {
     });
     views.push(view);
 
-    const marker = view.dom.querySelector('.ne-list-marker');
+    const marker = view.dom.querySelector('.ge-list-marker');
 
     expect(marker).toBeInstanceOf(HTMLElement);
     expect(marker?.getAttribute('aria-hidden')).toBe('true');
@@ -30,20 +30,20 @@ describe('listsPlugin', () => {
   });
 
   it('updates only the previous bullet depth class when reused', () => {
-    const previousWidget = new BulletMarkerWidget(1, 'ne-list-marker');
-    const nextWidget = new BulletMarkerWidget(2, 'ne-list-marker-next');
+    const previousWidget = new BulletMarkerWidget(1, 'ge-list-marker');
+    const nextWidget = new BulletMarkerWidget(2, 'ge-list-marker-next');
     const marker = previousWidget.toDOM();
-    marker.className = 'ne-list-marker ne-depth-0 ne-depth-1';
+    marker.className = 'ge-list-marker ge-depth-0 ge-depth-1';
     const reusableWidget = nextWidget as unknown as {
       updateDOM(dom: HTMLElement, view: EditorView, from: BulletMarkerWidget): boolean;
     };
 
     expect(reusableWidget.updateDOM(marker, {} as EditorView, previousWidget)).toBe(true);
 
-    expect(marker.classList.contains('ne-depth-1')).toBe(false);
-    expect(marker.classList.contains('ne-depth-2')).toBe(true);
-    expect(marker.classList.contains('ne-depth-0')).toBe(true);
-    expect(marker.classList.contains('ne-list-marker')).toBe(false);
-    expect(marker.classList.contains('ne-list-marker-next')).toBe(true);
+    expect(marker.classList.contains('ge-depth-1')).toBe(false);
+    expect(marker.classList.contains('ge-depth-2')).toBe(true);
+    expect(marker.classList.contains('ge-depth-0')).toBe(true);
+    expect(marker.classList.contains('ge-list-marker')).toBe(false);
+    expect(marker.classList.contains('ge-list-marker-next')).toBe(true);
   });
 });

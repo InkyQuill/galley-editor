@@ -1,10 +1,10 @@
 import { Decoration } from '@codemirror/view';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
-const emphasisPlugin: NeutrinoPlugin = {
-  id: 'ne:emphasis',
-  extensions(classNames: NeutrinoClassNames, context) {
+const emphasisPlugin: GalleyPlugin = {
+  id: 'ge:emphasis',
+  extensions(classNames: GalleyClassNames, context) {
     const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     // Hide emphasis marks (*, **, ~~) with 'active' reveal
@@ -25,14 +25,14 @@ const emphasisPlugin: NeutrinoPlugin = {
     const classExt = makeInlinePlugin({
       createDecoration(node) {
         if (node.name === 'StrongEmphasis') {
-          return Decoration.mark({ class: classNames.bold ?? 'ne-bold' });
+          return Decoration.mark({ class: classNames.bold ?? 'ge-bold' });
         }
         if (node.name === 'Emphasis') {
-          return Decoration.mark({ class: classNames.italic ?? 'ne-italic' });
+          return Decoration.mark({ class: classNames.italic ?? 'ge-italic' });
         }
         if (node.name === 'Strikethrough') {
           return Decoration.mark({
-            class: classNames.strikethrough ?? 'ne-strikethrough',
+            class: classNames.strikethrough ?? 'ge-strikethrough',
           });
         }
         return null;

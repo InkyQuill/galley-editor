@@ -21,7 +21,7 @@ Inactive fenced code blocks render as a block widget:
 - Code body with dependency-free default highlighting.
 - Raw fenced markdown returns when the cursor is inside or near the block so editing stays plain and predictable.
 
-Consumers can provide their own highlighter without Neutrino depending on `highlight.js`, Shiki, Prism, or any other library:
+Consumers can provide their own highlighter without Galley depending on `highlight.js`, Shiki, Prism, or any other library:
 
 ```ts
 codeHighlighter?: (input: {
@@ -31,7 +31,7 @@ codeHighlighter?: (input: {
 }) => string | HTMLElement;
 ```
 
-If the highlighter returns a string, Neutrino treats it as highlighted HTML and inserts it with `innerHTML`. Consumers are responsible for sanitizing third-party output. If it returns an `HTMLElement`, Neutrino appends that element.
+If the highlighter returns a string, Galley treats it as highlighted HTML and inserts it with `innerHTML`. Consumers are responsible for sanitizing third-party output. If it returns an `HTMLElement`, Galley appends that element.
 
 ### Table Rendering
 
@@ -57,7 +57,7 @@ When the cursor is inside the image syntax, the raw markdown is shown for editin
 
 ### Footer
 
-`NeutrinoEditor` gets an optional footer enabled by default:
+`GalleyEditor` gets an optional footer enabled by default:
 
 ```ts
 footer?: boolean | {
@@ -67,11 +67,11 @@ footer?: boolean | {
 }
 ```
 
-The footer shows the current word count, current character count, and the root `neutrino.svg` logo with the tooltip text `Neutrino Editor v.{version}`. `footer={false}` disables the footer entirely.
+The footer shows the current word count, current character count, and the root `galley.svg` logo with the tooltip text `Galley Editor v.{version}`. `footer={false}` disables the footer entirely.
 
 ### Toolbar
 
-`NeutrinoEditor` gets a compact default toolbar inspired by the provided reference image: a top row inside the editor shell, separated from the writing surface by a subtle border. It includes heading selection, inline formatting, list actions, insert actions, code/table/hr insertion, and undo/redo. It is enabled by default and can be disabled:
+`GalleyEditor` gets a compact default toolbar inspired by the provided reference image: a top row inside the editor shell, separated from the writing surface by a subtle border. It includes heading selection, inline formatting, list actions, insert actions, code/table/hr insertion, and undo/redo. It is enabled by default and can be disabled:
 
 ```ts
 toolbar?: boolean;
@@ -81,7 +81,7 @@ The toolbar calls the existing command registry through the controller ref. It d
 
 ### Default Theme
 
-`neutrino-base.css` becomes a complete default skin for the editor, not just semantic text styling. It styles:
+`galley-base.css` becomes a complete default skin for the editor, not just semantic text styling. It styles:
 
 - wrapper surface
 - toolbar
@@ -93,7 +93,7 @@ The toolbar calls the existing command registry through the controller ref. It d
 - table widgets
 - light and dark themes
 
-The palette stays restrained and editor-like. Consumers can still override all colors through `--ne-*` variables.
+The palette stays restrained and editor-like. Consumers can still override all colors through `--ge-*` variables.
 
 ### Storybook Images
 
@@ -104,7 +104,7 @@ Storybook gains image examples using deterministic local SVG assets committed un
 Add a lightweight rendering context object passed to plugin `extensions`:
 
 ```ts
-interface NeutrinoRenderContext {
+interface GalleyRenderContext {
   theme: 'light' | 'dark';
   codeHighlighter?: CodeHighlighter;
 }

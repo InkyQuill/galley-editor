@@ -1,7 +1,7 @@
 /**
- * Theme system for Neutrino Editor.
+ * Theme system for Galley Editor.
  *
- * Produces CM6 styles that consume the public --ne-* CSS variable contract
+ * Produces CM6 styles that consume the public --ge-* CSS variable contract
  * and uses classHighlighter for Lezer token CSS classes.
  */
 
@@ -55,8 +55,8 @@ export function watchColorScheme(
 
 /**
  * Build CM6 theme extensions.
- * Structural layout stays fixed while visual values flow through --ne-* CSS
- * variables defined by neutrino-base.css or consumer overrides.
+ * Structural layout stays fixed while visual values flow through --ge-* CSS
+ * variables defined by galley-base.css or consumer overrides.
  */
 export function buildCmTheme(scheme: ColorScheme): Extension[] {
   const isDark = resolveColorScheme(scheme) === 'dark';
@@ -68,24 +68,24 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
     EditorView.theme(
       {
         '&': {
-          backgroundColor: 'var(--ne-color-bg)',
+          backgroundColor: 'var(--ge-color-bg)',
           boxSizing: 'border-box',
           height: 'auto',
           width: '100%',
         },
         '.cm-content': {
-          caretColor: 'var(--ne-color-caret)',
-          color: 'var(--ne-color-text)',
-          fontFamily: 'var(--ne-font-body)',
-          fontSize: 'var(--ne-font-size)',
-          lineHeight: 'var(--ne-line-height)',
+          caretColor: 'var(--ge-color-caret)',
+          color: 'var(--ge-color-text)',
+          fontFamily: 'var(--ge-font-body)',
+          fontSize: 'var(--ge-font-size)',
+          lineHeight: 'var(--ge-line-height)',
           padding: '12px',
         },
         '&.cm-focused': {
-          outline: '1px solid var(--ne-color-focus-ring)',
+          outline: '1px solid var(--ge-color-focus-ring)',
         },
         '& .cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
-          backgroundColor: 'var(--ne-color-selection)',
+          backgroundColor: 'var(--ge-color-selection)',
         },
         '.cm-scroller': {
           overflowX: 'hidden',
@@ -95,7 +95,7 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
           padding: '0 4px',
         },
         '.cm-cursor': {
-          borderLeftColor: 'var(--ne-color-caret)',
+          borderLeftColor: 'var(--ge-color-caret)',
           zIndex: '10',
         },
       },

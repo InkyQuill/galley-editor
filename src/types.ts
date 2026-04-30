@@ -3,7 +3,7 @@ import type { EditorSelection, EditorState, Extension, Transaction } from '@code
 import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
-export type NeutrinoMode = 'live' | 'markdown' | 'preview';
+export type GalleyMode = 'live' | 'markdown' | 'preview';
 
 export type CodeHighlighter = (input: {
   code: string;
@@ -11,9 +11,9 @@ export type CodeHighlighter = (input: {
   theme: 'light' | 'dark';
 }) => string | HTMLElement;
 
-export interface NeutrinoRenderContext {
+export interface GalleyRenderContext {
   theme: 'light' | 'dark';
-  mode?: NeutrinoMode;
+  mode?: GalleyMode;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
   onLinkClick?: LinkClickHandler;
@@ -47,52 +47,52 @@ export type ToolbarIconName =
 export type ToolbarIconRenderer = (input: {
   name: ToolbarIconName;
   label: string;
-  mode: NeutrinoMode;
+  mode: GalleyMode;
 }) => ReactNode;
 
-export interface NeutrinoToolbarContext {
+export interface GalleyToolbarContext {
   value: string;
-  mode: NeutrinoMode;
+  mode: GalleyMode;
   canEdit: boolean;
-  editor: NeutrinoHandle | null;
+  editor: GalleyHandle | null;
   execCommand(name: BuiltinCommand | string, ...args: unknown[]): unknown;
-  setMode(mode: NeutrinoMode): void;
+  setMode(mode: GalleyMode): void;
   cycleMode(): void;
 }
 
-export type NeutrinoToolbarSlot =
+export type GalleyToolbarSlot =
   | ReactNode
-  | ((context: NeutrinoToolbarContext) => ReactNode);
+  | ((context: GalleyToolbarContext) => ReactNode);
 
-export interface NeutrinoToolbarOptions {
+export interface GalleyToolbarOptions {
   enabled?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
-  before?: NeutrinoToolbarSlot;
-  after?: NeutrinoToolbarSlot;
+  before?: GalleyToolbarSlot;
+  after?: GalleyToolbarSlot;
 }
 
-export interface NeutrinoFooterContext {
+export interface GalleyFooterContext {
   value: string;
-  mode: NeutrinoMode;
+  mode: GalleyMode;
   wordCount: number;
   characterCount: number;
-  editor: NeutrinoHandle | null;
+  editor: GalleyHandle | null;
 }
 
-export type NeutrinoFooterSlot =
+export type GalleyFooterSlot =
   | ReactNode
-  | ((context: NeutrinoFooterContext) => ReactNode);
+  | ((context: GalleyFooterContext) => ReactNode);
 
-export interface NeutrinoFooterOptions {
+export interface GalleyFooterOptions {
   wordCount?: boolean;
   characterCount?: boolean;
   logo?: boolean;
-  before?: NeutrinoFooterSlot;
-  after?: NeutrinoFooterSlot;
+  before?: GalleyFooterSlot;
+  after?: GalleyFooterSlot;
 }
 
-export interface NeutrinoSurfaceOptions {
+export interface GalleySurfaceOptions {
   className?: string;
   style?: CSSProperties;
   contentPadding?: string;
@@ -107,7 +107,7 @@ export type RevealStrategy = 'line' | 'select' | 'active' | boolean;
 
 // ── Plugin spec (low-level, for building plugins) ───────────────────────────
 
-export interface NeutrinoPluginSpec {
+export interface GalleyPluginSpec {
   /**
    * Return a Decoration or WidgetType to apply at this node, or null to skip.
    * `parentDepths` tracks nesting counts for parent node names during tree iteration.
@@ -142,16 +142,16 @@ export interface NeutrinoPluginSpec {
 
 // ── Plugin (high-level, what consumers register) ────────────────────────────
 
-export interface NeutrinoPlugin {
-  /** Stable identifier. Built-ins use 'ne:headings', 'ne:emphasis', etc. */
+export interface GalleyPlugin {
+  /** Stable identifier. Built-ins use 'ge:headings', 'ge:emphasis', etc. */
   id: string;
   /** Return CM6 extensions that implement this plugin's behavior. */
-  extensions(classNames: NeutrinoClassNames, context?: NeutrinoRenderContext): Extension[];
+  extensions(classNames: GalleyClassNames, context?: GalleyRenderContext): Extension[];
 }
 
 // ── Semantic CSS class overrides ────────────────────────────────────────────
 
-export interface NeutrinoClassNames {
+export interface GalleyClassNames {
   bold?: string;
   italic?: string;
   strikethrough?: string;
@@ -175,31 +175,31 @@ export interface NeutrinoClassNames {
   listMarker?: string;
 }
 
-export const DEFAULT_CLASS_NAMES: Required<NeutrinoClassNames> = {
-  bold: 'ne-bold',
-  italic: 'ne-italic',
-  strikethrough: 'ne-strikethrough',
-  inlineCode: 'ne-code-inline',
-  link: 'ne-link',
-  heading: 'ne-heading',
-  h1: 'ne-h1',
-  h2: 'ne-h2',
-  h3: 'ne-h3',
-  h4: 'ne-h4',
-  h5: 'ne-h5',
-  h6: 'ne-h6',
-  blockCode: 'ne-code-fence',
-  blockQuote: 'ne-blockquote',
-  table: 'ne-table',
-  image: 'ne-image-frame',
-  divider: 'ne-divider',
-  dividerWidget: 'ne-divider-widget',
-  checkbox: 'ne-checkbox',
-  completedTask: 'ne-completed-task',
-  listMarker: 'ne-list-marker',
+export const DEFAULT_CLASS_NAMES: Required<GalleyClassNames> = {
+  bold: 'ge-bold',
+  italic: 'ge-italic',
+  strikethrough: 'ge-strikethrough',
+  inlineCode: 'ge-code-inline',
+  link: 'ge-link',
+  heading: 'ge-heading',
+  h1: 'ge-h1',
+  h2: 'ge-h2',
+  h3: 'ge-h3',
+  h4: 'ge-h4',
+  h5: 'ge-h5',
+  h6: 'ge-h6',
+  blockCode: 'ge-code-fence',
+  blockQuote: 'ge-blockquote',
+  table: 'ge-table',
+  image: 'ge-image-frame',
+  divider: 'ge-divider',
+  dividerWidget: 'ge-divider-widget',
+  checkbox: 'ge-checkbox',
+  completedTask: 'ge-completed-task',
+  listMarker: 'ge-list-marker',
 };
 
-export function resolveClassNames(overrides?: NeutrinoClassNames): Required<NeutrinoClassNames> {
+export function resolveClassNames(overrides?: GalleyClassNames): Required<GalleyClassNames> {
   return { ...DEFAULT_CLASS_NAMES, ...overrides };
 }
 
@@ -249,7 +249,7 @@ export interface FindResult {
 
 // ── Imperative handle (exposed via React ref) ───────────────────────────────
 
-export interface NeutrinoHandle {
+export interface GalleyHandle {
   /** Get the current document content. */
   getContent(): string;
   /** Replace the entire document content. */
@@ -288,13 +288,13 @@ export interface NeutrinoHandle {
   readonly view: EditorView | null;
 }
 
-export interface UseNeutrinoOptions {
+export interface UseGalleyOptions {
   initialValue?: string;
   onChange?: (value: string) => void;
 }
 
-export interface UseNeutrinoResult {
-  ref: RefObject<NeutrinoHandle | null>;
+export interface UseGalleyResult {
+  ref: RefObject<GalleyHandle | null>;
   content: string;
   setContent(value: string): void;
   insertText(text: string): void;
@@ -309,7 +309,7 @@ export interface UseNeutrinoResult {
 
 // ── Editor props ────────────────────────────────────────────────────────────
 
-export interface NeutrinoEditorProps {
+export interface GalleyEditorProps {
   /** The markdown content (controlled). */
   value?: string;
   /** Called when the document changes. */
@@ -330,7 +330,7 @@ export interface NeutrinoEditorProps {
   /** CSS class applied to the CodeMirror .cm-editor element. */
   editorClassName?: string;
   /** Override semantic CSS class names for rendered elements. */
-  classNames?: NeutrinoClassNames;
+  classNames?: GalleyClassNames;
 
   /** Color scheme. Default: 'auto'. */
   theme?: 'light' | 'dark' | 'auto';
@@ -347,18 +347,18 @@ export interface NeutrinoEditorProps {
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
   bidi?: boolean;
   /** Show and customize the built-in command toolbar, including icon overrides and before/after slots. Default: true. */
-  toolbar?: boolean | NeutrinoToolbarOptions;
+  toolbar?: boolean | GalleyToolbarOptions;
   /** Show and customize the built-in status footer, including stats/logo visibility and before/after widgets. Default: true. */
-  footer?: boolean | NeutrinoFooterOptions;
+  footer?: boolean | GalleyFooterOptions;
   /** Visual mode. Default: 'live'. `editable={false}` always renders as 'preview'. */
-  mode?: NeutrinoMode;
+  mode?: GalleyMode;
   /** Called when the built-in mode toggle requests a mode change. */
-  onModeChange?: (mode: NeutrinoMode) => void;
+  onModeChange?: (mode: GalleyMode) => void;
   /** Optional shell styling hooks for gradients, frosted glass, and paddings. */
-  surface?: NeutrinoSurfaceOptions;
+  surface?: GalleySurfaceOptions;
 
   /** Additional plugins to register alongside built-ins. */
-  plugins?: NeutrinoPlugin[];
+  plugins?: GalleyPlugin[];
   /** Built-in plugin IDs to disable. */
   disabledPlugins?: string[];
   /** Additional CM6 extensions (appended after all internal extensions). */

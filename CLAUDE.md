@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Neutrino Editor (`@inkyquill/neutrino-editor`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
+Galley Editor (`@inkyquill/galley-editor`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
 
 ## Commands
 
@@ -31,13 +31,13 @@ Vite has two build modes in `vite.config.ts`:
 
 The `EditorView` is created **once** on mount and never destroyed except on unmount. All prop changes are applied via CodeMirror `Compartment` reconfiguration:
 
-- **`EditorController`** (`src/controller.ts`): Owns the EditorView and 3 Compartments (dynamic settings, autosize, history). Implements `NeutrinoHandle` (the imperative ref API). Holds the command registry.
-- **`NeutrinoEditor.tsx`** (`src/components/`): Thin React `forwardRef` wrapper. Creates the controller once, syncs props via `updateSettings()`, exposes handle via `useImperativeHandle` with a proxy pattern.
+- **`EditorController`** (`src/controller.ts`): Owns the EditorView and 3 Compartments (dynamic settings, autosize, history). Implements `GalleyHandle` (the imperative ref API). Holds the command registry.
+- **`GalleyEditor.tsx`** (`src/components/`): Thin React `forwardRef` wrapper. Creates the controller once, syncs props via `updateSettings()`, exposes handle via `useImperativeHandle` with a proxy pattern.
 - Callback props are stored in stable refs updated via `useLayoutEffect` — they never cause re-initialization.
 
 ### Plugin System
 
-Each rendering feature is a `NeutrinoPlugin` (id + `extensions(classNames)` method). Built-ins live in `src/plugins/`. Consumers can add custom plugins via the `plugins` prop.
+Each rendering feature is a `GalleyPlugin` (id + `extensions(classNames)` method). Built-ins live in `src/plugins/`. Consumers can add custom plugins via the `plugins` prop.
 
 Two factory functions in `src/rendering.ts`:
 - **`makeInlinePlugin(spec)`** — `ViewPlugin` (viewport-only, efficient). For inline marks (bold, italic, links, etc.).
@@ -52,10 +52,10 @@ Reveal strategies (`getRevealStrategy`):
 
 ### Styling
 
-Style-agnostic: the editor applies **semantic CSS classes** (`ne-h1`, `ne-bold`, `ne-code-fence`, etc.) to decorations. No colors or fonts are hardcoded. Consumers style via:
-- `neutrino-base.css` — optional import with minimal defaults
+Style-agnostic: the editor applies **semantic CSS classes** (`ge-h1`, `ge-bold`, `ge-code-fence`, etc.) to decorations. No colors or fonts are hardcoded. Consumers style via:
+- `galley-base.css` — optional import with minimal defaults
 - `@tailwindcss/typography` `prose` classes (compatible but not required)
-- Custom CSS targeting `ne-*` classes
+- Custom CSS targeting `ge-*` classes
 - `classNames` prop to override class names entirely
 
 Lezer token classes (`tok-strong`, `tok-emphasis`, etc.) are applied via `classHighlighter`.
@@ -66,7 +66,7 @@ Lezer token classes (`tok-strong`, `tok-emphasis`, etc.) are applied via `classH
 
 ### Exports
 
-`src/components/index.ts` re-exports: `NeutrinoEditor`, `ErrorBoundary`, all types, `makeInlinePlugin`/`makeBlockPlugin` (for custom plugins), `BUILT_IN_PLUGINS`, `BUILTIN_COMMANDS`.
+`src/components/index.ts` re-exports: `GalleyEditor`, `ErrorBoundary`, all types, `makeInlinePlugin`/`makeBlockPlugin` (for custom plugins), `BUILT_IN_PLUGINS`, `BUILTIN_COMMANDS`.
 
 ### Path Alias
 

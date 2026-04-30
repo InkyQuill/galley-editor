@@ -21,7 +21,7 @@ describe('tablesPlugin', () => {
     });
     views.push(view);
 
-    const table = view.dom.querySelector('.ne-table-widget table');
+    const table = view.dom.querySelector('.ge-table-widget table');
     expect(table).toBeInstanceOf(HTMLTableElement);
     expect(table?.querySelectorAll('thead th')).toHaveLength(2);
     expect(table?.querySelector('thead th')?.textContent).toBe('A');
@@ -37,7 +37,7 @@ describe('tablesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-table-widget')).toBeNull();
+    expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
     expect(lineElement(view, 1).textContent).toBe('| A | B |');
   });
 
@@ -53,7 +53,7 @@ describe('tablesPlugin', () => {
     });
     views.push(view);
 
-    expect(view.dom.querySelector('.ne-table-widget table')).toBeInstanceOf(HTMLTableElement);
+    expect(view.dom.querySelector('.ge-table-widget table')).toBeInstanceOf(HTMLTableElement);
     expect(lineElement(view, 1).textContent).not.toContain('| A | B |');
   });
 
@@ -67,9 +67,9 @@ describe('tablesPlugin', () => {
     });
     views.push(view);
 
-    const cells = view.dom.querySelectorAll('.ne-table-widget tbody td');
-    expect(cells.item(0).classList.contains('ne-align-left')).toBe(true);
-    expect(cells.item(1).classList.contains('ne-align-center')).toBe(true);
-    expect(cells.item(2).classList.contains('ne-align-right')).toBe(true);
+    const cells = view.dom.querySelectorAll('.ge-table-widget tbody td');
+    expect(cells.item(0).classList.contains('ge-align-left')).toBe(true);
+    expect(cells.item(1).classList.contains('ge-align-center')).toBe(true);
+    expect(cells.item(2).classList.contains('ge-align-right')).toBe(true);
   });
 });

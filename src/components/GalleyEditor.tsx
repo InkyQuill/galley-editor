@@ -17,29 +17,29 @@ import {
 import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
   resolveClassNames,
-  type NeutrinoEditorProps,
-  type NeutrinoFooterContext,
-  type NeutrinoFooterSlot,
-  type NeutrinoHandle,
-  type NeutrinoMode,
-  type NeutrinoToolbarContext,
-  type NeutrinoToolbarSlot,
+  type GalleyEditorProps,
+  type GalleyFooterContext,
+  type GalleyFooterSlot,
+  type GalleyHandle,
+  type GalleyMode,
+  type GalleyToolbarContext,
+  type GalleyToolbarSlot,
   type ToolbarIconName,
   type ToolbarIconRenderer,
 } from '../types';
-import { NEUTRINO_VERSION } from '../version';
+import { GALLEY_VERSION } from '../version';
 
-export type { NeutrinoEditorProps, NeutrinoHandle };
+export type { GalleyEditorProps, GalleyHandle };
 
-const MODE_ORDER: NeutrinoMode[] = ['live', 'markdown', 'preview'];
+const MODE_ORDER: GalleyMode[] = ['live', 'markdown', 'preview'];
 
-const MODE_LABELS: Record<NeutrinoMode, string> = {
+const MODE_LABELS: Record<GalleyMode, string> = {
   live: 'Live',
   markdown: 'Markdown',
   preview: 'HTML',
 };
 
-const FOOTER_TOOLTIP = `Neutrino Editor v.${NEUTRINO_VERSION} by Inky Quill`;
+const FOOTER_TOOLTIP = `Galley Editor v.${GALLEY_VERSION} by Inky Quill`;
 
 function wordCount(value: string): number {
   const words = value.trim().match(/\S+/g);
@@ -50,21 +50,18 @@ function plural(value: number, singular: string, pluralValue: string): string {
   return `${value} ${value === 1 ? singular : pluralValue}`;
 }
 
-function NeutrinoLogo() {
+function GalleyLogo() {
   return (
     <svg
-      className="ne-footer-logo"
+      className="ge-footer-logo"
       width="18"
       height="18"
-      viewBox="0 0 116 116"
+      viewBox="0 0 250 250"
       aria-hidden="true"
       focusable="false"
     >
-      <g transform="translate(-44.034126,-72.285387)">
-        <path
-          fill="currentColor"
-          d="m 89.608893,188.00206 c -7.164788,-1.60037 -11.339635,-5.8813 -12.901236,-13.22904 -0.463661,-2.18165 -0.555713,-3.51274 -0.547323,-7.91442 0.0139,-7.29082 0.692282,-12.74381 3.406793,-27.38438 1.349963,-7.28095 1.726911,-11.90433 1.166782,-14.31089 -1.068772,-4.5919 -3.95797,-6.52081 -8.751732,-5.84288 -2.707494,0.38289 -4.247564,0.51234 -7.789345,2.70841 -2.663004,1.65119 -11.737019,9.15909 -11.570077,8.81724 2.347716,-4.80743 6.785574,-9.87263 9.056535,-11.9707 5.841586,-5.39687 12.856035,-6.8478 19.42756,-6.56544 4.997675,0.21474 8.778384,2.67866 11.608253,5.70402 2.381394,2.5459 3.585012,5.81503 3.809794,10.34774 0.186684,3.76444 -0.09279,6.27173 -1.902187,17.06563 -1.835725,10.95093 -2.317784,14.98 -2.319812,20.16847 -0.0031,8.04665 2.4734,9.70269 6.919351,9.8767 5.988791,0.23439 9.081601,-0.76786 15.349561,-4.5106 10.03567,-5.99253 18.31492,-34.01158 18.93403,-68.81365 -0.3189,-0.18612 -4.24291,-0.41959 -7.48307,0.69893 5.3289,-7.542767 9.71734,-17.366585 13.83817,-30.152939 2.10661,11.605462 4.95215,21.650764 9.76655,30.889189 -1.15687,-0.0433 -5.44525,-0.97375 -6.64932,-0.98622 -2.09343,25.22552 -0.98913,56.64994 -17.96671,74.21112 -8.81034,9.07736 -22.87269,13.05767 -35.402567,11.19371 z"
-        />
+      <g transform="translate(18.547382,-47.712035)">
+        <path fill="currentColor" d="m 81.702183,273.93601 c -3.95284,-0.78791 -9.727379,-4.17733 -10.865046,-6.37733 -0.437794,-0.8466 -0.493188,-2.27989 -0.125491,-3.24701 0.225194,-0.5923 7.174802,-9.36883 14.425166,-18.21727 l 2.54738,-3.10885 H 73.66399 59.643788 l 0.01984,2.44739 c 0.01362,1.68084 -0.111657,2.75776 -0.39999,3.4383 -0.403375,0.95205 -12.685206,19.4236 -14.982864,22.53383 -1.494374,2.02286 -2.383681,2.5345 -4.407482,2.53574 -1.944695,10e-4 -3.814678,-0.60901 -7.069632,-2.30694 -3.236575,-1.68835 -5.09949,-3.47397 -5.341507,-5.11989 -0.124777,-0.8486 -0.05305,-1.50902 0.240104,-2.21063 0.364521,-0.87242 5.92113,-7.94114 14.313759,-18.20895 l 2.541094,-3.10885 H 16.893707 c -15.2148704,0 -27.663401,-0.1015 -27.663401,-0.22555 0,-0.12406 0.74353,-0.80867 1.6522906,-1.52136 4.558226,-3.57477 8.42348495,-7.19187 11.563184,-10.8208 7.5877964,-8.77014 12.5582994,-19.1769 14.4479294,-30.24967 1.393672,-8.16658 0.507019,-13.65776 -2.640293,-16.35175 -2.82973,-2.42214 -8.5101004,-2.25149 -13.91061054,0.41792 -3.90861986,1.93198 -9.23109986,5.56027 -14.92219146,10.17233 -2.528995,2.0495 -3.334059,2.56492 -3.334059,2.13453 0,-0.85032 4.048297,-9.64331 6.00025,-13.03268 3.5411396,-6.14884 10.1513366,-14.02162 15.5632926,-18.53597 5.8007803,-4.83869 11.5217844,-7.7588 18.2562504,-9.31833 2.789297,-0.64594 12.832291,-1.0789 12.832291,-0.55322 0,0.15909 -0.420402,1.05408 -0.934227,1.98887 -1.180888,2.14836 -2.139433,4.58123 -2.67338,6.78526 -0.647793,2.67397 -0.76496,7.60775 -0.25079,10.56048 2.078095,11.93387 11.038974,21.21369 21.717772,22.49076 1.561077,0.18669 12.154989,0.28503 30.757813,0.28552 l 28.376562,7.4e-4 V 187.15846 177.1043 h 4.63022 4.63021 v 10.05416 10.05417 h 36.58558 c 23.76694,0 37.35519,-0.0965 38.78211,-0.27542 7.54178,-0.94566 13.91447,-5.6687 17.24863,-12.78361 1.58388,-3.37991 2.13949,-5.79138 2.29781,-9.9729 0.11636,-3.07318 0.0557,-3.90428 -0.42506,-5.82083 -1.05867,-4.22069 -3.01851,-7.0826 -5.72136,-8.3548 -0.72761,-0.34248 -1.70401,-0.62385 -2.16979,-0.62527 -1.8656,-0.006 -3.44526,-0.54645 -4.40767,-1.50886 -1.7058,-1.7058 -1.91079,-4.03057 -0.51656,-5.85849 1.05193,-1.37915 2.69201,-1.98249 5.37422,-1.97703 4.50086,0.009 8.62632,1.80933 12.03855,5.25308 5.1333,5.18071 8.70549,12.75757 10.34764,21.94809 0.66227,3.7065 0.66601,13.76504 0.007,18.25625 -1.88657,12.85288 -6.87106,23.48491 -14.99322,31.98083 -7.76379,8.12107 -18.12066,13.54421 -28.831,15.09671 -2.08874,0.30277 -5.73263,0.42025 -14.68437,0.47345 -6.54844,0.0389 -14.97211,0.10518 -18.71927,0.14724 l -6.81302,0.0765 v 2.10512 c 0,1.39846 -0.16236,2.53239 -0.48365,3.37796 -0.42231,1.11143 -10.75319,16.80456 -14.65142,22.25623 -1.7007,2.37844 -2.84287,3.07207 -4.97327,3.02023 -3.27067,-0.0796 -10.61202,-3.92377 -11.77009,-6.16321 -0.62974,-1.21779 -0.51718,-3.20166 0.24541,-4.3254 0.83125,-1.22491 14.52343,-18.31021 15.52707,-19.3749 0.41806,-0.44349 0.76011,-0.88998 0.76011,-0.99219 0,-0.10221 -6.38522,-0.18584 -14.18938,-0.18584 h -14.18961 l 0.18159,1.60502 c 0.33162,2.93118 -0.0693,3.96258 -3.638582,9.36127 -5.457907,8.25524 -11.109922,16.5885 -12.152545,17.91755 -1.47586,1.8813 -3.114502,2.51351 -5.35649,2.06662 z M 64.178324,231.40696 c 10.457171,-14.62097 15.560188,-21.99026 16.00715,-23.11601 0.340328,-0.85718 0.333393,-1.06107 -0.06462,-1.89981 -0.890535,-1.87666 -3.145479,-1.80124 -4.717945,0.15781 -0.492116,0.6131 -2.618221,3.49597 -4.724678,6.40639 -2.106457,2.91042 -7.304129,10.07651 -11.550383,15.92466 -4.246253,5.84815 -7.720461,10.74591 -7.720461,10.88392 0,0.38869 4.706994,2.49341 5.0719,2.26789 0.09853,-0.0609 3.563098,-4.84208 7.699034,-10.62485 z m 35.825506,10.18953 c 0.95473,-1.06334 17.24667,-23.90489 21.3331,-29.90934 2.44534,-3.59309 2.73621,-4.47603 1.87814,-5.7011 -0.61866,-0.88326 -1.55199,-1.15889 -2.79279,-0.82478 -1.17187,0.31555 -0.62034,-0.39291 -13.98155,17.95998 -2.25558,3.09824 -5.92631,8.13108 -8.157192,11.18408 -2.23088,3.053 -4.0036,5.60346 -3.939379,5.66768 0.151186,0.15119 4.772459,2.20931 4.972841,2.21469 0.08377,0.002 0.392845,-0.26379 0.68683,-0.59121 z m 47.49797,-5.15938 c 5.77338,-7.76752 8.78838,-11.94361 14.31802,-19.83204 5.48286,-7.82168 5.73738,-8.22175 5.73867,-9.02068 0.003,-1.78096 -1.67141,-2.97382 -3.38178,-2.40935 -0.74869,0.24709 -1.68366,1.35163 -5.54638,6.55229 -2.55524,3.4403 -6.9978,9.41025 -9.87234,13.26655 -2.87455,3.8563 -6.54317,8.7974 -8.15249,10.98021 l -2.92604,3.96875 1.90928,0.89171 c 1.76257,0.82319 2.93301,1.27805 3.43398,1.33451 0.11098,0.0125 2.12656,-2.56687 4.47908,-5.73195 z M 53.816852,173.831 c -0.231538,-0.27899 -0.124755,-0.75607 0.461871,-2.06355 5.181946,-11.54958 8.083376,-29.90833 7.233939,-45.77264 -0.429777,-8.02663 -1.488792,-15.51193 -3.102659,-21.93012 -0.882676,-3.51031 -2.876028,-9.623913 -3.975269,-12.19213 -0.708768,-1.655932 -0.850415,-2.231453 -0.618099,-2.511376 0.439363,-0.529401 128.505985,-0.545911 128.709105,-0.01659 0.0731,0.190603 -0.34142,1.530056 -0.92125,2.976563 -2.87944,7.18337 -5.25893,17.123883 -6.24441,26.086463 -0.59321,5.39502 -0.79715,16.06323 -0.41144,21.52272 0.87255,12.35075 3.27675,23.07422 7.28662,32.50072 0.81881,1.92489 6.71669,1.76282 -64.15286,1.76282 -53.87144,0 -64.011904,-0.0573 -64.265548,-0.36288 z M 111.90878,85.911234 c -0.097,-0.09701 -0.17639,-3.88856 -0.17639,-8.425659 0,-7.655741 0.0348,-8.280776 0.48386,-8.687153 0.69767,-0.631381 7.73292,-0.649984 8.36079,-0.02211 0.36062,0.360614 0.41578,1.536531 0.41578,8.863542 v 8.447768 H 116.539 c -2.44961,0 -4.5332,-0.07937 -4.63022,-0.176388 z" />
       </g>
     </svg>
   );
@@ -75,19 +72,19 @@ function isIconRenderer(icon: ReactNode | ToolbarIconRenderer): icon is ToolbarI
 }
 
 function isToolbarSlotRenderer(
-  slot: NeutrinoToolbarSlot,
-): slot is (context: NeutrinoToolbarContext) => ReactNode {
+  slot: GalleyToolbarSlot,
+): slot is (context: GalleyToolbarContext) => ReactNode {
   return typeof slot === 'function';
 }
 
 function isFooterSlotRenderer(
-  slot: NeutrinoFooterSlot,
-): slot is (context: NeutrinoFooterContext) => ReactNode {
+  slot: GalleyFooterSlot,
+): slot is (context: GalleyFooterContext) => ReactNode {
   return typeof slot === 'function';
 }
 
-const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
-  function NeutrinoEditor(props, ref) {
+const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
+  function GalleyEditor(props, ref) {
     const {
       value = '',
       onChange,
@@ -125,7 +122,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
 
     const containerRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<EditorController | null>(null);
-    const handleProxy = useMemo<NeutrinoHandle>(
+    const handleProxy = useMemo<GalleyHandle>(
       () => ({
         get view() { return controllerRef.current?.view ?? null; },
         getContent: () => controllerRef.current?.getContent() ?? '',
@@ -146,9 +143,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       [],
     );
     const [resolvedTheme, setResolvedTheme] = useState(() => resolveColorScheme(theme));
-    const [internalMode, setInternalMode] = useState<NeutrinoMode>('live');
+    const [internalMode, setInternalMode] = useState<GalleyMode>('live');
     const requestedMode = mode ?? internalMode;
-    const effectiveMode: NeutrinoMode = editable ? requestedMode : 'preview';
+    const effectiveMode: GalleyMode = editable ? requestedMode : 'preview';
     const canEditDocument = editable && effectiveMode !== 'preview';
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
@@ -159,15 +156,15 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     const showFooter = footer !== false;
     const currentWordCount = wordCount(value);
     const currentCharacterCount = value.length;
-    const shellClassName = ['ne-editor-shell', surface?.className].filter(Boolean).join(' ');
+    const shellClassName = ['ge-editor-shell', surface?.className].filter(Boolean).join(' ');
     const shellStyle = {
       ...surface?.style,
-      ...(surface?.contentPadding ? { '--ne-content-padding': surface.contentPadding } : {}),
-      ...(surface?.toolbarPadding ? { '--ne-toolbar-padding': surface.toolbarPadding } : {}),
-      ...(surface?.footerPadding ? { '--ne-footer-padding': surface.footerPadding } : {}),
+      ...(surface?.contentPadding ? { '--ge-content-padding': surface.contentPadding } : {}),
+      ...(surface?.toolbarPadding ? { '--ge-toolbar-padding': surface.toolbarPadding } : {}),
+      ...(surface?.footerPadding ? { '--ge-footer-padding': surface.footerPadding } : {}),
     } as CSSProperties & Record<string, string | number | undefined>;
 
-    const changeMode = (nextMode: NeutrinoMode) => {
+    const changeMode = (nextMode: GalleyMode) => {
       if (!mode) setInternalMode(nextMode);
       onModeChange?.(nextMode);
     };
@@ -181,7 +178,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       controllerRef.current?.execCommand(command, ...args);
       controllerRef.current?.focus();
     };
-    const toolbarContext: NeutrinoToolbarContext = {
+    const toolbarContext: GalleyToolbarContext = {
       value,
       mode: effectiveMode,
       canEdit: canEditDocument,
@@ -190,7 +187,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       setMode: changeMode,
       cycleMode,
     };
-    const footerContext: NeutrinoFooterContext = {
+    const footerContext: GalleyFooterContext = {
       value,
       mode: effectiveMode,
       wordCount: currentWordCount,
@@ -198,23 +195,23 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       editor: handleProxy,
     };
     const renderToolbarSlot = (
-      slot: NeutrinoToolbarSlot | undefined,
+      slot: GalleyToolbarSlot | undefined,
       position: 'before' | 'after',
     ) => {
       if (!slot) return null;
       return (
-        <div className={`ne-toolbar-slot ne-toolbar-slot-${position}`}>
+        <div className={`ge-toolbar-slot ge-toolbar-slot-${position}`}>
           {isToolbarSlotRenderer(slot) ? slot(toolbarContext) : slot}
         </div>
       );
     };
     const renderFooterSlot = (
-      slot: NeutrinoFooterSlot | undefined,
+      slot: GalleyFooterSlot | undefined,
       position: 'before' | 'after',
     ) => {
       if (!slot) return null;
       return (
-        <div className={`ne-footer-slot ne-footer-slot-${position}`}>
+        <div className={`ge-footer-slot ge-footer-slot-${position}`}>
           {isFooterSlotRenderer(slot) ? slot(footerContext) : slot}
         </div>
       );
@@ -236,7 +233,7 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
     ) => (
       <button
         type="button"
-        className="ne-toolbar-button"
+        className="ge-toolbar-button"
         aria-label={ariaLabel}
         title={ariaLabel}
         disabled={!canEditDocument}
@@ -361,12 +358,12 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
       <div className={className} data-theme={resolvedTheme} data-mode={effectiveMode}>
         <div className={shellClassName} style={shellStyle}>
           {showToolbar && (
-            <div className="ne-toolbar" aria-label="Editor toolbar">
+            <div className="ge-toolbar" aria-label="Editor toolbar">
               {renderToolbarSlot(toolbarOptions.before, 'before')}
               <select
-                className="ne-toolbar-select"
+                className="ge-toolbar-select"
                 aria-label="Text style"
-                name="ne-text-style"
+                name="ge-text-style"
                 defaultValue="normal"
                 disabled={!canEditDocument}
                 onMouseDown={(event) => event.preventDefault()}
@@ -386,30 +383,30 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
                 <option value="h5">Heading 5</option>
                 <option value="h6">Heading 6</option>
               </select>
-              <span className="ne-toolbar-separator" />
+              <span className="ge-toolbar-separator" />
               {toolbarButton('bold', 'B', 'Bold', 'toggleBold')}
               {toolbarButton('italic', 'I', 'Italic', 'toggleItalic')}
               {toolbarButton('strikethrough', 'S', 'Strikethrough', 'toggleStrikethrough')}
               {toolbarButton('inlineCode', '`', 'Inline code', 'toggleCode')}
-              <span className="ne-toolbar-separator" />
+              <span className="ge-toolbar-separator" />
               {toolbarButton('bulletList', 'UL', 'Bullet list', 'toggleBulletList')}
               {toolbarButton('orderedList', '1.', 'Ordered list', 'toggleOrderedList')}
               {toolbarButton('taskList', '[ ]', 'Task list', 'toggleCheckList')}
-              <span className="ne-toolbar-separator" />
+              <span className="ge-toolbar-separator" />
               {toolbarButton('link', '[]', 'Insert link', 'insertLink')}
               {toolbarButton('image', 'Img', 'Insert image', 'insertImage')}
               {toolbarButton('codeBlock', '</>', 'Insert code block', 'insertCodeBlock')}
               {toolbarButton('table', 'Tbl', 'Insert table', 'insertTable')}
               {toolbarButton('divider', 'HR', 'Insert divider', 'insertHr')}
-              <span className="ne-toolbar-separator" />
+              <span className="ge-toolbar-separator" />
               {toolbarButton('undo', 'Undo', 'Undo', 'undo')}
               {toolbarButton('redo', 'Redo', 'Redo', 'redo')}
               {showModeToggle && (
                 <>
-                  <span className="ne-toolbar-separator" />
+                  <span className="ge-toolbar-separator" />
                   <button
                     type="button"
-                    className="ne-toolbar-button ne-mode-toggle"
+                    className="ge-toolbar-button ge-mode-toggle"
                     aria-label="Switch editor mode"
                     title="Switch editor mode"
                     disabled={!editable}
@@ -425,9 +422,9 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
           )}
           <div ref={containerRef} />
           {showFooter && (
-            <div className="ne-footer">
+            <div className="ge-footer">
               {renderFooterSlot(footerOptions.before, 'before')}
-              <div className="ne-footer-stats">
+              <div className="ge-footer-stats">
                 {footerOptions.wordCount !== false && (
                   <span>{plural(currentWordCount, 'word', 'words')}</span>
                 )}
@@ -435,16 +432,16 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
                   <span>{plural(currentCharacterCount, 'character', 'characters')}</span>
                 )}
               </div>
-              <div className="ne-footer-end">
+              <div className="ge-footer-end">
                 {renderFooterSlot(footerOptions.after, 'after')}
                 {footerOptions.logo !== false && (
                   <span
-                    className="ne-footer-logo-wrap"
+                    className="ge-footer-logo-wrap"
                     aria-label={FOOTER_TOOLTIP}
                     tabIndex={0}
                   >
-                    <NeutrinoLogo />
-                    <span className="ne-footer-tooltip" role="tooltip">
+                    <GalleyLogo />
+                    <span className="ge-footer-tooltip" role="tooltip">
                       {FOOTER_TOOLTIP}
                     </span>
                   </span>
@@ -458,4 +455,4 @@ const NeutrinoEditor = forwardRef<NeutrinoHandle, NeutrinoEditorProps>(
   },
 );
 
-export default NeutrinoEditor;
+export default GalleyEditor;

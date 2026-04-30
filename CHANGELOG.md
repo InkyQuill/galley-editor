@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@inky/neutrino-editor` are documented in this file.
+All notable changes to `@inky/galley-editor` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
@@ -15,12 +15,12 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - Cmd/Ctrl-click link activation with `onLinkClick` interception.
 - `imageRenderer` prop for opt-in custom markdown image widgets.
 - `bidi` prop for adding `dir="auto"` to editor lines.
-- `useNeutrino()` hook for hooks-first React consumers.
+- `useGalley()` hook for hooks-first React consumers.
 - `selectionAffectsDecorations` plugin performance hook.
 - Toolbar and footer before/after slots for consumer-owned controls and status widgets.
 
 ### Changed
-- **Breaking:** `NeutrinoPluginSpec.getDecorationRange()` was removed and replaced with explicit `getLineRange`, `getMarkRange`, and `getPointPosition` methods.
+- **Breaking:** `GalleyPluginSpec.getDecorationRange()` was removed and replaced with explicit `getLineRange`, `getMarkRange`, and `getPointPosition` methods.
 - Markdown images render as built-in image widgets by default; `imageRenderer` remains available for custom widgets or alt-text fallback.
 - Storybook now includes a custom chrome slots example and responsive visual checks for editor chrome customization.
 
@@ -28,7 +28,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ### Added
 - Visual rendering for inactive fenced code blocks with language badges, copy buttons, and dependency-free default highlighting.
-- `codeHighlighter` prop so consumers can integrate highlight.js, Shiki, Prism, or a custom highlighter without Neutrino depending on one.
+- `codeHighlighter` prop so consumers can integrate highlight.js, Shiki, Prism, or a custom highlighter without Galley depending on one.
 - Visual rendering for inactive GFM pipe tables.
 - Visual rendering for inactive markdown images, including SVG and PNG URLs.
 - Built-in editor toolbar, enabled by default and disableable with `toolbar={false}`.
@@ -46,7 +46,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - Default base stylesheet now skins the full editor shell, toolbar, editing surface, code blocks, tables, and footer in light and dark themes.
 - Link source reveal now expands the full `[label](url)` when the cursor is inside the link.
 - `editable={false}` now renders the editor in preview mode so rendered Markdown blocks do not revert to source on interaction.
-- The logo tooltip now reads `Neutrino Editor v.{version} by Inky Quill`.
+- The logo tooltip now reads `Galley Editor v.{version} by Inky Quill`.
 - Array-form `keymap` now fully replaces the default keymap. Function-form `keymap` still receives defaults and returns the full keymap.
 
 ## [0.4.0] — 2026-04-29
@@ -69,14 +69,14 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 ## [0.3.0] — 2026-04-29
 
 ### Added
-- CSS variable theming contract for Neutrino's base styles.
+- CSS variable theming contract for Galley's base styles.
 - Live auto theme subscription so `theme="auto"` updates when the OS color scheme changes.
 - Demo theme toggle for cycling auto, light, and dark modes.
 - Regression test suites covering v0.3 runtime correctness and theming behavior.
 
 ### Changed
 - `onEscape` may now return `boolean | void`; returning `true` consumes Escape, while `false` or `void` lets it pass through.
-- `NeutrinoHandle.view` is now nullable and returns `EditorView | null`.
+- `GalleyHandle.view` is now nullable and returns `EditorView | null`.
 
 ### Fixed
 - B1: Multi-line blockquote and table line decorations now apply to every line in a block.
@@ -108,7 +108,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - `scripts/verify-publish.sh` for manual pre-tag tarball inspection.
 
 ### Changed
-- Renamed package from `@inkyquill/neutrino-editor` to `@inky/neutrino-editor`.
+- Renamed package from `@inkyquill/galley-editor` to `@inky/galley-editor`.
 - Version bumped from `1.0.0` to `0.2.0`. The 1.0.0 was aspirational; v0.x indicates active pre-release development. v1.0.0 will be the public-release commitment.
 - Moved `react`, `react-dom`, all `@codemirror/*`, all `@lezer/*` from `dependencies` to `peerDependencies` so consumers deduplicate properly.
 - `vite.config.ts`: renamed `rolldownOptions` to `rollupOptions`, wired `vite-plugin-dts` for type emission, configured CSS bundling so `dist/style.css` exists.
@@ -128,9 +128,9 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.6.0...HEAD
-[0.6.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.6.0
-[0.5.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.5.0
-[0.4.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.4.0
-[0.3.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.3.0
-[0.2.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.2.0
+[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.6.0...HEAD
+[0.6.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.6.0
+[0.5.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.5.0
+[0.4.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.4.0
+[0.3.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.3.0
+[0.2.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.2.0

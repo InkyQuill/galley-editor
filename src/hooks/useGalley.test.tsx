@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import NeutrinoEditor from '../components/NeutrinoEditor';
-import { useNeutrino } from './useNeutrino';
+import GalleyEditor from '../components/GalleyEditor';
+import { useGalley } from './useGalley';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -30,7 +30,7 @@ afterEach(() => {
   containers.length = 0;
 });
 
-describe('useNeutrino', () => {
+describe('useGalley', () => {
   it('provides reactive content and stable imperative wrappers', () => {
     const onChange = vi.fn();
     const observedExecCommands: unknown[] = [];
@@ -42,12 +42,12 @@ describe('useNeutrino', () => {
         setContent,
         execCommand,
         focus,
-      } = useNeutrino({ initialValue: '# Hello', onChange });
+      } = useGalley({ initialValue: '# Hello', onChange });
       observedExecCommands.push(execCommand);
 
       return (
         <>
-          <NeutrinoEditor
+          <GalleyEditor
             ref={editorRef}
             value={content}
             onChange={setContent}

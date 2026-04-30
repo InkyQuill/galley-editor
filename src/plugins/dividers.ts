@@ -1,6 +1,6 @@
 import { Decoration, WidgetType } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
 class DividerWidget extends WidgetType {
   widgetClass: string;
@@ -26,11 +26,11 @@ class DividerWidget extends WidgetType {
   }
 }
 
-const dividersPlugin: NeutrinoPlugin = {
-  id: 'ne:dividers',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const widgetClass = classNames.dividerWidget ?? 'ne-divider-widget';
-    const lineClass = classNames.divider ?? 'ne-divider';
+const dividersPlugin: GalleyPlugin = {
+  id: 'ge:dividers',
+  extensions(classNames: GalleyClassNames, context) {
+    const widgetClass = classNames.dividerWidget ?? 'ge-divider-widget';
+    const lineClass = classNames.divider ?? 'ge-divider';
     const lineDeco = Decoration.line({ class: lineClass });
     const revealStrategy = context?.mode === 'preview' ? false : 'line';
 

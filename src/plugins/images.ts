@@ -3,8 +3,8 @@ import type { EditorState } from '@codemirror/state';
 import { makeInlinePlugin } from '../rendering';
 import type {
   ImageRenderer,
-  NeutrinoClassNames,
-  NeutrinoPlugin,
+  GalleyClassNames,
+  GalleyPlugin,
 } from '../types';
 
 interface ParsedImage {
@@ -45,7 +45,7 @@ class ImageWidget extends WidgetType {
     }
 
     const wrapper = document.createElement('span');
-    wrapper.className = `${this.imageClass} ne-image-widget`;
+    wrapper.className = `${this.imageClass} ge-image-widget`;
     wrapper.append(rendered);
     return wrapper;
   }
@@ -75,7 +75,7 @@ function selectionIntersects(from: number, to: number, state: EditorState): bool
 
 function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
   const image = document.createElement('img');
-  image.className = 'ne-image';
+  image.className = 'ge-image';
   image.alt = alt;
   image.src = url;
   image.loading = 'lazy';
@@ -83,10 +83,10 @@ function defaultImageRenderer({ alt, url, title }: ParsedImage): HTMLElement {
   return image;
 }
 
-const imagesPlugin: NeutrinoPlugin = {
-  id: 'ne:images',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const imageClass = classNames.image ?? 'ne-image-frame';
+const imagesPlugin: GalleyPlugin = {
+  id: 'ge:images',
+  extensions(classNames: GalleyClassNames, context) {
+    const imageClass = classNames.image ?? 'ge-image-frame';
     const preview = context?.mode === 'preview';
     const renderer = context?.imageRenderer ?? defaultImageRenderer;
 

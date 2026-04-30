@@ -1,5 +1,5 @@
 /**
- * Core rendering engine: factories that turn a NeutrinoPluginSpec into CM6 extensions.
+ * Core rendering engige: factories that turn a GalleyPluginSpec into CM6 extensions.
  *
  * makeInlinePlugin — ViewPlugin (viewport-only, cheap). For inline marks.
  * makeBlockPlugin  — StateField (full-doc iteration). For multi-line blocks.
@@ -16,7 +16,7 @@ import {
 import { type EditorSelection, type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import type { SyntaxNodeRef } from '@lezer/common';
-import type { NeutrinoPluginSpec, RevealStrategy } from './types';
+import type { GalleyPluginSpec, RevealStrategy } from './types';
 
 // ── Shared constants ────────────────────────────────────────────────────────
 
@@ -50,7 +50,7 @@ function isLineDecoration(decoration: Decoration): boolean {
   return decoration.constructor === LINE_DECORATION_CONSTRUCTOR;
 }
 
-function validatePluginSpec(spec: NeutrinoPluginSpec): void {
+function validatePluginSpec(spec: GalleyPluginSpec): void {
   const rangeSelectorCount = [
     spec.getLineRange,
     spec.getMarkRange,
@@ -69,7 +69,7 @@ function defaultNodeRange(node: SyntaxNodeRef): { from: number; to: number } {
 }
 
 function getMarkRange(
-  spec: NeutrinoPluginSpec,
+  spec: GalleyPluginSpec,
   node: SyntaxNodeRef,
   state: EditorState,
 ): { from: number; to: number } | null {
@@ -77,7 +77,7 @@ function getMarkRange(
 }
 
 function getLineRange(
-  spec: NeutrinoPluginSpec,
+  spec: GalleyPluginSpec,
   node: SyntaxNodeRef,
   state: EditorState,
 ): { from: number; to: number } | null {
@@ -100,7 +100,7 @@ function addLineDecorations(
 }
 
 function selectionAffectsDecorations(
-  spec: NeutrinoPluginSpec,
+  spec: GalleyPluginSpec,
   prev: EditorSelection,
   next: EditorSelection,
 ): boolean {
@@ -111,7 +111,7 @@ function selectionAffectsDecorations(
 
 export function buildInlineDecorationsForRanges(
   view: EditorView,
-  spec: NeutrinoPluginSpec,
+  spec: GalleyPluginSpec,
   ranges: readonly { from: number; to: number }[],
 ): DecorationSet {
   const { state } = view;
@@ -200,7 +200,7 @@ export function buildInlineDecorationsForRanges(
   return Decoration.set(widgets, true);
 }
 
-export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
+export function makeInlinePlugin(spec: GalleyPluginSpec) {
   validatePluginSpec(spec);
 
   return ViewPlugin.fromClass(
@@ -244,7 +244,7 @@ export function makeInlinePlugin(spec: NeutrinoPluginSpec) {
 
 function buildBlockDecorations(
   state: EditorState,
-  spec: NeutrinoPluginSpec,
+  spec: GalleyPluginSpec,
 ): DecorationSet {
   const doc = state.doc;
   const cursorLine = doc.lineAt(state.selection.main.anchor);
@@ -307,7 +307,7 @@ function buildBlockDecorations(
   return Decoration.set(widgets, true);
 }
 
-export function makeBlockPlugin(spec: NeutrinoPluginSpec) {
+export function makeBlockPlugin(spec: GalleyPluginSpec) {
   validatePluginSpec(spec);
 
   const field = StateField.define<DecorationSet>({

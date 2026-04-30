@@ -1,6 +1,6 @@
 import { type EditorView, WidgetType } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
-import type { NeutrinoPlugin, NeutrinoClassNames } from '../types';
+import type { GalleyPlugin, GalleyClassNames } from '../types';
 
 /** Number of distinct visual bullet styles that cycle with nesting depth. */
 const DEPTH_STYLE_COUNT = 3;
@@ -13,7 +13,7 @@ export class BulletMarkerWidget extends WidgetType {
   constructor(depth: number, markerClass: string) {
     super();
     this.markerClass = markerClass;
-    this.depthClass = `ne-depth-${depth % DEPTH_STYLE_COUNT}`;
+    this.depthClass = `ge-depth-${depth % DEPTH_STYLE_COUNT}`;
   }
 
   eq(other: BulletMarkerWidget) {
@@ -27,13 +27,13 @@ export class BulletMarkerWidget extends WidgetType {
 
     // Sizing element preserves the width of the original marker
     const sizing = document.createElement('span');
-    sizing.className = 'ne-list-marker-sizing';
+    sizing.className = 'ge-list-marker-sizing';
     sizing.textContent = '-';
     span.appendChild(sizing);
 
     // Visual bullet
     const dot = document.createElement('span');
-    dot.className = 'ne-list-marker-dot';
+    dot.className = 'ge-list-marker-dot';
     span.appendChild(dot);
 
     return span;
@@ -54,10 +54,10 @@ export class BulletMarkerWidget extends WidgetType {
   }
 }
 
-const listsPlugin: NeutrinoPlugin = {
-  id: 'ne:lists',
-  extensions(classNames: NeutrinoClassNames, context) {
-    const markerClass = classNames.listMarker ?? 'ne-list-marker';
+const listsPlugin: GalleyPlugin = {
+  id: 'ge:lists',
+  extensions(classNames: GalleyClassNames, context) {
+    const markerClass = classNames.listMarker ?? 'ge-list-marker';
     const revealStrategy = context?.mode === 'preview' ? false : 'active';
 
     return [
