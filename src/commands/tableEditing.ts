@@ -27,10 +27,15 @@ function isTableCellRef(value: unknown): value is TableCellRef {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
 
   const candidate = value as Partial<TableCellRef>;
-  return Number.isInteger(candidate.row) &&
-    Number.isInteger(candidate.column) &&
-    candidate.row >= 0 &&
-    candidate.column >= 0;
+  const row = candidate.row;
+  const column = candidate.column;
+
+  return typeof row === 'number' &&
+    typeof column === 'number' &&
+    Number.isInteger(row) &&
+    Number.isInteger(column) &&
+    row >= 0 &&
+    column >= 0;
 }
 
 function isSupportedAlignment(value: unknown): value is TableAlignment {
