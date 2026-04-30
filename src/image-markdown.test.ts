@@ -73,6 +73,22 @@ describe('parseImageMarkdown', () => {
       to: raw.length,
     });
   });
+
+  it('parses single-quoted titles', () => {
+    expect(parseImageMarkdown("![a](url 'Title')")).toMatchObject({
+      alt: 'a',
+      url: 'url',
+      title: 'Title',
+    });
+  });
+
+  it('parses parenthesized titles', () => {
+    expect(parseImageMarkdown('![a](url (Title))')).toMatchObject({
+      alt: 'a',
+      url: 'url',
+      title: 'Title',
+    });
+  });
 });
 
 describe('serializeImageMarkdown', () => {
@@ -119,6 +135,13 @@ describe('serializeImageMarkdown', () => {
       height: 200,
     })).toBe('![x](a){#hero .wide width=100 height=200}');
   });
+
+  it('serializes parsed alternate title forms as double-quoted titles', () => {
+    const image = parseImageMarkdown("![a](url 'Title')");
+
+    expect(image).not.toBeNull();
+    expect(serializeImageMarkdown(image as GalleyImageInfo)).toBe('![a](url "Title")');
+  });
 });
 
 describe('imageAtSelection', () => {
@@ -137,6 +160,51 @@ describe('imageAtSelection', () => {
       raw,
       from,
       to: from + raw.length,
+    });
+  });
+
+  it('returns the second adjacent image when the cursor is at its start', () => {
+    const first = '![a](a){width=1}';
+    const second = '![b](b)';
+    const doc = `${first}${second}`;
+    const secondFrom = first.length;
+    const state = createMarkdownState(doc, EditorSelection.cursor(secondFrom));
+
+    expect(imageAtSelection(state)).toEqual({
+      alt: 'b',
+      url: 'b',
+      raw: second,
+      from: secondFrom,
+      to: secondFrom + second.length,
+    });
+  });
+
+  it('returns an image when the cursor is inside its trailing metadata attrs', () => {
+    const raw = '![a](a){width=1}';
+    const state = createMarkdownState(raw, EditorSelection.cursor(raw.indexOf('width')));
+
+    expect(imageAtSelection(state)).toMatchObject({
+      alt: 'a',
+      url: 'a',
+      width: 1,
+      raw,
+      from: 0,
+      to: raw.length,
+    });
+  });
+
+  it('skips an image when a non-empty selection only touches its endpoint', () => {
+    const first = '![a](a){width=1}';
+    const second = '![b](b)';
+    const doc = `${first}${second}`;
+    const state = createMarkdownState(doc, EditorSelection.range(first.length, doc.length));
+
+    expect(imageAtSelection(state)).toEqual({
+      alt: 'b',
+      url: 'b',
+      raw: second,
+      from: first.length,
+      to: doc.length,
     });
   });
 

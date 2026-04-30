@@ -66,7 +66,10 @@ function splitImageMarkdown(raw: string): {
 }
 
 function splitTitle(target: string): { url: string; title?: string } {
-  const titleMatch = /^(?<url>.+?)\s+"(?<title>[^"]*)"$/.exec(target);
+  const titleMatch =
+    /^(?<url>.+?)\s+"(?<title>[^"]*)"$/.exec(target) ??
+    /^(?<url>.+?)\s+'(?<title>[^']*)'$/.exec(target) ??
+    /^(?<url>.+?)\s+\((?<title>[^)]*)\)$/.exec(target);
   if (!titleMatch?.groups) return { url: target };
 
   const title = titleMatch.groups.title;
@@ -86,8 +89,16 @@ function selectionIntersectsRange(
   selection: EditorState['selection']['main'],
   from: number,
   to: number,
+  docLength: number,
 ): boolean {
-  return selection.from <= to && selection.to >= from;
+  if (selection.empty) {
+    return selection.head >= from && (
+      selection.head < to ||
+      (selection.head === to && to === docLength)
+    );
+  }
+
+  return selection.from < to && selection.to > from;
 }
 
 export function parseImageMarkdown(
@@ -146,7 +157,7 @@ export function imageAtSelection(state: EditorState): GalleyImageInfo | null {
       if (node.name !== 'Image') return;
 
       const to = node.to + imageTrailingAttrsLength(state, node.to);
-      if (!selectionIntersectsRange(selection, node.from, to)) return false;
+      if (!selectionIntersectsRange(selection, node.from, to, state.doc.length)) return false;
 
       found = parseImageMarkdown(state.sliceDoc(node.from, to), node.from, to);
       return false;
