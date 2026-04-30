@@ -66,3 +66,22 @@ publish:
     - echo "@inky:registry=https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" > .npmrc
     - echo "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${CI_JOB_TOKEN}" >> .npmrc
     - npm publish
+
+pages:
+  stage: publish
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - npm ci --legacy-peer-deps --no-audit --no-fund
+    - npm run build-storybook
+    - npm --prefix docs-site ci --no-audit --no-fund
+    - npm --prefix docs-site run build
+    - rm -rf public
+    - mkdir public
+    - cp -R docs-site/dist/. public/
+    - mkdir -p public/storybook
+    - cp -R storybook-static/. public/storybook/
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week

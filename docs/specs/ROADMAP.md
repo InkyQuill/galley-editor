@@ -17,12 +17,12 @@ A React component library exposing a half-WYSIWYG markdown editor (live preview,
 
 - **Registry:** GitLab Package Registry on `git.inkyquill.net`, project `inky/galley-editor`.
 - **Scope:** `@inky`.
-- **Auth:** CI publishes via `CI_JOB_TOKEN` on tag pushes matching `v*.*.*`. Consumers configure `.npmrc` with a personal `read_package_registry`-scoped token.
+- **Auth:** CI publishes via `CI_JOB_TOKEN` on tag pushes matching `v*.*.*`. Consumers only configure the `@inky` registry scope; the public project allows anonymous package pulls.
 - **Public publish (npmjs):** deferred to v1.0.0; the build is produced by CI but the actual `npm publish --registry=https://registry.npmjs.org` is a separate human action.
 
 ## Milestones
 
-Each milestone is independently shippable to the private GitLab registry. Implementation is sequential — no milestone starts until the previous is tagged.
+Each milestone is independently shippable to the GitLab Package Registry. Implementation is sequential — no milestone starts until the previous is tagged.
 
 | Version | Title | Status | Spec | Tag |
 |---|---|---|---|---|

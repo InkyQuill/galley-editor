@@ -15,16 +15,15 @@ A React component that provides a half-WYSIWYG markdown editing experience. Buil
 
 ## Installation
 
-This package is currently published to the GitLab Package Registry.
+This package is currently published to the GitLab Package Registry from a public project. Consumers only need to point the `@inky` scope at the registry; no token is required to install.
 
-1. Configure npm to resolve `@inky` against the GitLab registry. Copy [`.npmrc.example`](./.npmrc.example) to your project root as `.npmrc` and supply a token:
+1. Configure npm to resolve `@inky` against the GitLab registry. Copy [`.npmrc.example`](./.npmrc.example) to your project root as `.npmrc`, or add this line manually:
 
    ```
    @inky:registry=https://git.inkyquill.net/api/v4/packages/npm/
-   //git.inkyquill.net/api/v4/packages/npm/:_authToken=${GITLAB_TOKEN}
    ```
 
-   Generate the token at *git.inkyquill.net → User Settings → Access Tokens*, scoped to `read_package_registry`.
+   Because `inky/galley-editor` is public, package pulls are anonymous. Maintainer publishing still uses authenticated CI.
 
 2. Install:
 
@@ -69,6 +68,8 @@ function App() {
 - [Styling](docs/styling.md)
 - [Roadmap](docs/specs/ROADMAP.md)
 
+Public documentation website sources live in [`docs-site/`](docs-site/). The site is built with Astro Starlight and published together with Storybook in one GitLab Pages instance.
+
 ## Development
 
 ```bash
@@ -77,6 +78,7 @@ cd galley-editor
 npm install --legacy-peer-deps
 npm run dev          # demo app
 npm run storybook    # component playground
+npm run docs:dev     # documentation site
 npm run test         # unit tests
 npm run build:lib    # build the publishable library
 ```

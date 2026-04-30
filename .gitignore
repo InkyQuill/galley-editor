@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 storybook-static
+docs-site/.astro
 .remember
 coverage
 .worktrees

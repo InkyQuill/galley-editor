@@ -8,6 +8,8 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores([
     'dist',
+    'docs-site/.astro',
+    'docs-site/dist',
     'storybook-static',
     '.remember',
     '.worktrees',
