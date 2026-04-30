@@ -178,11 +178,31 @@ export type BuiltinCommand =
   | 'insertHr'
   | 'indent'
   | 'outdent'
+  | 'duplicateLine'
+  | 'sortSelectedLines'
+  | 'swapLineUp'
+  | 'swapLineDown'
+  | 'insertLineAfter'
+  | 'insertLineBefore'
+  | 'jumpToHash'
+  | 'findInDocument'
   | 'undo'
   | 'redo'
   | 'selectAll';
 
 export type CommandFn = (view: EditorView, ...args: unknown[]) => unknown;
+
+export interface FindOpts {
+  caseSensitive?: boolean;
+  wholeWord?: boolean;
+  regex?: boolean;
+}
+
+export interface FindResult {
+  from: number;
+  to: number;
+  line: number;
+}
 
 // ── Imperative handle (exposed via React ref) ───────────────────────────────
 

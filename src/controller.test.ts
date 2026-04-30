@@ -6,6 +6,7 @@ import {
   type ControllerSettings,
   type EditorCallbacks,
 } from './controller';
+import { DEFAULT_KEYMAP } from './commands';
 
 const controllers: EditorController[] = [];
 const parents: HTMLElement[] = [];
@@ -224,6 +225,75 @@ describe('EditorController key handling', () => {
       which: 13,
     });
     expect(controller.getContent()).toBe('hello\n');
+  });
+
+  it('exports the v0.5 default key bindings', () => {
+    expect(DEFAULT_KEYMAP.map((binding) => binding.key)).toEqual(
+      expect.arrayContaining([
+        'Mod-d',
+        'Alt-ArrowUp',
+        'Alt-ArrowDown',
+        'Mod-Alt-ArrowUp',
+        'Mod-Alt-ArrowDown',
+      ]),
+    );
+  });
+
+  it('uses Mod-D to duplicate the current line by default', () => {
+    const controller = createController('one\ntwo');
+    controller.select(1);
+
+    const event = dispatchKey(controller.view, {
+      key: 'D',
+      code: 'KeyD',
+      keyCode: 68,
+      which: 68,
+      ctrlKey: true,
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(controller.getContent()).toBe('one\none\ntwo');
+  });
+
+  it('lets array-form keymap replace defaults completely', () => {
+    const custom = vi.fn(() => true);
+    const controller = createController('one\ntwo', {}, {
+      keymap: [{ key: 'F8', run: () => custom() }],
+    });
+    controller.select(1);
+
+    const duplicate = dispatchKey(controller.view, {
+      key: 'D',
+      code: 'KeyD',
+      keyCode: 68,
+      which: 68,
+      ctrlKey: true,
+    });
+    const f8 = dispatchKey(controller.view, {
+      key: 'F8',
+      code: 'F8',
+      keyCode: 119,
+      which: 119,
+    });
+
+    expect(duplicate.defaultPrevented).toBe(false);
+    expect(controller.getContent()).toBe('one\ntwo');
+    expect(custom).toHaveBeenCalledOnce();
+    expect(f8.defaultPrevented).toBe(true);
+  });
+
+  it('passes exported defaults to the function-form keymap', () => {
+    let receivedDefaults: string[] = [];
+    createController('hello', {}, {
+      keymap: (defaults) => {
+        receivedDefaults = defaults.map((binding) => binding.key ?? '');
+        return defaults;
+      },
+    });
+
+    expect(receivedDefaults).toEqual(
+      expect.arrayContaining(DEFAULT_KEYMAP.map((binding) => binding.key ?? '')),
+    );
   });
 });
 

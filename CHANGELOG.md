@@ -8,6 +8,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-30
+
 ### Added
 - Visual rendering for inactive fenced code blocks with language badges, copy buttons, and dependency-free default highlighting.
 - `codeHighlighter` prop so consumers can integrate highlight.js, Shiki, Prism, or a custom highlighter without Neutrino depending on one.
@@ -19,12 +21,17 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - `mode`, `onModeChange`, and the toolbar mode toggle for live, raw Markdown, and rendered preview modes.
 - Toolbar icon overrides for inline SVGs, icon components, and render functions.
 - `surface` prop and CSS variables for shell styling, frosted glass, gradients, and editor padding overrides.
+- `duplicateLine`, `sortSelectedLines`, `swapLineUp`, `swapLineDown`, `insertLineAfter`, and `insertLineBefore` editing commands.
+- `findInDocument` and `jumpToHash` navigation helpers, available as named exports and built-in commands.
+- `DEFAULT_KEYMAP` and `BUILTIN_COMMAND_NAMES` exports for command discovery and keymap customization.
+- `docs/commands.md` command reference.
 
 ### Changed
 - Default base stylesheet now skins the full editor shell, toolbar, editing surface, code blocks, tables, and footer in light and dark themes.
 - Link source reveal now expands the full `[label](url)` when the cursor is inside the link.
 - `editable={false}` now renders the editor in preview mode so rendered Markdown blocks do not revert to source on interaction.
 - The logo tooltip now reads `Neutrino Editor v.{version} by Inky Quill`.
+- Array-form `keymap` now fully replaces the default keymap. Function-form `keymap` still receives defaults and returns the full keymap.
 
 ## [0.4.0] — 2026-04-29
 
@@ -105,7 +112,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.4.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/neutrino-editor/-/compare/v0.5.0...HEAD
+[0.5.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.5.0
 [0.4.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.4.0
 [0.3.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.3.0
 [0.2.0]: https://git.inkyquill.net/inky/neutrino-editor/-/tags/v0.2.0

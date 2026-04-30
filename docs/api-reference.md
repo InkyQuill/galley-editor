@@ -34,7 +34,7 @@ import { NeutrinoEditor } from '@inky/neutrino-editor';
 | `classNames` | `NeutrinoClassNames` | `DEFAULT_CLASS_NAMES` | Override semantic CSS class names |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme |
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
-| `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Override or extend the default CodeMirror keymap |
+| `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
 | `toolbar` | `boolean \| NeutrinoToolbarOptions` | `true` | Show and customize the built-in command toolbar |
 | `footer` | `boolean \| FooterOptions` | `true` | Show the built-in status footer with word count, character count, and logo |
@@ -129,6 +129,8 @@ Executes a built-in or custom command by name. Custom commands take precedence. 
 ```typescript
 ref.current.execCommand('toggleBold');
 ref.current.execCommand('insertLink', 'Click here', 'https://example.com');
+ref.current.execCommand('duplicateLine');
+ref.current.execCommand('jumpToHash', 'my-section');
 ```
 
 #### `registerCommand(name: string, fn: CommandFn): void`
@@ -329,6 +331,10 @@ type BuiltinCommand =
   | 'toggleBulletList' | 'toggleOrderedList' | 'toggleCheckList'
   | 'insertLink' | 'insertImage' | 'insertCodeBlock' | 'insertTable' | 'insertHr'
   | 'indent' | 'outdent'
+  | 'duplicateLine' | 'sortSelectedLines'
+  | 'swapLineUp' | 'swapLineDown'
+  | 'insertLineAfter' | 'insertLineBefore'
+  | 'jumpToHash' | 'findInDocument'
   | 'undo' | 'redo' | 'selectAll';
 ```
 
@@ -336,6 +342,22 @@ type BuiltinCommand =
 
 ```typescript
 type CommandFn = (view: EditorView, ...args: unknown[]) => unknown;
+```
+
+### `FindOpts` and `FindResult`
+
+```typescript
+interface FindOpts {
+  caseSensitive?: boolean;
+  wholeWord?: boolean;
+  regex?: boolean;
+}
+
+interface FindResult {
+  from: number;
+  to: number;
+  line: number;
+}
 ```
 
 ### `CodeHighlighter`
@@ -382,6 +404,22 @@ Constant `1`. In `makeBlockPlugin`, decorations are hidden when the cursor is wi
 
 The registry of all built-in commands. Each command is a function that takes an `EditorView` and optional arguments.
 
+### `BUILTIN_COMMAND_NAMES: readonly BuiltinCommand[]`
+
+Autocomplete-friendly list of built-in command names.
+
+### `DEFAULT_KEYMAP: KeyBinding[]`
+
+The default command keybindings, including `Mod-D` duplicate line, line swapping, insert-line commands, link insertion, undo/redo, and select-all.
+
+### `findInDocument(view, needle, opts?): FindResult[]`
+
+Named export for programmatic search. The same behavior is available through `execCommand('findInDocument', needle, opts)`.
+
+### `jumpToHash(view, hash): boolean`
+
+Named export for heading navigation. Accepts hashes with or without a leading `#`.
+
 #### Inline Formatting
 
 | Command | Description | Arguments |
@@ -421,6 +459,14 @@ The registry of all built-in commands. Each command is a function that takes an 
 |---|---|---|
 | `indent` | Indents selected lines by one tab unit | -- |
 | `outdent` | Outdents selected lines by one tab unit | -- |
+| `duplicateLine` | Duplicates touched lines and moves selection to the duplicate | -- |
+| `sortSelectedLines` | Sorts selected lines in place | `'asc' \| 'desc'` or `{ direction?: 'asc' \| 'desc'; wholeDocument?: boolean }` |
+| `swapLineUp` | Swaps touched lines with the line above | -- |
+| `swapLineDown` | Swaps touched lines with the line below | -- |
+| `insertLineAfter` | Inserts blank lines after touched lines | -- |
+| `insertLineBefore` | Inserts blank lines before touched lines | -- |
+| `jumpToHash` | Jumps to a markdown heading slug | `hash: string` |
+| `findInDocument` | Returns search match positions | `needle: string`, `opts?: FindOpts` |
 | `undo` | Undoes last change | -- |
 | `redo` | Redoes last undone change | -- |
 | `selectAll` | Selects all document content | -- |

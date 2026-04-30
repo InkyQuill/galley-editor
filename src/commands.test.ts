@@ -3,7 +3,7 @@ import { EditorState, EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { history } from '@codemirror/commands';
-import { BUILTIN_COMMANDS } from './commands';
+import { BUILTIN_COMMAND_NAMES, BUILTIN_COMMANDS, findInDocument } from './commands';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -487,6 +487,35 @@ describe('selectAll', () => {
     const sel = view.state.selection.main;
     expect(sel.from).toBe(0);
     expect(sel.to).toBe(11);
+  });
+});
+
+describe('v0.5 command registry', () => {
+  it('exports names for all built-in commands', () => {
+    expect(BUILTIN_COMMAND_NAMES).toEqual(
+      expect.arrayContaining([
+        'duplicateLine',
+        'sortSelectedLines',
+        'swapLineUp',
+        'swapLineDown',
+        'insertLineAfter',
+        'insertLineBefore',
+        'jumpToHash',
+        'findInDocument',
+      ]),
+    );
+  });
+
+  it('exposes findInDocument as a named export and built-in command', () => {
+    const view = tracked(createView('alpha beta alpha', 0));
+
+    expect(findInDocument(view, 'alpha')).toEqual([
+      { from: 0, to: 5, line: 1 },
+      { from: 11, to: 16, line: 1 },
+    ]);
+    expect(BUILTIN_COMMANDS.findInDocument(view, 'beta')).toEqual([
+      { from: 6, to: 10, line: 1 },
+    ]);
   });
 });
 

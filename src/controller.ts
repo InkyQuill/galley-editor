@@ -36,6 +36,7 @@ import { autosizeExtension } from './autosize';
 import { BUILT_IN_PLUGINS } from './plugins';
 import {
   BUILTIN_COMMANDS,
+  DEFAULT_KEYMAP,
   makeSmartBackspaceTransaction,
   makeSmartEnterTransaction,
   makeSmartTabTransaction,
@@ -342,8 +343,23 @@ export class EditorController implements NeutrinoHandle {
     return true;
   }
 
+  private buildCommandKeymap(): KeyBinding[] {
+    return DEFAULT_KEYMAP.map((binding) => {
+      if (!binding.command) return binding;
+      const { command, args = [] } = binding;
+      return {
+        key: binding.key,
+        shift: binding.shift,
+        preventDefault: binding.preventDefault,
+        stopPropagation: binding.stopPropagation,
+        scope: binding.scope,
+        run: () => this.execCommand(command, ...args) !== false,
+      } satisfies KeyBinding;
+    });
+  }
+
   private buildKeymap(settings: ControllerSettings): Extension {
-    const commandDefaults: KeyBinding[] = [
+    const controllerDefaults: KeyBinding[] = [
       { key: 'Enter', run: (cm) => this.handleEnter(cm, false, false) },
       { key: 'Shift-Enter', run: (cm) => this.handleDefaultEnter(cm) },
       { key: 'Mod-Enter', run: (cm) => this.handleEnter(cm, true, false) },
@@ -358,20 +374,19 @@ export class EditorController implements NeutrinoHandle {
           return handled === true;
         },
       },
-      { key: 'Mod-K', run: () => !!this.execCommand('insertLink') },
-      { key: 'Mod-b', run: () => !!this.execCommand('toggleBold') },
-      { key: 'Mod-i', run: () => !!this.execCommand('toggleItalic') },
-      { key: 'Mod-z', run: () => !!this.execCommand('undo') },
-      { key: 'Mod-Shift-z', run: () => !!this.execCommand('redo') },
-      { key: 'Mod-a', run: () => !!this.execCommand('selectAll') },
     ];
 
-    const combinedKeymap = [...commandDefaults, ...standardKeymap, ...historyKeymap];
+    const combinedKeymap = [
+      ...controllerDefaults,
+      ...this.buildCommandKeymap(),
+      ...standardKeymap,
+      ...historyKeymap,
+    ];
     if (typeof settings.keymap === 'function') {
       return keymap.of(settings.keymap(combinedKeymap));
     }
     if (settings.keymap) {
-      return keymap.of([...combinedKeymap, ...settings.keymap]);
+      return keymap.of(settings.keymap);
     }
     return keymap.of(combinedKeymap);
   }

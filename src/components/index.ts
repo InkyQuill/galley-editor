@@ -9,8 +9,16 @@ export type {
   NeutrinoPlugin,
   NeutrinoPluginSpec,
   NeutrinoClassNames,
+  NeutrinoMode,
+  NeutrinoToolbarOptions,
+  NeutrinoFooterOptions,
+  NeutrinoSurfaceOptions,
+  ToolbarIconName,
+  ToolbarIconRenderer,
   BuiltinCommand,
   CommandFn,
+  FindOpts,
+  FindResult,
   RevealStrategy,
 } from '../types';
 
@@ -26,6 +34,7 @@ export {
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  imagesPlugin,
   listsPlugin,
   checkboxesPlugin,
   dividersPlugin,
@@ -33,4 +42,21 @@ export {
 } from '../plugins';
 
 // Built-in commands
-export { BUILTIN_COMMANDS } from '../commands';
+export {
+  BUILTIN_COMMANDS,
+  BUILTIN_COMMAND_NAMES,
+  DEFAULT_KEYMAP,
+  duplicateLine,
+  sortSelectedLines,
+  swapLineUp,
+  swapLineDown,
+  insertLineAfter,
+  insertLineBefore,
+  jumpToHash,
+  slugifyHeading,
+  findInDocument,
+} from '../commands';
+export type {
+  NeutrinoKeyBinding,
+  SortSelectedLinesOptions,
+} from '../commands';
