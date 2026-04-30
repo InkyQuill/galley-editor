@@ -8,12 +8,10 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
-### Added
-- Hybrid upload UX with inline progress placeholders, drop indicators, optional overlay/locked mode, missing-image placeholders, and visual image resize handles.
-
 ## [0.8.0] — 2026-04-30
 
 ### Added
+- Hybrid upload UX with inline progress placeholders, drop indicators, optional overlay/locked mode, missing-image placeholders, and visual image resize handles.
 - File paste/drop workflows through `onFiles` and `onFileError`, with consumer-returned markdown inserted at the original paste selection or drop position.
 - Upload status/progress reporting through `onFileStatus` and the per-operation `input.report()` progress channel.
 - Expanded `imageRenderer` metadata with `url`, `title`, `width`, `height`, raw source, preserved attrs, and source positions.

@@ -867,7 +867,7 @@ export const MissingImagePlaceholder: Story = {
 
 function ImageResizeHandlesStory() {
   const [value, setValue] = useState(
-    '## Launch Image\n\n![Launch dashboard](/uploads/launch-dashboard.png "Dashboard"){width=480 height=270}\n\nThe surrounding copy summarizes the latest release metrics.',
+    `## Launch Image\n\n![Launch dashboard](${galleyLogo} "Dashboard"){width=480 height=270}\n\nThe surrounding copy summarizes the latest release metrics.`,
   );
 
   return (
@@ -893,7 +893,7 @@ export const ImageResizeHandles: Story = {
 
 function ImageSourceRevealStory() {
   const [value, setValue] = useState(
-    '## Source Reveal\n\n![Campaign hero](/uploads/campaign-hero.png "Campaign hero"){width=520 height=292}\n\nThe campaign copy references the hero image above.',
+    `## Source Reveal\n\n![Campaign hero](${galleyMark} "Campaign hero"){width=520 height=292}\n\nThe campaign copy references the hero image above.`,
   );
 
   return (
