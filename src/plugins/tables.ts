@@ -44,6 +44,11 @@ interface SelectedTableCell {
   draft: string | null;
 }
 
+interface SourceEscapedTable {
+  from: number;
+  to: number;
+}
+
 type TableCommand = (view: EditorView) => boolean;
 
 const selectTableCell = StateEffect.define<SelectedTableCell | null>({
@@ -77,6 +82,38 @@ const selectedTableCellField = StateField.define<SelectedTableCell | null>({
     }
 
     if (transaction.selection && !hasSelectionEffect) return null;
+    return next;
+  },
+});
+
+const sourceEscapedTable = StateEffect.define<SourceEscapedTable | null>({
+  map(value, changes) {
+    if (!value) return null;
+
+    const from = changes.mapPos(value.from, 1);
+    const to = changes.mapPos(value.to, -1);
+    return from < to ? { from, to } : null;
+  },
+});
+
+const sourceEscapedTableField = StateField.define<SourceEscapedTable | null>({
+  create() {
+    return null;
+  },
+  update(value, transaction) {
+    let next = value;
+    if (next && transaction.docChanged) {
+      const from = transaction.changes.mapPos(next.from, 1);
+      const to = transaction.changes.mapPos(next.to, -1);
+      next = from < to ? { from, to } : null;
+    }
+
+    for (const effect of transaction.effects) {
+      if (effect.is(sourceEscapedTable)) {
+        next = effect.value;
+      }
+    }
+
     return next;
   },
 });
@@ -222,7 +259,10 @@ class TableWidget extends WidgetType {
       if (event.ctrlKey || event.metaKey) {
         view.dispatch({
           selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
-          effects: selectTableCell.of(null),
+          effects: [
+            selectTableCell.of(null),
+            sourceEscapedTable.of({ from: this.table.from, to: this.table.to }),
+          ],
         });
         revealTableSource(view, tableCellInfo);
         return;
@@ -230,7 +270,10 @@ class TableWidget extends WidgetType {
 
       view.dispatch({
         selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
-        effects: selectTableCell.of(selection),
+        effects: [
+          selectTableCell.of(selection),
+          sourceEscapedTable.of(null),
+        ],
       });
     });
   }
@@ -340,12 +383,7 @@ class TableWidget extends WidgetType {
       { label: 'Align column center', text: 'C', run: (editorView) => setTableColumnAlignment(editorView, 'center') },
       { label: 'Align column right', text: 'R', run: (editorView) => setTableColumnAlignment(editorView, 'right') },
       { label: 'Clear column alignment', text: 'x', run: (editorView) => setTableColumnAlignment(editorView, null) },
-      {
-        label: 'Edit table source',
-        text: '{}',
-        reveal: true,
-        run: (editorView) => revealTableSource(editorView, this.selected?.cell),
-      },
+      { label: 'Edit table source', text: '{}', reveal: true, run: (editorView) => this.revealSource(editorView) },
     ];
 
     for (const buttonInfo of buttons) {
@@ -365,6 +403,19 @@ class TableWidget extends WidgetType {
     }
 
     return controls;
+  }
+
+  private revealSource(view: EditorView): boolean {
+    const revealed = revealTableSource(view, this.selected?.cell);
+    if (!revealed) return false;
+
+    view.dispatch({
+      effects: [
+        selectTableCell.of(null),
+        sourceEscapedTable.of({ from: this.table.from, to: this.table.to }),
+      ],
+    });
+    return true;
   }
 }
 
@@ -415,6 +466,10 @@ function tableSelectionIntersects(state: EditorState, table: GalleyTable): boole
 
 function selectedTableMatchesTable(selected: SelectedTableCell | null, table: GalleyTable): boolean {
   return selected?.tableFrom === table.from && selected.tableTo === table.to;
+}
+
+function sourceEscapeMatchesTable(sourceEscape: SourceEscapedTable | null, table: GalleyTable): boolean {
+  return sourceEscape?.from === table.from && sourceEscape.to === table.to;
 }
 
 function selectCellAtCurrentTableSelection(view: EditorView): void {
@@ -478,6 +533,7 @@ function buildTableDecorations(
 ): DecorationSet {
   const widgets: Range<Decoration>[] = [];
   const selectedCell = state.field(selectedTableCellField);
+  const sourceEscape = state.field(sourceEscapedTableField);
 
   syntaxTree(state).iterate({
     enter(node) {
@@ -487,7 +543,7 @@ function buildTableDecorations(
       if (!table) return;
 
       const selectedForTable = selectedTableMatchesTable(selectedCell, table) ? selectedCell : null;
-      if (canEdit && !preview && tableSelectionIntersects(state, table) && !selectedForTable) {
+      if (canEdit && !preview && sourceEscapeMatchesTable(sourceEscape, table) && tableSelectionIntersects(state, table)) {
         return;
       }
 
@@ -516,10 +572,13 @@ function makeTableDecorationsField(
       const selectedChanged =
         transaction.startState.field(selectedTableCellField) !==
         transaction.state.field(selectedTableCellField);
+      const sourceEscapeChanged =
+        transaction.startState.field(sourceEscapedTableField) !==
+        transaction.state.field(sourceEscapedTableField);
       const selectionChanged = !transaction.newSelection.eq(transaction.startState.selection);
       const treeChanged = syntaxTree(transaction.state) !== syntaxTree(transaction.startState);
 
-      if (transaction.docChanged || selectionChanged || selectedChanged || treeChanged) {
+      if (transaction.docChanged || selectionChanged || selectedChanged || sourceEscapeChanged || treeChanged) {
         return buildTableDecorations(transaction.state, tableClass, preview, canEdit);
       }
 
@@ -582,6 +641,7 @@ const tablesPlugin: GalleyPlugin = {
 
     return [
       selectedTableCellField,
+      sourceEscapedTableField,
       makeTableDecorationsField(tableClass, preview, canEdit),
       makeTablesViewPlugin(preview, canEdit),
     ];

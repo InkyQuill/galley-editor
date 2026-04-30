@@ -79,6 +79,14 @@ describe('tablesPlugin', () => {
     expect(table?.querySelector('tbody td')?.textContent).toBe('1');
   });
 
+  it('keeps editable live parseable tables rendered when editor selection is inside source', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc, 'one');
+
+    expect(view.dom.querySelector('.ge-table-widget table')).toBeInstanceOf(HTMLTableElement);
+    expect(lineElement(view, 1).textContent).not.toContain('| A | B |');
+  });
+
   it('selects a rendered cell without revealing source on normal click', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc);
@@ -99,6 +107,20 @@ describe('tablesPlugin', () => {
     expect(view.state.selection.main.head).toBe(doc.indexOf('two'));
     expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
   });
+
+  it('reveals table source from the edit source control', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    view.dom.querySelector('button[aria-label="Edit table source"]')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(view.state.selection.main.head).toBe(doc.indexOf('two'));
+    expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
+    expect(lineElement(view, 1).textContent).toContain('| A | B |');
+  });
+
 
   it('starts editing from a printable key and commits with Enter', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
