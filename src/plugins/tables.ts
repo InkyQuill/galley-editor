@@ -118,6 +118,14 @@ const sourceEscapedTableField = StateField.define<SourceEscapedTable | null>({
   },
 });
 
+function selectedTableCellState(state: EditorState): SelectedTableCell | null {
+  return state.field(selectedTableCellField, false) ?? null;
+}
+
+function sourceEscapedTableState(state: EditorState): SourceEscapedTable | null {
+  return state.field(sourceEscapedTableField, false) ?? null;
+}
+
 class TableWidget extends WidgetType {
   table: GalleyTable;
   tableClass: string;
@@ -656,8 +664,8 @@ function buildTableDecorations(
   canEdit: boolean,
 ): DecorationSet {
   const widgets: Range<Decoration>[] = [];
-  const selectedCell = state.field(selectedTableCellField);
-  const sourceEscape = state.field(sourceEscapedTableField);
+  const selectedCell = selectedTableCellState(state);
+  const sourceEscape = sourceEscapedTableState(state);
 
   syntaxTree(state).iterate({
     enter(node) {
@@ -694,11 +702,11 @@ function makeTableDecorationsField(
     },
     update(decorations, transaction) {
       const selectedChanged =
-        transaction.startState.field(selectedTableCellField) !==
-        transaction.state.field(selectedTableCellField);
+        selectedTableCellState(transaction.startState) !==
+        selectedTableCellState(transaction.state);
       const sourceEscapeChanged =
-        transaction.startState.field(sourceEscapedTableField) !==
-        transaction.state.field(sourceEscapedTableField);
+        sourceEscapedTableState(transaction.startState) !==
+        sourceEscapedTableState(transaction.state);
       const selectionChanged = !transaction.newSelection.eq(transaction.startState.selection);
       const treeChanged = syntaxTree(transaction.state) !== syntaxTree(transaction.startState);
 
@@ -726,7 +734,7 @@ function makeTablesViewPlugin(
     eventHandlers: {
       keydown(event, view) {
         if (!canEdit || preview || view.state.readOnly) return false;
-        const selected = view.state.field(selectedTableCellField);
+        const selected = selectedTableCellState(view.state);
         if (!selected || selected.editing) return false;
 
         const table = parseMarkdownTable(
