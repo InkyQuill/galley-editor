@@ -37,6 +37,8 @@
   --sl-sidebar-width: 18.5rem;
   --sl-content-width: 60rem;
   --sl-content-pad-x: clamp(1rem, 3vw, 3rem);
+  --galley-frame-width: min(89rem, calc(100vw - 2rem));
+  --galley-frame-gutter: max(1rem, calc((100vw - 89rem) / 2));
 }
 
 html {
@@ -44,6 +46,7 @@ html {
     radial-gradient(circle at 18% 0%, rgba(85, 112, 220, 0.2), transparent 34rem),
     radial-gradient(circle at 84% 18%, rgba(76, 124, 214, 0.14), transparent 32rem),
     linear-gradient(135deg, #0e141e 0%, #121824 48%, #0d121b 100%);
+  background-attachment: fixed;
 }
 
 html::before,
@@ -95,17 +98,22 @@ body::before {
     border-radius: 1.5rem;
     box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     margin: clamp(1rem, 4vw, 3rem) auto;
-    max-width: min(89rem, calc(100vw - 2rem));
+    max-width: var(--galley-frame-width);
     min-height: calc(100vh - clamp(2rem, 8vw, 6rem));
     overflow: clip;
     position: relative;
   }
 
   .page > .header {
-    left: 50% !important;
-    max-width: min(89rem, calc(100vw - 2rem));
-    transform: translateX(-50%);
-    width: 100% !important;
+    left: var(--galley-frame-gutter) !important;
+    max-width: none;
+    transform: none;
+    width: var(--galley-frame-width) !important;
+  }
+
+  .page .sidebar-pane {
+    inset-inline-start: var(--galley-frame-gutter);
+    width: var(--sl-sidebar-width);
   }
 }
 
@@ -225,6 +233,14 @@ h1 {
 
 .right-sidebar-panel {
   border-inline-start: 1px solid var(--galley-border);
+}
+
+@media (min-width: 72rem) {
+  .right-sidebar {
+    border-inline-end: 1px solid var(--galley-border-strong);
+    inset-inline-end: var(--galley-frame-gutter);
+    width: calc((var(--galley-frame-width) - var(--sl-content-width)) / 2);
+  }
 }
 
 .galley-home {

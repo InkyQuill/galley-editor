@@ -25,6 +25,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `onChange` | `(value: string) => void` | | Called when the document changes. |
 | `editable` | `boolean` | `true` | Enables or disables editing. |
 | `placeholder` | `string` | `''` | Placeholder text for an empty document. |
+| `ariaLabel` | `string` | | Accessible name applied to the underlying CodeMirror content element. |
 | `minRows` | `number` | `3` | Minimum visible editor rows. |
 | `maxRows` | `number` | | Maximum visible rows before scrolling. |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme. |

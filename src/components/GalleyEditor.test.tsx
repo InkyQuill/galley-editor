@@ -205,6 +205,23 @@ describe('GalleyEditor React wrapper', () => {
     expect(wrapper?.getAttribute('data-theme')).toBe('dark');
   });
 
+  it('applies ariaLabel to the editable content element', () => {
+    const { container, root } = mount(
+      <GalleyEditor value="hello" theme="light" ariaLabel="Release notes body" />,
+    );
+    const content = container.querySelector('.cm-content');
+
+    expect(content).toBeInstanceOf(HTMLElement);
+    expect(content?.getAttribute('aria-label')).toBe('Release notes body');
+
+    rerender(
+      root,
+      <GalleyEditor value="hello" theme="light" ariaLabel="Archived note body" />,
+    );
+
+    expect(content?.getAttribute('aria-label')).toBe('Archived note body');
+  });
+
   it('updates auto theme when the preferred color scheme changes', () => {
     const mediaList = mockPrefersDark(false);
     const { container, root } = mount(<GalleyEditor value="hello" theme="auto" />);

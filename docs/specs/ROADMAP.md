@@ -34,6 +34,7 @@ Each milestone is independently shippable to the GitLab Package Registry. Implem
 | 0.7.0 | Public Repository Cleanup | shipped 2026-04-30 | [v0.7-public-cleanup.md](./v0.7-public-cleanup.md) | v0.7.0 |
 | 0.8.0 | Asset Workflows | shipped 2026-04-30 | [v0.8 asset workflows design](../superpowers/specs/2026-04-30-v0.8-asset-workflows-design.md) | v0.8.0 |
 | 0.9.0 | Table Editing | shipped 2026-05-01 | [v0.9 table editing design](../superpowers/specs/2026-04-30-v0.9-advanced-authoring-design.md) | v0.9.0 |
+| 0.9.1 | Consumer Integration Polish | shipped 2026-05-01 | Consumer feedback patch: accessible naming, public LLM docs, and customization recipes | v0.9.1 |
 | 0.10.0 | KaTeX/Mermaid Renderer Examples | draft | — | — |
 | 1.0.0 | Public Release & API Stabilization | draft | [v1.0 API stabilization design](../superpowers/specs/2026-04-30-v1.0-api-stabilization-design.md), [v1.0-public-release.md](./v1.0-public-release.md) | — |
 

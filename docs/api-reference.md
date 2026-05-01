@@ -27,6 +27,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `onChange` | `(value: string) => void` | -- | Called when the document changes |
 | `editable` | `boolean` | `true` | Whether the editor is editable |
 | `placeholder` | `string` | `''` | Placeholder text shown when empty |
+| `ariaLabel` | `string` | `undefined` | Accessible name applied to the underlying CodeMirror `.cm-content` element |
 | `minRows` | `number` | `3` | Minimum visible rows |
 | `maxRows` | `number` | `undefined` | Maximum rows before scrolling (unlimited if omitted) |
 | `className` | `string` | `''` | CSS class for the outer wrapper `<div>` |
@@ -422,6 +423,8 @@ interface GalleyToolbarOptions {
 ```
 
 Use `icons` to pass inline SVG elements, Lucide React components, or render functions. Use `before` and `after` to add consumer-owned controls into the built-in toolbar.
+
+Supported `ToolbarIconName` keys are `bold`, `italic`, `strikethrough`, `inlineCode`, `bulletList`, `orderedList`, `taskList`, `link`, `image`, `codeBlock`, `table`, `divider`, `undo`, `redo`, and `mode`.
 
 ```tsx
 import { Bold, Italic } from 'lucide-react';

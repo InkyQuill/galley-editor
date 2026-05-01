@@ -8,6 +8,17 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-05-01
+
+### Added
+- `ariaLabel` prop for naming the underlying CodeMirror content element without a consumer-owned extension.
+- Consumer integration documentation for public LLM-readable Pages URLs, toolbar icon names with Remix/React icon examples, dense workspace styling, `theme="auto"` inside host apps, read-only surfaces, and app-owned dirty/save workflows.
+- v0.9.1 docs-site release notes.
+
+### Changed
+- `llms.txt` now publishes absolute GitLab Pages URLs for the LLM index and complete Markdown guide.
+- The static LLM complete guide now mirrors the new consumer integration recipes.
+
 ## [0.9.0] — 2026-05-01
 
 ### Added
@@ -169,7 +180,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.1...HEAD
+[0.9.1]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.0...v0.9.1
 [0.9.0]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.8.0...v0.9.0
 [0.8.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.8.0
 [0.7.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.7.0

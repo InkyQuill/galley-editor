@@ -3,7 +3,7 @@ title: Roadmap
 description: Current roadmap toward Galley Editor v1.0.
 ---
 
-Galley is in active development. v0.9.0 is the current table-editing baseline, and the remaining work is split into v0.10 renderer examples and v1.0 API stabilization.
+Galley is in active development. v0.9.1 is the current consumer-polish baseline, and the remaining work is split into v0.10 renderer examples and v1.0 API stabilization.
 
 ## Done
 
@@ -17,6 +17,7 @@ Galley is in active development. v0.9.0 is the current table-editing baseline, a
 - Consumer-owned paste/drop upload hooks with progress reporting.
 - Image metadata parsing, rendering metadata, and command-backed resize helpers.
 - Hybrid visual editing for simple GFM pipe tables, including cell navigation and row, column, alignment, delete, and Source controls.
+- Consumer integration polish for accessible editor naming, public LLM-readable docs, dense workspace styling, custom icon contracts, and app-owned document workflow guidance.
 
 ## Next Milestones
 

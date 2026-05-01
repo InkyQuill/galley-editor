@@ -50,8 +50,9 @@ export default defineConfig({
           label: 'Project',
           items: [
             { label: 'Roadmap', slug: 'releases/roadmap' },
-            { label: 'v0.8.0', slug: 'releases/v0-8-0' },
+            { label: 'v0.9.1', slug: 'releases/v0-9-1' },
             { label: 'v0.9.0', slug: 'releases/v0-9-0' },
+            { label: 'v0.8.0', slug: 'releases/v0-8-0' },
             { label: 'v0.7.0', slug: 'releases/v0-7-0' },
           ],
         },

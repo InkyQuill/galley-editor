@@ -431,6 +431,8 @@ export interface GalleyEditorProps {
   editable?: boolean;
   /** Placeholder text shown when the editor is empty. */
   placeholder?: string;
+  /** Accessible name for the underlying CodeMirror content element. */
+  ariaLabel?: string;
 
   /** Minimum visible rows. Default: 3. */
   minRows?: number;

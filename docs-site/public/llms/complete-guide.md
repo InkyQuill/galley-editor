@@ -19,6 +19,7 @@ export function NotesEditor() {
       minRows={10}
       theme="auto"
       placeholder="Write in Markdown..."
+      ariaLabel="Notes body"
     />
   );
 }
@@ -52,7 +53,9 @@ Custom commands take precedence over built-ins with the same name.
 
 ## Built-In Commands
 
-Built-ins: `toggleBold`, `toggleItalic`, `toggleCode`, `toggleStrikethrough`, `toggleHeading`, `toggleBulletList`, `toggleOrderedList`, `toggleCheckList`, `insertLink`, `insertImage`, `insertCodeBlock`, `insertTable`, `insertHr`, `indent`, `outdent`, `duplicateLine`, `sortSelectedLines`, `swapLineUp`, `swapLineDown`, `insertLineAfter`, `insertLineBefore`, `jumpToHash`, `findInDocument`, `undo`, `redo`, `selectAll`.
+Built-ins: `toggleBold`, `toggleItalic`, `toggleCode`, `toggleStrikethrough`, `toggleHeading`, `toggleBulletList`, `toggleOrderedList`, `toggleCheckList`, `insertLink`, `insertImage`, `updateImageMetadata`, `clearImageDimensions`, `insertCodeBlock`, `insertTable`, `normalizeTable`, `commitTableCell`, `insertTableRowBefore`, `insertTableRowAfter`, `deleteTableRow`, `insertTableColumnBefore`, `insertTableColumnAfter`, `deleteTableColumn`, `setTableColumnAlignment`, `revealTableSource`, `insertHr`, `indent`, `outdent`, `duplicateLine`, `sortSelectedLines`, `swapLineUp`, `swapLineDown`, `insertLineAfter`, `insertLineBefore`, `jumpToHash`, `findInDocument`, `undo`, `redo`, `selectAll`.
+
+Table commands use rendered cell indexes: header row `0`, body rows start at `1`, and the separator row stays structural Markdown source. Table editing commands return `false` outside a supported table.
 
 Default keybindings include `Mod-B`, `Mod-I`, `Mod-K`, `Mod-D`, `Alt-ArrowUp`, `Alt-ArrowDown`, `Mod-Alt-ArrowUp`, `Mod-Alt-ArrowDown`, `Mod-Z`, `Mod-Shift-Z`, and `Mod-A`.
 
@@ -63,6 +66,16 @@ Use `keymap={(defaults) => [...defaults, customBinding]}` to extend defaults. Us
 The imperative handle exposes `getContent()`, `setContent(value)`, `insertText(text)`, `focus()`, `blur()`, `select(anchor, head?)`, `getSelection()`, `execCommand(name, ...args)`, `registerCommand(name, fn)`, `undo()`, `redo()`, `scrollTo(fraction)`, `scrollSelectionIntoView()`, `addExtension(extension)`, and read-only `view`.
 
 Event props include `onFocus`, `onBlur`, `onSelectionChange`, `onScroll`, `onEnter`, `onEscape`, `onPaste`, `onFiles`, `onFileStatus`, `onFileError`, and `onSubmit`.
+
+Use `ariaLabel` to give the underlying CodeMirror content element an accessible name:
+
+```tsx
+<GalleyEditor
+  value={value}
+  onChange={setValue}
+  ariaLabel="Release notes body"
+/>
+```
 
 ## Custom Toolbar Buttons
 
@@ -108,6 +121,34 @@ import { Bold, Code2, Link } from 'lucide-react';
 ```
 
 Supported icon names: `bold`, `italic`, `strikethrough`, `inlineCode`, `bulletList`, `orderedList`, `taskList`, `link`, `image`, `codeBlock`, `table`, `divider`, `undo`, `redo`, `mode`.
+
+The complete icon-name contract is exported as `ToolbarIconName`. This example uses Remix Icon components:
+
+```tsx
+import {
+  RiBold,
+  RiCodeLine,
+  RiImageLine,
+  RiLink,
+  RiListOrdered,
+  RiListUnordered,
+  RiTableLine,
+} from '@remixicon/react';
+import type { ReactNode } from 'react';
+import type { ToolbarIconName } from '@inky/galley-editor';
+
+const icons = {
+  bold: <RiBold size={16} aria-hidden="true" />,
+  inlineCode: <RiCodeLine size={16} aria-hidden="true" />,
+  bulletList: <RiListUnordered size={16} aria-hidden="true" />,
+  orderedList: <RiListOrdered size={16} aria-hidden="true" />,
+  link: <RiLink size={16} aria-hidden="true" />,
+  image: <RiImageLine size={16} aria-hidden="true" />,
+  table: <RiTableLine size={16} aria-hidden="true" />,
+} satisfies Partial<Record<ToolbarIconName, ReactNode>>;
+
+<GalleyEditor toolbar={{ icons }} />;
+```
 
 ## Custom Renderers
 
@@ -227,6 +268,81 @@ The `theme` prop controls `data-theme="light"` or `data-theme="dark"` on the wra
 ```
 
 `surface.style` applies to `.ge-editor-shell`. `surface.contentPadding`, `surface.toolbarPadding`, and `surface.footerPadding` set the matching CSS variables.
+
+When the host app uses its own `.dark` class, keep Galley's color decisions on the editor wrapper. `theme="auto"` resolves to `data-theme="light"` or `data-theme="dark"`, so CSS can target both systems without duplicating JS state:
+
+```tsx
+<section className="aurora-workspace dark">
+  <GalleyEditor
+    className="aurora-editor"
+    theme="auto"
+    ariaLabel="Knowledge base note"
+    value={value}
+    onChange={setValue}
+  />
+</section>
+```
+
+```css
+.aurora-editor {
+  --ge-color-bg: rgba(255, 255, 255, 0.78);
+  --ge-color-surface: rgba(241, 245, 249, 0.72);
+  --ge-color-surface-elevated: rgba(255, 255, 255, 0.88);
+  --ge-color-border: rgba(148, 163, 184, 0.34);
+  --ge-color-focus-ring: #2563eb;
+}
+
+.aurora-editor[data-theme='dark'] {
+  --ge-color-bg: rgba(15, 23, 42, 0.74);
+  --ge-color-surface: rgba(30, 41, 59, 0.58);
+  --ge-color-surface-elevated: rgba(15, 23, 42, 0.86);
+  --ge-color-border: rgba(148, 163, 184, 0.22);
+  --ge-color-focus-ring: #38bdf8;
+}
+```
+
+For dense product workspaces, reduce padding and typography through stable variables:
+
+```tsx
+<GalleyEditor
+  className="compact-editor"
+  ariaLabel="Note body"
+  toolbar={{ icons }}
+  footer={{ logo: false }}
+  surface={{
+    contentPadding: '18px 22px',
+    toolbarPadding: '6px 8px',
+    footerPadding: '4px 8px',
+  }}
+/>
+```
+
+```css
+.compact-editor {
+  --ge-font-size: 0.9375rem;
+  --ge-line-height: 1.55;
+  --ge-radius-editor: 6px;
+  --ge-shadow-editor: none;
+}
+```
+
+Stable styling hooks include `.ge-editor-shell`, `.cm-editor.cm-focused`, `.cm-content`, `.ge-toolbar`, `.ge-toolbar-button`, `.ge-toolbar-select`, `.ge-footer`, `.ge-table`, `.ge-code-fence`, `.ge-code-block`, `.ge-code-copy`, and `.ge-image-frame`.
+
+## App-Owned Document Workflow
+
+Galley is an editor component, not a full document manager. It owns Markdown editing, rendering, commands, toolbar/footer chrome, and editor-resident upload UI. The host app owns dirty state, explicit save/reset buttons, autosave, native `beforeunload` prompts, in-app discard dialogs, collaboration, permissions, and persistence.
+
+Use `editable={false}` plus `toolbar={false}` or `footer={{ logo: false }}` when the same surface should render a read-only document:
+
+```tsx
+<GalleyEditor
+  value={savedMarkdown}
+  editable={canEdit}
+  toolbar={canEdit}
+  footer={{ logo: false }}
+  ariaLabel={canEdit ? 'Editable note body' : 'Read-only note body'}
+/>
+```
 
 ## File Uploads
 

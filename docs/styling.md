@@ -265,6 +265,24 @@ You then own those class rules:
 | `theme="dark"` | `data-theme="dark"` | Forces dark overrides and CodeMirror dark mode. |
 | `theme="auto"` | `data-theme="light"` or `data-theme="dark"` | Resolves from `prefers-color-scheme` and updates when the OS preference changes. |
 
+If your host app also uses a `.dark` class, keep app layout rules on `.dark` and keep Galley variables on the editor wrapper:
+
+```css
+.workspace-editor {
+  --ge-color-bg: rgba(255, 255, 255, 0.78);
+  --ge-color-surface: rgba(241, 245, 249, 0.72);
+  --ge-color-surface-elevated: rgba(255, 255, 255, 0.88);
+  --ge-color-border: rgba(148, 163, 184, 0.34);
+}
+
+.workspace-editor[data-theme="dark"] {
+  --ge-color-bg: rgba(15, 23, 42, 0.74);
+  --ge-color-surface: rgba(30, 41, 59, 0.58);
+  --ge-color-surface-elevated: rgba(15, 23, 42, 0.86);
+  --ge-color-border: rgba(148, 163, 184, 0.22);
+}
+```
+
 The wrapper structure is:
 
 ```html
@@ -292,6 +310,10 @@ Block line classes: `ge-heading`, `ge-h1` through `ge-h6`, `ge-code-fence`, `ge-
 Widget classes: `ge-checkbox`, `ge-list-marker`, `ge-list-marker-sizing`, `ge-list-marker-dot`, `ge-divider-widget`.
 
 Chrome classes: `ge-editor-shell`, `ge-toolbar`, `ge-toolbar-button`, `ge-toolbar-select`, `ge-toolbar-separator`, `ge-toolbar-slot`, `ge-footer`, `ge-footer-stats`, `ge-footer-slot`, `ge-footer-end`, `ge-footer-logo-wrap`, `ge-footer-tooltip`.
+
+Rendered block hooks: `ge-table`, `ge-code-fence`, `ge-code-block`, `ge-code-block-header`, `ge-code-copy`, `ge-code-body`, `ge-image-frame`.
+
+Read-only surfaces use `editable={false}` and resolve to `data-mode="preview"` on the wrapper, so selectors such as `.workspace-editor[data-mode="preview"] .ge-editor-shell` are stable for view-only tuning.
 
 Depth classes: `ge-depth-0`, `ge-depth-1`, `ge-depth-2`. Depth classes cycle every 3 nesting levels.
 

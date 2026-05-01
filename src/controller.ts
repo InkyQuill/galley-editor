@@ -105,6 +105,7 @@ export interface EditorCallbacks {
 export interface ControllerSettings {
   editable: boolean;
   placeholder: string;
+  ariaLabel?: string;
   theme: ColorScheme;
   editorClassName: string;
   classNames: GalleyClassNames;
@@ -645,6 +646,9 @@ export class EditorController implements GalleyHandle {
       // Editability
       EditorView.editable.of(canEditDocument),
       EditorState.readOnly.of(!canEditDocument),
+      EditorView.contentAttributes.of(
+        settings.ariaLabel ? { 'aria-label': settings.ariaLabel } : {},
+      ),
       // Placeholder
       ...(settings.placeholder ? [cmPlaceholder(settings.placeholder)] : []),
       ...uploadUiExtension({

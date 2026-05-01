@@ -1,6 +1,6 @@
 # Galley Editor
 
-> ⚠️ **In active development.** v0.9.0 is the current pre-1.0 build. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+> ⚠️ **In active development.** v0.9.1 is the current pre-1.0 build. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
@@ -70,7 +70,10 @@ function App() {
 
 Public documentation website sources live in [`docs-site/`](docs-site/). The site is built with Astro Starlight and published together with Storybook in one GitLab Pages instance.
 
-The docs site includes a complete guide covering custom commands, renderers, toolbar buttons, icons, styling, themes, built-in commands, and upload workflows. Static LLM-readable entry points are published at `/llms.txt` and `/llms/complete-guide.md`.
+The docs site includes a complete guide covering custom commands, renderers, toolbar buttons, icons, styling, themes, built-in commands, accessible naming, app-owned document workflow, and upload workflows. Static LLM-readable entry points are published at:
+
+- <https://pages.inkyquill.net/inky/galley-editor/llms.txt>
+- <https://pages.inkyquill.net/inky/galley-editor/llms/complete-guide.md>
 
 ## Development
 
