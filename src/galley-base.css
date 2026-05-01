@@ -460,16 +460,17 @@
 }
 
 .ge-table-cell-editor {
-  background: var(--ge-color-bg);
-  border: 1px solid var(--ge-color-focus-ring);
-  border-radius: var(--ge-radius-code);
-  box-sizing: border-box;
+  background: var(--ge-color-transparent);
+  border: 0;
+  border-radius: 0;
+  box-sizing: content-box;
   color: var(--ge-color-text);
   font: inherit;
-  min-width: 12ch;
-  outline: none;
-  padding: 2px 4px;
-  width: 100%;
+  min-width: 1ch;
+  outline: 2px solid var(--ge-color-focus-ring);
+  outline-offset: 2px;
+  padding: 0;
+  width: auto;
 }
 
 .ge-table-controls {

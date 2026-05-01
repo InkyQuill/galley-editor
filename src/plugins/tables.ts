@@ -232,9 +232,13 @@ class TableWidget extends WidgetType {
     const input = document.createElement('input');
     input.className = 'ge-table-cell-editor';
     input.value = this.selected?.draft ?? tableCellInfo.text;
+    syncCellEditorSize(input);
 
     input.addEventListener('keydown', (event) => {
       this.handleEditorKeydown(event, input, view);
+    });
+    input.addEventListener('input', () => {
+      syncCellEditorSize(input);
     });
     input.addEventListener('paste', (event) => {
       event.preventDefault();
@@ -243,6 +247,7 @@ class TableWidget extends WidgetType {
       const start = input.selectionStart ?? input.value.length;
       const end = input.selectionEnd ?? start;
       input.value = `${input.value.slice(0, start)}${text}${input.value.slice(end)}`;
+      syncCellEditorSize(input);
       const caret = start + text.length;
       input.setSelectionRange(caret, caret);
     });
@@ -274,7 +279,6 @@ class TableWidget extends WidgetType {
       event.preventDefault();
       event.stopPropagation();
 
-      const selection = selectedCellFor(this.table, tableCellInfo, false, null);
       if (event.ctrlKey || event.metaKey) {
         view.dispatch({
           selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
@@ -287,6 +291,22 @@ class TableWidget extends WidgetType {
         return;
       }
 
+      const alreadySelected = selectedCellMatches(this.selected, this.table, tableCellInfo);
+      if (this.selected?.editing) {
+        if (alreadySelected) {
+          view.dom.querySelector<HTMLInputElement>('.ge-table-cell-editor')?.focus();
+          return;
+        }
+        this.commitActiveEditorAndSelect(view, tableCellInfo);
+        return;
+      }
+
+      const selection = selectedCellFor(
+        this.table,
+        tableCellInfo,
+        alreadySelected && !this.selected?.editing,
+        alreadySelected && !this.selected?.editing ? tableCellInfo.text : null,
+      );
       view.dispatch({
         selection: EditorSelection.cursor(tableCellInfo.sourceFrom),
         effects: [
@@ -294,6 +314,30 @@ class TableWidget extends WidgetType {
           sourceEscapedTable.of(null),
         ],
       });
+    });
+  }
+
+  private commitActiveEditorAndSelect(view: EditorView, targetCell: GalleyTableCell): void {
+    if (!this.selected) return;
+
+    const input = view.dom.querySelector<HTMLInputElement>('.ge-table-cell-editor');
+    if (!input) return;
+    if (!commitTableCell(view, this.selected.cell, input.value)) return;
+
+    const nextTable = parseMarkdownTable(
+      view.state.sliceDoc(this.table.from, mappedTableTo(view.state, this.table.from)),
+      this.table.from,
+    );
+    const selectedTable = nextTable ?? this.table;
+    const nextCell = tableCell(selectedTable, targetCell);
+    if (!nextCell) return;
+
+    view.dispatch({
+      selection: EditorSelection.cursor(nextCell.sourceFrom),
+      effects: [
+        selectTableCell.of(selectedCellFor(selectedTable, nextCell, false, null)),
+        sourceEscapedTable.of(null),
+      ],
     });
   }
 
@@ -423,6 +467,10 @@ class TableWidget extends WidgetType {
     });
     return true;
   }
+}
+
+function syncCellEditorSize(input: HTMLInputElement): void {
+  input.size = Math.max(input.value.length, 1);
 }
 
 function selectedTableCellKey(selected: SelectedTableCell | null): string {

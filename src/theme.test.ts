@@ -181,4 +181,14 @@ describe('galley-base.css theme contract', () => {
 
     expect(leakedSelectors).toEqual([]);
   });
+
+  it('keeps the table cell editor from forcing column width through padding or fixed width', () => {
+    const css = readCss();
+    const block = getBlock(css, /\.ge-table-cell-editor\s*\{(?<body>[\s\S]*?)\}/);
+
+    expect(block).toContain('padding: 0;');
+    expect(block).toContain('width: auto;');
+    expect(block).not.toMatch(/min-width:\s*12ch/);
+    expect(block).not.toMatch(/width:\s*100%/);
+  });
 });

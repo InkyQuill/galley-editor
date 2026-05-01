@@ -238,6 +238,56 @@ describe('tablesPlugin', () => {
     expect(view.state.doc.toString()).toContain('| one | done |');
   });
 
+  it('starts editing the existing cell text from a second click on the selected cell', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    expect(view.dom.querySelector('.ge-table-cell-editor')).toBeNull();
+
+    clickCell(view, '1:1');
+    const input = activeInput(view);
+
+    expect(input.value).toBe('two');
+    expect(input.size).toBe(3);
+
+    setEditorValue(input, 'updated');
+    keydown(input, 'Enter');
+
+    expect(view.state.doc.toString()).toContain('| one | updated |');
+  });
+
+  it('commits the active cell edit before selecting another cell', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    clickCell(view, '1:1');
+    setEditorValue(activeInput(view), 'changed');
+    clickCell(view, '1:0');
+
+    expect(view.state.doc.toString()).toContain('| one | changed |');
+    expect(view.dom.querySelector('.ge-table-cell-editor')).toBeNull();
+    expect(view.dom.querySelector('.ge-table-cell-selected')?.getAttribute('data-ge-table-cell')).toBe('1:0');
+  });
+
+  it('sizes the active cell editor from its text instead of forcing the column width', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc);
+
+    clickCell(view, '1:1');
+    clickCell(view, '1:1');
+    const input = activeInput(view);
+
+    expect(input.size).toBe(3);
+
+    setEditorValue(input, 'ok');
+    expect(input.size).toBe(2);
+
+    setEditorValue(input, '');
+    expect(input.size).toBe(1);
+  });
+
   it('cancels a draft with Escape', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc);
