@@ -259,6 +259,34 @@ Both commands are also named exports:
 import { clearImageDimensions, updateImageMetadata } from '@inky/galley-editor';
 ```
 
+## Table Commands and Types
+
+Visual table editing commands are available through `execCommand()` and as named exports:
+
+```ts
+editor.current?.execCommand('commitTableCell', { row: 1, column: 1 }, 'Done');
+editor.current?.execCommand('insertTableRowAfter');
+editor.current?.execCommand('setTableColumnAlignment', 'center');
+editor.current?.execCommand('revealTableSource');
+```
+
+Rows use the rendered model index: header row `0`, body rows start at `1`, and the separator row is structural source rather than a rendered/editable row. Table editing commands return `false` outside a supported table.
+
+| Command | Arguments |
+| --- | --- |
+| `normalizeTable` | none |
+| `commitTableCell` | `{ row: number; column: number }`, `text: string` |
+| `insertTableRowBefore` | none |
+| `insertTableRowAfter` | none |
+| `deleteTableRow` | none |
+| `insertTableColumnBefore` | none |
+| `insertTableColumnAfter` | none |
+| `deleteTableColumn` | none |
+| `setTableColumnAlignment` | `'left' | 'center' | 'right' | null` |
+| `revealTableSource` | `{ row: number; column: number }?` |
+
+Named exports include `normalizeTable`, `commitTableCell`, row/column helpers, `setTableColumnAlignment`, `revealTableSource`, `replaceTable`, and `replaceTables`. Public table model types are `GalleyTable`, `GalleyTableCell`, `TableAlignment`, `TableCellRef`, and `GalleyTableReplacement`.
+
 ## Hook
 
 `useGalley(options?)` owns a ref, tracks controlled content, and returns stable method wrappers.

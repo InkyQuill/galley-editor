@@ -220,6 +220,70 @@ Inserts a markdown horizontal rule.
 editorRef.current?.execCommand('insertHr');
 ```
 
+### Table Editing
+
+Table editing commands operate on the table at the current cursor or selection. When no supported table is selected, they return `false`.
+
+Rows use the rendered model index: the header row is `0`, and body rows start at `1`. The separator row is structural Markdown source, not a rendered or editable row.
+
+#### `normalizeTable`
+
+Rewrites selected tables using Galley's canonical pipe-table serialization.
+
+```ts
+editorRef.current?.execCommand('normalizeTable');
+```
+
+#### `commitTableCell`
+
+Updates one rendered cell.
+
+Arguments: `{ row: number; column: number }`, `text: string`
+
+```ts
+editorRef.current?.execCommand('commitTableCell', { row: 1, column: 1 }, 'Done');
+```
+
+#### Row commands
+
+`insertTableRowBefore`, `insertTableRowAfter`, and `deleteTableRow` edit the current body row. Header-row deletion returns `false`.
+
+```ts
+editorRef.current?.execCommand('insertTableRowBefore');
+editorRef.current?.execCommand('insertTableRowAfter');
+editorRef.current?.execCommand('deleteTableRow');
+```
+
+#### Column commands
+
+`insertTableColumnBefore`, `insertTableColumnAfter`, and `deleteTableColumn` edit the current column. Deleting the last remaining column returns `false`.
+
+```ts
+editorRef.current?.execCommand('insertTableColumnBefore');
+editorRef.current?.execCommand('insertTableColumnAfter');
+editorRef.current?.execCommand('deleteTableColumn');
+```
+
+#### `setTableColumnAlignment`
+
+Sets the current column alignment.
+
+Arguments: `'left' | 'center' | 'right' | null`
+
+```ts
+editorRef.current?.execCommand('setTableColumnAlignment', 'center');
+editorRef.current?.execCommand('setTableColumnAlignment', null);
+```
+
+#### `revealTableSource`
+
+Moves the selection to the current cell source, or to an explicit rendered cell.
+
+```ts
+editorRef.current?.execCommand('revealTableSource');
+editorRef.current?.execCommand('revealTableSource', { row: 1, column: 1 });
+```
+
 ## Line Editing
 
 ### `duplicateLine`

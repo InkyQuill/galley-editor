@@ -3,7 +3,7 @@ title: Roadmap
 description: Current roadmap toward Galley Editor v1.0.
 ---
 
-Galley is in active development. v0.8.0 is the current asset-workflows baseline, and the remaining work is split into v0.9 advanced authoring and v1.0 API stabilization.
+Galley is in active development. v0.8.0 is the current asset-workflows baseline, and the remaining work is split into v0.9 table editing, v0.10 renderer examples, and v1.0 API stabilization.
 
 ## Done
 
@@ -21,7 +21,8 @@ Galley is in active development. v0.8.0 is the current asset-workflows baseline,
 
 | Version | Focus | Scope |
 | --- | --- | --- |
-| 0.9.0 | Advanced Authoring | Markdown extension registration examples for KaTeX and Mermaid; better table editing helpers. |
+| 0.9.0 | Table Editing | Hybrid visual editing for simple GFM pipe tables, including cell navigation and row, column, alignment, delete, and Source controls. |
+| 0.10.0 | KaTeX/Mermaid Examples | Markdown extension registration examples for KaTeX and Mermaid. |
 | 1.0.0 | API Stabilization | More Storybook integration examples; final public API review and release hardening. |
 
 ## Publishing

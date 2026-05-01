@@ -204,9 +204,9 @@ Two `makeInlinePlugin` extensions:
 
 ### Tables (`ge:tables`)
 
-**File:** `src/plugins/tables.ts`
+Simple GFM pipe tables render as visual widgets in live and preview modes. In editable live mode, clicking a cell selects the rendered table instead of revealing Markdown source. Typing starts a raw cell editor, `Tab`/`Shift+Tab`/`Enter` commit and navigate, and the widget exposes row, column, alignment, delete, and Source controls.
 
-The simplest built-in plugin. Uses `makeBlockPlugin` to add `ge-table` line decoration to `Table` nodes. Always visible (`hideWhenNearCursor: false`).
+Unsupported table syntax falls back to Markdown source. Complex escaped-pipe parsing, range selection, rectangular paste, and spreadsheet formulas are not part of v0.9.
 
 ### Images (`ge:images`)
 

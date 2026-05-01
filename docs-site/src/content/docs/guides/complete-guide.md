@@ -90,6 +90,16 @@ All built-ins are available with `editor.execCommand(name, ...args)`, toolbar bu
 | `insertImage` | `alt?: string`, `url?: string` | Insert `![alt](url)`. |
 | `insertCodeBlock` | `language?: string` | Insert a fenced code block. |
 | `insertTable` | none | Insert a starter Markdown table. |
+| `normalizeTable` | none | Rewrite selected tables with canonical pipe-table formatting. |
+| `commitTableCell` | `{ row: number; column: number }`, `text: string` | Update a rendered table cell. |
+| `insertTableRowBefore` | none | Insert a body row before the current table row. |
+| `insertTableRowAfter` | none | Insert a body row after the current table row. |
+| `deleteTableRow` | none | Delete the current body row. |
+| `insertTableColumnBefore` | none | Insert a column before the current table column. |
+| `insertTableColumnAfter` | none | Insert a column after the current table column. |
+| `deleteTableColumn` | none | Delete the current table column. |
+| `setTableColumnAlignment` | `'left' | 'center' | 'right' | null` | Set or clear current column alignment. |
+| `revealTableSource` | `{ row: number; column: number }?` | Move the selection to table cell source. |
 | `insertHr` | none | Insert a horizontal rule. |
 | `indent` | none | Indent touched lines. |
 | `outdent` | none | Outdent touched lines. |
@@ -106,6 +116,8 @@ All built-ins are available with `editor.execCommand(name, ...args)`, toolbar bu
 | `selectAll` | none | Select the whole document. |
 
 Default command keybindings include `Mod-B`, `Mod-I`, `Mod-K`, `Mod-D`, `Alt-ArrowUp`, `Alt-ArrowDown`, `Mod-Alt-ArrowUp`, `Mod-Alt-ArrowDown`, `Mod-Z`, `Mod-Shift-Z`, and `Mod-A`.
+
+Table commands use rendered cell indexes: header row `0`, body rows start at `1`, and the separator row stays structural Markdown source. In editable live mode, clicking a rendered table cell starts visual table editing; Ctrl/Cmd-click or `revealTableSource` returns to Markdown source. Table editing commands return `false` when the selection is outside a supported table.
 
 Use the `keymap` prop to extend or replace bindings:
 

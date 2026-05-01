@@ -568,6 +568,10 @@ type BuiltinCommand =
   | 'toggleBulletList' | 'toggleOrderedList' | 'toggleCheckList'
   | 'insertLink' | 'insertImage' | 'insertCodeBlock' | 'insertTable' | 'insertHr'
   | 'updateImageMetadata' | 'clearImageDimensions'
+  | 'normalizeTable' | 'commitTableCell'
+  | 'insertTableRowBefore' | 'insertTableRowAfter' | 'deleteTableRow'
+  | 'insertTableColumnBefore' | 'insertTableColumnAfter' | 'deleteTableColumn'
+  | 'setTableColumnAlignment' | 'revealTableSource'
   | 'indent' | 'outdent'
   | 'duplicateLine' | 'sortSelectedLines'
   | 'swapLineUp' | 'swapLineDown'
@@ -609,6 +613,41 @@ type CodeHighlighter = (input: {
 ```
 
 Used by inactive fenced code blocks. String results are treated as highlighted HTML; consumers are responsible for sanitizing output from third-party highlighters.
+
+### Table Model Types
+
+Table command helpers expose rendered table model types for integrations that need to track a selected cell or prepare replacements:
+
+```typescript
+type TableAlignment = 'left' | 'center' | 'right' | null;
+
+interface TableCellRef {
+  row: number;
+  column: number;
+}
+
+interface GalleyTableCell extends TableCellRef {
+  text: string;
+  sourceFrom: number;
+  sourceTo: number;
+  cellFrom: number;
+  cellTo: number;
+  header: boolean;
+}
+
+interface GalleyTable {
+  from: number;
+  to: number;
+  rows: GalleyTableCell[][];
+  alignments: TableAlignment[];
+  columnCount: number;
+}
+
+interface GalleyTableReplacement {
+  table: GalleyTable;
+  next: GalleyTable;
+}
+```
 
 ---
 
@@ -658,6 +697,10 @@ Named export for programmatic search. The same behavior is available through `ex
 
 Named export for heading navigation. Accepts hashes with or without a leading `#`.
 
+### Table command helpers
+
+Named exports for visual table editing: `normalizeTable`, `commitTableCell`, `insertTableRowBefore`, `insertTableRowAfter`, `deleteTableRow`, `insertTableColumnBefore`, `insertTableColumnAfter`, `deleteTableColumn`, `setTableColumnAlignment`, `revealTableSource`, `replaceTable`, and `replaceTables`.
+
 #### Inline Formatting
 
 | Command | Description | Arguments |
@@ -692,6 +735,23 @@ Named export for heading navigation. Accepts hashes with or without a leading `#
 | `insertHr` | Inserts `---` horizontal rule | -- |
 | `updateImageMetadata` | Updates the image at the current selection/cursor | `{ alt?: string; url?: string; title?: string \| null; width?: number \| null; height?: number \| null }` |
 | `clearImageDimensions` | Removes `width` and `height` metadata from the image at the current selection/cursor | -- |
+
+#### Table Editing
+
+| Command | Description | Arguments |
+|---|---|---|
+| `normalizeTable` | Rewrites selected tables with canonical pipe-table serialization | -- |
+| `commitTableCell` | Updates a rendered table cell. Header row is `0`; body rows start at `1`; the separator row is not rendered or editable. | `{ row: number; column: number }`, `text: string` |
+| `insertTableRowBefore` | Inserts a body row before the current rendered row | -- |
+| `insertTableRowAfter` | Inserts a body row after the current rendered row | -- |
+| `deleteTableRow` | Deletes the current body row. Header-row deletion returns `false`. | -- |
+| `insertTableColumnBefore` | Inserts a column before the current column | -- |
+| `insertTableColumnAfter` | Inserts a column after the current column | -- |
+| `deleteTableColumn` | Deletes the current column. Last-column deletion returns `false`. | -- |
+| `setTableColumnAlignment` | Sets or clears the current column alignment | `'left' \| 'center' \| 'right' \| null` |
+| `revealTableSource` | Moves the selection to the current or requested cell source | `{ row: number; column: number }?` |
+
+All table editing commands return `false` outside a supported table.
 
 #### Editing
 

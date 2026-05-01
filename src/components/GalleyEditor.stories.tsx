@@ -394,6 +394,32 @@ export const AllFeatures: Story = {
   render: AllFeaturesStory,
 };
 
+export const VisualTableEditing: Story = {
+  args: {
+    value: [
+      '## Launch checklist',
+      '',
+      '| Feature | Owner | Status | Notes |',
+      '| :--- | :--- | :---: | ---: |',
+      '| **Uploads** | Pavel | Done | `0.8.0` |',
+      '| Tables | Pavel | In progress | visual editing |',
+      '| API review | Team | Next | v1.0 |',
+      '',
+      'Click a cell to edit the rendered table. Ctrl/Cmd-click reveals Markdown source.',
+    ].join('\n'),
+    mode: 'live',
+    editable: true,
+    footer: true,
+  },
+};
+
+export const VisualTableEditingReadOnly: Story = {
+  args: {
+    ...VisualTableEditing.args,
+    editable: false,
+  },
+};
+
 // ── Image Rendering ────────────────────────────────────────────────────────
 
 function ImageRenderingStory() {
