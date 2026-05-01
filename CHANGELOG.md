@@ -8,6 +8,18 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-05-01
+
+### Added
+- Hybrid visual editing for simple GFM pipe tables.
+- Excel-lite table cell navigation and single-cell paste behavior.
+- Table row, column, alignment, delete, and Source controls.
+- Built-in table editing commands for consumer toolbar integrations.
+
+### Changed
+- Normal clicks on rendered tables now select visual cells instead of revealing the full Markdown table.
+- KaTeX and Mermaid renderer examples are deferred to v0.10 so v0.9 can focus on table UX.
+
 ## [0.8.0] — 2026-04-30
 
 ### Added
@@ -157,7 +169,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.8.0...HEAD
+[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.0...HEAD
+[0.9.0]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.8.0...v0.9.0
 [0.8.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.8.0
 [0.7.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.7.0
 [0.6.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.6.0

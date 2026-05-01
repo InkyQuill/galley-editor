@@ -1,6 +1,6 @@
 {
   "name": "@inky/galley-editor",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "A React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6 with Obsidian-style live preview.",
   "type": "module",
   "license": "MIT",
