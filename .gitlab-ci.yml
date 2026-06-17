@@ -3,6 +3,7 @@ default:
 
 stages:
   - test
+  - release
   - publish
 
 # One job runs everything that depends on node_modules: install, lint,
@@ -52,20 +53,27 @@ version-matches-tag:
       fi
       echo "Version $PKG_VERSION matches tag $CI_COMMIT_TAG"
 
-# Tag-only publish. Uses dist/ artifact from the test job.
-# No npm install needed; npm publish packs from package.json `files`
-# allowlist (which is dist/ + LICENSE + README + CHANGELOG).
-publish:
-  stage: publish
+# Main-branch release. semantic-release computes the next version from
+# Conventional Commits, updates release metadata, creates the Git tag and
+# GitLab release, and publishes the package to the GitLab npm registry.
+release:
+  stage: release
   needs:
-    - test
-    - version-matches-tag
+    - job: test
+      artifacts: true
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-.*)?$/'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  variables:
+    NPM_TOKEN: ${CI_JOB_TOKEN}
   script:
-    - echo "@inky:registry=https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" > .npmrc
-    - echo "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${CI_JOB_TOKEN}" >> .npmrc
-    - npm publish
+    - npm ci --legacy-peer-deps --no-audit --no-fund
+    - git fetch --prune-tags
+    - |
+      {
+        echo "@inky:registry=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/npm/"
+        echo "${CI_API_V4_URL#https:}/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${CI_JOB_TOKEN}"
+      } > .npmrc
+    - npm run semantic-release
 
 pages:
   stage: publish
