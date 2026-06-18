@@ -119,6 +119,41 @@
   overflow: hidden;
 }
 
+.ge-editor-body {
+  min-width: 0;
+}
+
+.ge-layout-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ge-layout-fill .ge-editor-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ge-layout-fill .ge-editor-body > .cm-editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ge-layout-fill .cm-scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ge-layout-fill .cm-content {
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
 .ge-editor-shell .cm-editor {
   background: var(--ge-color-bg);
   color: var(--ge-color-text);
