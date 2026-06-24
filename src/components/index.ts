@@ -1,3 +1,5 @@
+"use client";
+
 // Component exports
 export { default as GalleyEditor } from './GalleyEditor';
 export { default as ErrorBoundary } from './ErrorBoundary';

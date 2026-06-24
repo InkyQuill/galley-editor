@@ -1,4 +1,7 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+"use client";
+
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+const useSafeLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import type {
   BuiltinCommand,
   GalleyHandle,
@@ -12,7 +15,7 @@ export function useGalley(options: UseGalleyOptions = {}): UseGalleyResult {
 
   const [content, setContentState] = useState(options.initialValue ?? '');
 
-  useLayoutEffect(() => {
+  useSafeLayoutEffect(() => {
     onChangeRef.current = options.onChange;
   }, [options.onChange]);
 

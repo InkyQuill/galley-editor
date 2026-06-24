@@ -1,3 +1,5 @@
+"use client";
+
 import {
   forwardRef,
   useEffect,
@@ -9,6 +11,8 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+
+const useSafeLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import {
   EditorController,
   type ControllerSettings,
@@ -261,7 +265,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
 
     // Stable callback refs — updated every render, never cause re-init
     const callbacksRef = useRef<EditorCallbacks>({});
-    useLayoutEffect(() => {
+    useSafeLayoutEffect(() => {
       callbacksRef.current = {
         onChange,
         onSelectionChange,
