@@ -22,6 +22,7 @@ const lightVariables = {
   '--ge-color-token-keyword': '#7c3aed',
   '--ge-color-token-string': '#047857',
   '--ge-color-token-number': '#b45309',
+  '--ge-color-token-comment': '#6b7280',
   '--ge-color-blockquote-border': 'rgba(127, 127, 127, 0.4)',
   '--ge-color-blockquote-fg': '#4b5563',
   '--ge-color-divider': 'rgba(127, 127, 127, 0.3)',
@@ -87,6 +88,7 @@ const darkVariables = {
   '--ge-color-token-keyword': '#c4b5fd',
   '--ge-color-token-string': '#86efac',
   '--ge-color-token-number': '#fbbf24',
+  '--ge-color-token-comment': '#9ca3af',
   '--ge-color-link': '#60a5fa',
   '--ge-color-link-hover': '#93c5fd',
   '--ge-color-blockquote-fg': '#9ca3af',
@@ -201,5 +203,17 @@ describe('galley-base.css theme contract', () => {
 
   it('uses CodeMirror drawSelection without adding a native selection layer', () => {
     expect(readCss()).not.toContain('::selection');
+  });
+
+  it('uses syntax token variables for exposed comment token classes', () => {
+    const css = readCss();
+    const renderedCommentBlock = getBlock(css, /\.ge-token-comment\s*\{(?<body>[\s\S]*?)\}/);
+    const lezerCommentBlock = getBlock(
+      css,
+      /\.tok-url\s*,\s*\.tok-meta\s*,\s*\.tok-comment\s*\{(?<body>[\s\S]*?)\}/,
+    );
+
+    expect(renderedCommentBlock).toContain('color: var(--ge-color-token-comment);');
+    expect(lezerCommentBlock).toContain('color: var(--ge-color-token-comment);');
   });
 });
