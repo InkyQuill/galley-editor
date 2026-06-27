@@ -162,19 +162,17 @@
   line-height: var(--ge-line-height);
 }
 
-.ge-editor-shell .cm-editor.cm-focused {
-  outline: 2px solid var(--ge-color-focus-ring);
-  outline-offset: -2px;
-}
-
 .ge-editor-shell .cm-content {
   caret-color: var(--ge-color-caret);
   min-height: 260px;
   padding: var(--ge-content-padding);
 }
 
-.ge-editor-shell .cm-selectionBackground,
-.ge-editor-shell .cm-content ::selection {
+.ge-layout-fill .cm-content {
+  min-height: 100%;
+}
+
+.ge-editor-shell .cm-selectionBackground {
   background: var(--ge-color-selection);
 }
 

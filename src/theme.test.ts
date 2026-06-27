@@ -191,4 +191,15 @@ describe('galley-base.css theme contract', () => {
     expect(block).not.toMatch(/min-width:\s*12ch/);
     expect(block).not.toMatch(/width:\s*100%/);
   });
+
+  it('lets fill layout stretch the CodeMirror content area', () => {
+    const css = readCss();
+    const fillBlock = getBlock(css, /\.ge-layout-fill\s+\.cm-content\s*\{(?<body>[\s\S]*?)\}/);
+
+    expect(fillBlock).toContain('min-height: 100%;');
+  });
+
+  it('uses CodeMirror drawSelection without adding a native selection layer', () => {
+    expect(readCss()).not.toContain('::selection');
+  });
 });
