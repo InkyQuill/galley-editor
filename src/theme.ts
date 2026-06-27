@@ -82,7 +82,7 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
           padding: '12px',
         },
         '&.cm-focused': {
-          outline: '1px solid var(--ge-color-focus-ring)',
+          outline: 'none',
         },
         '& .cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
           backgroundColor: 'var(--ge-color-selection)',

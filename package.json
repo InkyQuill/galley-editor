@@ -51,8 +51,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:lib": "vite build --mode lib && npm run postbuild:lib",
-    "postbuild:lib": "cp src/galley-base.css dist/style.css",
+    "build:lib": "vite build --mode lib",
+    "postbuild:lib": "node -e \"require('node:fs').copyFileSync('src/galley-base.css', 'dist/style.css')\"",
     "semantic-release": "semantic-release",
     "lint": "eslint .",
     "preview": "vite preview",
