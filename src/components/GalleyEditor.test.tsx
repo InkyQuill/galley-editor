@@ -399,6 +399,26 @@ describe('GalleyEditor React wrapper', () => {
     expect(shell?.style.backdropFilter).toBe('blur(18px)');
   });
 
+  it('exposes fill-container layout classes', () => {
+    const { container } = mount(
+      <GalleyEditor value="# Untitled" theme="light" layout="fill" />,
+    );
+    const shell = container.querySelector('.ge-editor-shell');
+    const body = container.querySelector('.ge-editor-body');
+
+    expect(shell?.classList.contains('ge-layout-fill')).toBe(true);
+    expect(body).toBeInstanceOf(HTMLElement);
+    expect(body?.querySelector('.cm-editor')).toBeInstanceOf(HTMLElement);
+  });
+
+  it('uses autosize layout by default', () => {
+    const { container } = mount(<GalleyEditor value="# Untitled" theme="light" />);
+    const shell = container.querySelector('.ge-editor-shell');
+
+    expect(shell?.classList.contains('ge-layout-autosize')).toBe(true);
+    expect(shell?.classList.contains('ge-layout-fill')).toBe(false);
+  });
+
   it('renders raw markdown in markdown mode', () => {
     const { container } = mount(<GalleyEditor value="# Title\n\n**Bold**" theme="light" mode="markdown" />);
 

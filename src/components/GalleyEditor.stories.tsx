@@ -34,6 +34,7 @@ const meta = {
     editable: { control: 'boolean' },
     minRows: { control: { type: 'number', min: 1, max: 24, step: 1 } },
     maxRows: { control: { type: 'number', min: 1, max: 30, step: 1 } },
+    layout: { control: 'inline-radio', options: ['autosize', 'fill'] },
     theme: { control: 'inline-radio', options: ['light', 'dark', 'auto'] },
     mode: { control: 'inline-radio', options: ['live', 'markdown', 'preview'] },
     toolbar: { control: 'boolean' },
@@ -1565,6 +1566,28 @@ function AutosizeStory() {
  */
 export const Autosize: Story = {
   render: AutosizeStory,
+};
+
+function FillContainerStory() {
+  const [value, setValue] = useState('# Fixed-height shell\n\nShort documents still fill the host pane.');
+  return (
+    <div style={{ height: '70vh', maxWidth: '900px', margin: '0 auto' }}>
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        layout="fill"
+      />
+    </div>
+  );
+}
+
+/**
+ * Demonstrates `layout="fill"` for desktop shells and other fixed-height
+ * host containers. The editor body fills the available pane and the footer
+ * remains at the bottom.
+ */
+export const FillContainer: Story = {
+  render: FillContainerStory,
 };
 
 // ── With Event Handlers ─────────────────────────────────────────────────────

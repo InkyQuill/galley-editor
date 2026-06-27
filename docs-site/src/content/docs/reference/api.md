@@ -28,6 +28,7 @@ import { GalleyEditor } from '@inky/galley-editor';
 | `ariaLabel` | `string` | | Accessible name applied to the underlying CodeMirror content element. |
 | `minRows` | `number` | `3` | Minimum visible editor rows. |
 | `maxRows` | `number` | | Maximum visible rows before scrolling. |
+| `layout` | `'autosize' \| 'fill'` | `'autosize'` | Use `fill` inside fixed-height host containers. |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme. |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Built-in toolbar and toolbar slots. |

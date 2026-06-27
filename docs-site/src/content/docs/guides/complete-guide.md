@@ -441,6 +441,18 @@ For one-off shell tweaks, use `surface`:
 />
 ```
 
+For fixed-height application panes, use `layout="fill"` and give the wrapper or parent a real height. Galley will stop autosizing CodeMirror to content height and will keep the footer at the bottom of the editor shell:
+
+```tsx
+<section style={{ height: '100vh' }}>
+  <GalleyEditor
+    value={value}
+    onChange={setValue}
+    layout="fill"
+  />
+</section>
+```
+
 When the host app uses its own `.dark` class, keep Galley's color decisions on the editor wrapper. `theme="auto"` resolves to `data-theme="light"` or `data-theme="dark"`, so CSS can target both systems without duplicating JS state:
 
 ```tsx

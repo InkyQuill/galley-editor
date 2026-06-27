@@ -164,4 +164,26 @@ describe('autosizeExtension', () => {
     expect(view.scrollDOM.style.height).toBe('80px');
     expect(view.scrollDOM.style.overflowY).toBe('hidden');
   });
+
+  it('clears inline scroller sizing when the extension is removed', () => {
+    vi.useFakeTimers();
+    const view = createAutosizeView({
+      minRows: 2,
+      maxRows: 4,
+      lineHeight: 20,
+      contentHeight: 120,
+    });
+
+    appendText(view, 'content');
+    flushMeasure();
+    expect(view.scrollDOM.style.height).toBe('80px');
+    expect(view.scrollDOM.style.overflowY).toBe('auto');
+
+    view.destroy();
+
+    expect(view.scrollDOM.style.minHeight).toBe('');
+    expect(view.scrollDOM.style.maxHeight).toBe('');
+    expect(view.scrollDOM.style.height).toBe('');
+    expect(view.scrollDOM.style.overflowY).toBe('');
+  });
 });
