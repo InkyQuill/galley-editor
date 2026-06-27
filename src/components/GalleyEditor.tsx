@@ -93,6 +93,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       ariaLabel,
       minRows = 3,
       maxRows,
+      layout = 'autosize',
       className = '',
       editorClassName = '',
       classNames,
@@ -166,7 +167,11 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const showFooter = footer !== false;
     const currentWordCount = wordCount(value);
     const currentCharacterCount = value.length;
-    const shellClassName = ['ge-editor-shell', surface?.className].filter(Boolean).join(' ');
+    const shellClassName = [
+      'ge-editor-shell',
+      `ge-layout-${layout}`,
+      surface?.className,
+    ].filter(Boolean).join(' ');
     const shellStyle = {
       ...surface?.style,
       ...(surface?.contentPadding ? { '--ge-content-padding': surface.contentPadding } : {}),
@@ -285,6 +290,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       classNames: resolveClassNames(classNames),
       minRows,
       maxRows,
+      layout,
       tabIndents,
       keymap,
       codeHighlighter,
@@ -347,7 +353,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
+    }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, layout, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {
@@ -443,7 +449,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
               {renderToolbarSlot(toolbarOptions.after, 'after')}
             </div>
           )}
-          <div ref={containerRef} />
+          <div ref={containerRef} className="ge-editor-body" />
           {showFooter && (
             <div className="ge-footer">
               {renderFooterSlot(footerOptions.before, 'before')}

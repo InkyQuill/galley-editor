@@ -72,6 +72,7 @@ import {
   type DropIndicatorRenderer,
   type GalleyClassNames,
   type GalleyHandle,
+  type GalleyLayoutMode,
   type GalleyMode,
   type GalleyPlugin,
   type UploadOverlayRenderer,
@@ -111,6 +112,7 @@ export interface ControllerSettings {
   classNames: GalleyClassNames;
   minRows: number;
   maxRows?: number;
+  layout: GalleyLayoutMode;
   tabIndents: boolean;
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
@@ -253,7 +255,9 @@ export class EditorController implements GalleyHandle {
         this.dynamicCompartment.of(this.buildDynamicExtensions()),
         // Autosize (reconfigured on minRows/maxRows change)
         this.autosizeCompartment.of(
-          autosizeExtension(settings.minRows, settings.maxRows),
+          settings.layout === 'autosize'
+            ? autosizeExtension(settings.minRows, settings.maxRows)
+            : [],
         ),
         // History (separate so it can be cleared independently)
         this.historyCompartment.of(history()),
@@ -676,12 +680,15 @@ export class EditorController implements GalleyHandle {
 
     // Check if autosize needs reconfiguring
     if (
+      newSettings.layout !== this.settings.layout ||
       newSettings.minRows !== this.settings.minRows ||
       newSettings.maxRows !== this.settings.maxRows
     ) {
       effects.push(
         this.autosizeCompartment.reconfigure(
-          autosizeExtension(newSettings.minRows, newSettings.maxRows),
+          newSettings.layout === 'autosize'
+            ? autosizeExtension(newSettings.minRows, newSettings.maxRows)
+            : [],
         ),
       );
     }

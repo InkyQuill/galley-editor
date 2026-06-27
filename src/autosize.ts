@@ -100,6 +100,15 @@ export function autosizeExtension(
 
     requestAutosize(view);
 
+    function clearAppliedStyles(): void {
+      const scroller = view.scrollDOM;
+      scroller.style.minHeight = '';
+      scroller.style.maxHeight = '';
+      scroller.style.height = '';
+      scroller.style.overflowY = '';
+      applied = null;
+    }
+
     return {
       update(update: ViewUpdate) {
         if (
@@ -111,6 +120,9 @@ export function autosizeExtension(
         }
 
         requestAutosize(update.view);
+      },
+      destroy() {
+        clearAppliedStyles();
       },
     };
   });

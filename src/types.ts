@@ -200,6 +200,8 @@ export interface GalleySurfaceOptions {
   footerPadding?: string;
 }
 
+export type GalleyLayoutMode = 'autosize' | 'fill';
+
 // ── Reveal strategy ─────────────────────────────────────────────────────────
 
 /** Controls when raw markdown is shown instead of the rendered decoration. */
@@ -438,6 +440,8 @@ export interface GalleyEditorProps {
   minRows?: number;
   /** Maximum visible rows before scrolling. Default: undefined (unlimited). */
   maxRows?: number;
+  /** Layout behavior. Use 'fill' inside fixed-height host containers. Default: 'autosize'. */
+  layout?: GalleyLayoutMode;
 
   /** CSS class for the outer wrapper div. */
   className?: string;

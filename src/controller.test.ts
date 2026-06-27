@@ -35,6 +35,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     editorClassName: '',
     classNames: {},
     minRows: 3,
+    layout: 'autosize',
     tabIndents: true,
     bidi: false,
     mode: 'live',
