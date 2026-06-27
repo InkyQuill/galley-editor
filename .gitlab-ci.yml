@@ -66,6 +66,7 @@ release:
   variables:
     NPM_TOKEN: ${CI_JOB_TOKEN}
   script:
+    - apk add --no-cache git
     - npm ci --legacy-peer-deps --no-audit --no-fund
     - git fetch --prune-tags
     - |
