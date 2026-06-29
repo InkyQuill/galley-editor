@@ -1,172 +1,116 @@
 ---
 title: Plugins and Renderers
-description: Extend Galley rendering with plugins, code highlighters, image renderers, and markdown extensions.
+description: Extend Galley's Markdown rendering with renderer hooks, built-in plugins, and custom CodeMirror extensions.
+sidebar:
+  order: 35
 ---
 
-Galley keeps Markdown as the source document and renders visual helpers through CodeMirror extensions. You can start with the built-ins and add deeper behavior only when your product needs it.
+Most integrations should start with renderer hooks. Reach for custom plugins when you need to decorate Markdown syntax nodes directly.
 
-## Built-in Plugins
+## Built-In Plugins
 
-Built-ins cover common Markdown structures:
-
-- Headings
-- Emphasis and strikethrough
-- Inline code
-- Fenced code blocks
-- Links and images
-- Lists and checkboxes
-- Blockquotes
-- Dividers
-- Tables
-- Reference links
-
-Disable a built-in plugin by ID:
+Galley includes plugins for headings, emphasis, inline code, fenced code, blockquotes, links, images, lists, checkboxes, dividers, and tables.
 
 ```tsx
-<GalleyEditor disabledPlugins={['tables']} />
+import { BUILT_IN_PLUGINS } from '@inkyquill/galley-editor';
 ```
 
-## Code Highlighters
+Disable a built-in by id:
 
-Galley does not bundle a syntax highlighter. That keeps the package lighter and lets each app choose the highlighter it already uses, such as Highlight.js, Shiki, Prism, or an internal service.
+```tsx
+<GalleyEditor disabledPlugins={['ge:tables']} />
+```
+
+Add plugins alongside the built-ins:
+
+```tsx
+<GalleyEditor plugins={[myPlugin]} />
+```
+
+## Renderer Hooks
+
+Use renderer props for common customization points:
 
 ```tsx
 <GalleyEditor
-  codeHighlighter={({ code, language }) => {
-    const html = highlightWithYourLibrary(code, language);
-
-    return html;
+  codeHighlighter={({ code, language, theme }) => {
+    return highlight(code, language, theme);
+  }}
+  imageRenderer={(image) => {
+    const node = document.createElement('img');
+    node.src = image.url;
+    node.alt = image.alt;
+    return node;
+  }}
+  onLinkClick={(url, event) => {
+    event.preventDefault();
+    openInApp(url);
+    return true;
   }}
 />
 ```
 
-The inactive code-fence widget still provides the language hint and copy button. Clicking inside the code body returns to the editable Markdown fence, so editing stays direct.
+`onLinkClick` runs for Cmd/Ctrl-click link activation. Return `true` to suppress Galley's default `window.open` behavior.
 
-## Images
+## Image Controls
 
-Galley renders Markdown images with safe built-in `<img>` widgets by default:
-
-```md
-![Galley mark](/assets/galley.png)
-```
-
-Use `imageRenderer` when your app needs signed URLs, asset lookup, captions, resize handles, or upload metadata.
+Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer` for selected-image controls:
 
 ```tsx
 <GalleyEditor
-  imageRenderer={({ alt, url, title, width, height, from, to }) => {
-    const figure = document.createElement('figure');
-    figure.className = 'asset-preview';
-
-    const image = document.createElement('img');
-    image.src = url;
-    image.alt = alt;
-    if (title) image.title = title;
-    if (width) image.width = width;
-    if (height) image.height = height;
-
-    figure.dataset.from = String(from);
-    figure.dataset.to = String(to);
-    figure.append(image);
-    if (title) {
-      const caption = document.createElement('figcaption');
-      caption.textContent = title;
-      figure.append(caption);
-    }
-
-    return figure;
+  missingImageRenderer={(image) => {
+    const node = document.createElement('span');
+    node.textContent = image.reason === 'empty-url' ? 'Missing URL' : 'Image failed';
+    return node;
+  }}
+  imageControlsRenderer={({ image, update, clearDimensions, revealSource }) => {
+    const node = document.createElement('button');
+    node.type = 'button';
+    node.textContent = `${image.width ?? 'auto'} x ${image.height ?? 'auto'}`;
+    node.onclick = () => update({ width: 640, height: 360 });
+    node.oncontextmenu = (event) => {
+      event.preventDefault();
+      clearDimensions();
+      revealSource();
+    };
+    return node;
   }}
 />
 ```
-
-The renderer receives `GalleyImageInfo`:
-
-```ts
-type GalleyImageInfo = {
-  alt: string;
-  url: string;
-  title?: string;
-  width?: number;
-  height?: number;
-  attrs?: string[];
-  raw: string;
-  from: number;
-  to: number;
-};
-```
-
-Image metadata is encoded directly in Markdown:
-
-```md
-![Alt](image.png "Title"){width=640 height=360}
-```
-
-Use the `updateImageMetadata` and `clearImageDimensions` commands from a custom renderer or asset inspector to update the selected image.
-
-SVG images are supported by the default renderer when the source URL is allowed by the browser and the consuming app's content security policy.
 
 ## Custom Plugins
 
-Use `plugins` for additional Markdown rendering behavior:
+A `GalleyPlugin` is a stable id plus a function that returns CodeMirror extensions:
 
-```tsx
-import { makeInlinePlugin } from '@inkyquill/galley-editor';
+```ts
+import type { GalleyPlugin } from '@inkyquill/galley-editor';
 
-const mentionPlugin = makeInlinePlugin({
-  id: 'mentions',
-  // Plugin spec omitted for brevity.
-});
-
-<GalleyEditor plugins={[mentionPlugin]} />;
+export const myPlugin: GalleyPlugin = {
+  id: 'app:mentions',
+  extensions(classNames, context) {
+    return [myCodeMirrorExtension(classNames, context)];
+  },
+};
 ```
 
-Use raw CodeMirror extensions for behavior that is not tied to Galley's Markdown rendering pipeline:
+For syntax-driven decorations, use the exported factories:
 
-```tsx
-<GalleyEditor extensions={[myCodeMirrorExtension]} />
-```
+| Factory | Use for |
+| --- | --- |
+| `makeInlinePlugin(spec)` | Viewport-only inline marks and widgets. |
+| `makeBlockPlugin(spec)` | Multi-line or block decorations that need full-document iteration. |
 
-## Uploads and Drops
+The plugin spec receives Lezer syntax nodes and the current editor state. Return a CodeMirror `Decoration`, `WidgetType`, or `null`.
 
-Galley keeps uploads consumer-owned. When `onFiles` is provided, paste/drop operations that contain files call your handler with the files, source, original event, editor view, selection snapshot, and a `report()` function.
+## Reveal Strategy
 
-```tsx
-const escapeMarkdownAlt = (value: string) =>
-  value.replace(/[\n\r[\]\\]/g, ' ').trim();
+Plugins control when rendered decorations hide and raw Markdown reappears:
 
-const fakeUpload = async (file: File) =>
-  `![${escapeMarkdownAlt(file.name)}](/uploads/${encodeURIComponent(file.name)})`;
+| Strategy | Behavior |
+| --- | --- |
+| `line` | Reveal when the cursor is on the same line. |
+| `active` | Reveal when the selection intersects the node or its parent. |
+| `select` | Reveal only when selection overlaps the node. |
+| `boolean` | Provide your own decision. |
 
-<GalleyEditor
-  onFiles={async (input) => {
-    input.report({ phase: 'progress', progress: 0.25, message: 'Uploading...' });
-    const markdown = await Promise.all(input.files.map(fakeUpload));
-    input.report({ phase: 'progress', progress: 0.9, message: 'Inserting markdown...' });
-    return markdown;
-  }}
-  onFileStatus={(status) => {
-    renderUploadRow(status.id, status.phase, status.progress, status.message);
-  }}
-  onFileError={(error, input) => {
-    showUploadError(input.files, error);
-  }}
-/>
-```
-
-Returned strings are inserted at the paste selection or drop position. Return `false` or `null` when your app handled the files without inserting markdown.
-
-`input.report()` is the progress channel for long uploads. Galley forwards those updates to `onFileStatus` and also emits `start`, `complete`, and `error` phases around the handler call.
-
-Use an inline placeholder renderer when the progress UI should stay inside the editor document:
-
-```tsx
-<GalleyEditor
-  onFiles={uploadFiles}
-  uploadInteraction="inline"
-  uploadPlaceholderRenderer={(upload) => {
-    const element = document.createElement('div');
-    element.textContent = `${upload.phase}: ${Math.round((upload.progress ?? 0) * 100)}%`;
-    return element;
-  }}
-/>
-```
+Use the narrowest strategy that keeps editing predictable.

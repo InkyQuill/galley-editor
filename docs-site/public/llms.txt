@@ -1,11 +1,12 @@
 # Galley Editor LLM Documentation
 
-Galley Editor is a React Markdown editor built on CodeMirror 6. Use these plain Markdown files for machine-readable documentation. Public GitHub Pages paths include the `/galley-editor/` base.
+Galley Editor is a React Markdown editor built on CodeMirror 6. Public GitHub Pages paths include the `/galley-editor/` base.
 
-- Complete guide: https://inkyquill.github.io/galley-editor/llms/complete-guide.md
+- LLM overview: https://inkyquill.github.io/galley-editor/llms/overview.md
 - Human documentation site: https://inkyquill.github.io/galley-editor/
+- Quick start: https://inkyquill.github.io/galley-editor/guides/quick-start/
+- Commands: https://inkyquill.github.io/galley-editor/guides/commands/
 - API reference: https://inkyquill.github.io/galley-editor/reference/api/
 - Plugins and renderers: https://inkyquill.github.io/galley-editor/guides/plugins-renderers/
 - Customization: https://inkyquill.github.io/galley-editor/guides/customization/
-
-The complete guide covers custom commands, renderers, toolbar buttons, toolbar icons, accessible naming, styling, themes, built-in commands, supporting actions, app-owned document workflow, and app-owned file upload tracking.
+- File uploads: https://inkyquill.github.io/galley-editor/guides/uploads/

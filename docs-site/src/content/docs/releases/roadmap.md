@@ -1,50 +1,28 @@
 ---
 title: Roadmap
-description: Current roadmap toward Galley Editor v1.0.
+description: Current project status and the path to a stable Galley Editor release.
+sidebar:
+  order: 10
 ---
 
-Galley is in active development. v0.10.0 is the current public build.
+Galley Editor is currently `v0.10.0` and still pre-1.0.
 
-## Done
+## Current Focus
 
-- Full Galley rebrand and `ge-*` class prefix transition.
-- Live Markdown rendering for core Markdown blocks.
-- Links, images, code fences, dividers, blockquotes, lists, checkboxes, tables, and reference links.
-- Toolbar, footer, mode switching, and consumer slots.
-- Theme variables, frosted surfaces, scrollbar variables, and surface padding overrides.
-- Custom code highlighter and image renderer hooks.
-- Clean-room public repository cleanup.
-- Consumer-owned paste/drop upload hooks with progress reporting.
-- Image metadata parsing, rendering metadata, and command-backed resize helpers.
-- Hybrid visual editing for simple GFM pipe tables, including cell navigation and row, column, alignment, delete, and Source controls.
-- Consumer integration polish for accessible editor naming, public LLM-readable docs, dense workspace styling, custom icon contracts, and app-owned document workflow guidance.
-- Public GitHub and npmjs publishing, with GitHub Pages hosting docs and Storybook.
+- Stabilize the public React API and TypeScript types.
+- Keep command behavior covered by local tests.
+- Improve advanced authoring flows such as tables, images, smart input, and upload status.
+- Keep the docs and Storybook examples aligned with the package exports.
 
-## Next Milestones
+## Release Direction
 
-| Version | Focus | Scope |
-| --- | --- | --- |
-| 1.0.0 | API Stabilization | More Storybook integration examples; final public API review and release hardening. |
+The v1.0 target is a dependable editor component that product teams can embed without adopting a full document platform. The core contract is:
 
-## Publishing
+- Markdown remains the persisted document format.
+- CodeMirror owns editing and selection behavior.
+- Galley owns live-preview decorations and command behavior.
+- Applications own persistence, uploads, product chrome, and final design.
 
-The docs are designed for two publishing paths:
+Detailed planning documents live in the repository:
 
-| Path | Use |
-| --- | --- |
-| GitHub Pages namespace-in-path | Default public docs deployment. |
-| Custom domain | Preferred polished public URL when DNS and nginx/GitHub Pages routing are ready. |
-
-Default:
-
-```text
-GALLEY_DOCS_SITE=https://inkyquill.github.io
-GALLEY_DOCS_BASE=/galley-editor
-```
-
-Custom root domain:
-
-```text
-GALLEY_DOCS_SITE=https://galley.inkyquill.net
-GALLEY_DOCS_BASE=
-```
+<https://github.com/InkyQuill/galley-editor/blob/main/docs/specs/ROADMAP.md>

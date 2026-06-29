@@ -29,13 +29,19 @@ export default defineConfig({
       sidebar: [
         { label: 'Overview', slug: 'index' },
         {
-          label: 'Guides',
+          label: 'Start',
           items: [
             { label: 'Installation', slug: 'guides/installation' },
             { label: 'Quick Start', slug: 'guides/quick-start' },
-            { label: 'Complete Guide', slug: 'guides/complete-guide' },
+          ],
+        },
+        {
+          label: 'Build',
+          items: [
             { label: 'Customization', slug: 'guides/customization' },
+            { label: 'Commands', slug: 'guides/commands' },
             { label: 'Plugins and Renderers', slug: 'guides/plugins-renderers' },
+            { label: 'File Uploads', slug: 'guides/uploads' },
             { label: 'Storybook', slug: 'guides/storybook' },
           ],
         },
@@ -50,11 +56,6 @@ export default defineConfig({
           label: 'Project',
           items: [
             { label: 'Roadmap', slug: 'releases/roadmap' },
-            { label: 'v0.10.0', slug: 'releases/v0-10-0' },
-            { label: 'v0.9.1', slug: 'releases/v0-9-1' },
-            { label: 'v0.9.0', slug: 'releases/v0-9-0' },
-            { label: 'v0.8.0', slug: 'releases/v0-8-0' },
-            { label: 'v0.7.0', slug: 'releases/v0-7-0' },
           ],
         },
       ],

@@ -1,26 +1,18 @@
 ---
 title: Storybook
-description: Preview Galley Editor examples alongside the documentation.
+description: Explore interactive examples for Galley Editor.
+sidebar:
+  order: 50
 ---
 
-Storybook is the best place to see Galley working with real props, themes, images, code fences, toolbar slots, footer widgets, and preview modes.
-
-The published docs include Storybook in the same GitHub Pages site:
-
-[Open Storybook](../../storybook/)
-
-## Local Development
-
-Run Storybook when you want to test component states while editing the library:
+Run Storybook locally from the repository root:
 
 ```bash
 npm run storybook
 ```
 
-Run the Starlight docs site separately:
+The published Storybook lives beside the docs site:
 
-```bash
-npm run docs:dev
-```
+<https://inkyquill.github.io/galley-editor/storybook/>
 
-The GitHub Pages pipeline builds both outputs and publishes them together. Starlight is served from the Pages root, and Storybook is served from `/storybook/`.
+Use it to inspect editor modes, toolbar slots, command behavior, upload flows, image controls, and styling variants. The docs explain the API; Storybook is the fastest way to check how a behavior feels in the browser.

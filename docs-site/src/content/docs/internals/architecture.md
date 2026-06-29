@@ -1,54 +1,51 @@
 ---
 title: Architecture
-description: How Galley uses React, CodeMirror, Lezer, decorations, and compartments.
+description: How Galley keeps CodeMirror stable while rendering Markdown live preview decorations.
+sidebar:
+  order: 20
 ---
 
-Galley is a React wrapper around a single CodeMirror 6 `EditorView`.
+Galley is built around one principle: the Markdown text document is the source of truth. Rendering is done with CodeMirror decorations over that source, not by producing a separate HTML document.
 
-## Lifecycle
+## Controller Lifetime
 
-The `EditorView` is created once when `GalleyEditor` mounts and is destroyed only on unmount. Prop changes are applied through CodeMirror `Compartment` reconfiguration, which preserves cursor position, undo history, scroll state, and extension identity.
+`EditorController` owns the CodeMirror `EditorView`, compartments, command registry, and imperative handle implementation.
 
-The controller owns three main compartments:
+The view is created once on mount and destroyed only on unmount. Prop changes are applied through CodeMirror `Compartment` reconfiguration:
 
-| Compartment | Responsibility |
-| --- | --- |
-| Dynamic settings | Theme, editability, placeholder, plugins, extra extensions. |
-| Autosize | Minimum and maximum row sizing. |
-| History | Undo/redo history configuration. |
+- Dynamic editor settings.
+- Autosize and fill layout behavior.
+- History configuration.
 
-## Rendering Pipeline
+This avoids remounting CodeMirror when React props change.
 
-Galley uses Lezer's Markdown parser directly. There is no separate Markdown-to-HTML conversion step for live editing.
+## React Wrapper
 
-Plugins inspect the syntax tree and emit CodeMirror decorations:
+`GalleyEditor` is a thin `forwardRef` wrapper. It creates the controller once, forwards props into `updateSettings()`, and exposes a stable `GalleyHandle` proxy through `useImperativeHandle`.
 
-- Mark decorations add semantic classes.
-- Replace decorations hide Markdown syntax tokens.
-- Widget decorations render controls such as checkboxes, image previews, dividers, and inactive code fences.
-- Line decorations style full Markdown lines and blocks.
+Callback props are kept in stable refs and updated with layout effects, so changing callbacks does not rebuild the editor.
+
+## Rendering Plugins
+
+Each live-preview feature is a `GalleyPlugin` with a stable id and an `extensions()` function.
+
+Inline marks use `makeInlinePlugin()`, which builds viewport-scoped `ViewPlugin` decorations. This keeps bold, italic, links, and inline code cheap on large documents.
+
+Block features use `makeBlockPlugin()` or custom state fields when they need full-document iteration. Code fences use a custom state field because they emit per-line decorations.
 
 ## Reveal Strategies
 
-Live preview depends on reveal rules:
+A renderer can hide Markdown syntax while inactive and reveal raw source when the user edits nearby text.
 
-| Strategy | Behavior |
+| Strategy | Used for |
 | --- | --- |
-| `active` | Reveal when the cursor is inside the node or parent node. |
-| `line` | Reveal when the cursor is on the same line. |
-| `select` | Reveal only when the selection overlaps the hidden token. |
-| custom boolean | Plugin-specific behavior. |
+| `active` | Marks where parent context matters, such as emphasis. |
+| `line` | Blocks and line-oriented syntax, such as blockquotes. |
+| `select` | Syntax that should reveal only when directly selected, such as link URLs. |
+| `boolean` | Custom cases, such as checkboxes. |
 
-Preview mode disables click-to-Markdown reversion. Markdown mode keeps source tokens visible.
+## Styling Contract
 
-## Extension Points
+Galley emits semantic CSS classes instead of hard-coded visual styles. The optional base CSS defines defaults for those classes and exposes variables for color, spacing, radius, typography, and editor chrome.
 
-Consumers can extend Galley at several levels:
-
-- Toolbar and footer slots for React UI.
-- CSS variables and semantic classes for styling.
-- `codeHighlighter` for code fence rendering.
-- `imageRenderer` for app-specific asset behavior.
-- `plugins` for Galley rendering features.
-- `extensions` for raw CodeMirror features.
-- `registerCommand()` for app commands.
+This lets apps keep the editor visually consistent with the surrounding product while reusing Galley's parser and command behavior.

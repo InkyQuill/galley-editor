@@ -1,9 +1,50 @@
 ---
 title: Galley Editor
-description: Galley Editor is a live-preview Markdown editor for React, built on CodeMirror 6.
+description: A live-preview Markdown editor for React, built on CodeMirror 6.
+template: splash
+hero:
+  title: Galley Editor
+  tagline: A React Markdown editor that keeps Markdown as source text and renders it in place while you write.
+  image:
+    file: ../../assets/galley-color.png
+    alt: Galley Editor logo
+  actions:
+    - text: Quick Start
+      link: guides/quick-start/
+      icon: right-arrow
+    - text: API Reference
+      link: reference/api/
+      variant: minimal
 tableOfContents: false
 ---
 
-import GalleyHome from '../../components/GalleyHome.astro';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-<GalleyHome />
+Galley is for React apps that need Markdown editing without a separate Markdown-to-HTML preview pane. It uses CodeMirror 6 and Lezer's Markdown parser to hide syntax marks when the cursor leaves a node, then reveal raw Markdown when the user edits that node.
+
+<CardGrid>
+  <Card title="Live preview, not HTML conversion">
+    Markdown remains the document format. Galley decorates the editor view instead of maintaining a second rendered document.
+  </Card>
+  <Card title="Designed for product surfaces">
+    Bring your own toolbar, upload pipeline, renderer hooks, and CSS tokens while keeping the core editor controlled.
+  </Card>
+  <Card title="Extensible at CodeMirror depth">
+    Use built-in renderers, register custom plugins, or add CodeMirror extensions through the public API.
+  </Card>
+</CardGrid>
+
+## Start Here
+
+<CardGrid>
+  <LinkCard title="Install Galley" href="guides/installation/" description="Package installation, peer dependencies, and CSS import choices." />
+  <LinkCard title="Build an editor" href="guides/quick-start/" description="A controlled React example with modes, events, and a ref." />
+  <LinkCard title="Style the surface" href="guides/customization/" description="Themes, semantic classes, CSS variables, and app-owned chrome." />
+  <LinkCard title="Use commands" href="guides/commands/" description="Toolbar actions, keyboard shortcuts, custom commands, and tables." />
+  <LinkCard title="Extend rendering" href="guides/plugins-renderers/" description="Custom plugins, image renderers, code highlighters, and link handling." />
+  <LinkCard title="Handle uploads" href="guides/uploads/" description="Paste/drop file flows, progress reporting, overlays, and placeholders." />
+</CardGrid>
+
+## Current Scope
+
+Galley is currently `v0.10.0` and still pre-1.0. The documented API is the intended public surface for the current package, but minor releases may still refine behavior before the first stable release.
