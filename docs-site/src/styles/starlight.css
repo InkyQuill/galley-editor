@@ -26,6 +26,7 @@
   --sl-color-hairline-shade: #cfd6e3;
   --sl-color-text: #263244;
   --sl-color-text-accent: #173c9c;
+  --galley-docs-heading: #111827;
 }
 
 :root[data-theme='dark'] {
@@ -48,6 +49,7 @@
   --sl-color-hairline-shade: #202a3a;
   --sl-color-text: #d7dfeb;
   --sl-color-text-accent: #bae6fd;
+  --galley-docs-heading: #eef4ff;
 }
 
 html {
@@ -63,7 +65,7 @@ body {
 }
 
 .site-title {
-  color: var(--sl-color-black);
+  color: var(--galley-docs-heading);
   font-weight: 750;
   gap: 0.625rem;
   letter-spacing: 0;
@@ -132,7 +134,7 @@ site-search button:focus-visible {
 }
 
 .sl-markdown-content :is(h2, h3, h4) {
-  color: var(--sl-color-black);
+  color: var(--galley-docs-heading);
   letter-spacing: 0;
   scroll-margin-top: 5rem;
 }
@@ -159,7 +161,7 @@ site-search button:focus-visible {
 }
 
 .sl-markdown-content th {
-  color: var(--sl-color-black);
+  color: var(--galley-docs-heading);
 }
 
 .card {

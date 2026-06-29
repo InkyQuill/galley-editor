@@ -56,6 +56,7 @@ export default defineConfig({
           label: 'Project',
           items: [
             { label: 'Roadmap', slug: 'releases/roadmap' },
+            { label: 'v0.10.0', slug: 'releases/v0-10-0' },
           ],
         },
       ],
