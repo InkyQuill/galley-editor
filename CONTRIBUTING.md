@@ -48,6 +48,12 @@ Set the secret after the GitHub repository exists:
 gh secret set NPM_TOKEN --repo InkyQuill/galley-editor
 ```
 
+Then enable the release workflow:
+
+```bash
+gh variable set NPM_PUBLISH_ENABLED --repo InkyQuill/galley-editor --body true
+```
+
 ## PR checklist
 
 Every pull request must include:
