@@ -32,14 +32,14 @@ The docs are designed for two publishing paths:
 
 | Path | Use |
 | --- | --- |
-| GitLab Pages namespace-in-path | Default public docs deployment. |
-| Custom domain | Preferred polished public URL when DNS and nginx/GitLab Pages routing are ready. |
+| GitHub Pages namespace-in-path | Default public docs deployment. |
+| Custom domain | Preferred polished public URL when DNS and nginx/GitHub Pages routing are ready. |
 
 Default:
 
 ```text
-GALLEY_DOCS_SITE=https://pages.inkyquill.net
-GALLEY_DOCS_BASE=/inky/galley-editor
+GALLEY_DOCS_SITE=https://inkyquill.github.io
+GALLEY_DOCS_BASE=/galley-editor
 ```
 
 Custom root domain:

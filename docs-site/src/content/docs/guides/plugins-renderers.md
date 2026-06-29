@@ -110,7 +110,7 @@ SVG images are supported by the default renderer when the source URL is allowed 
 Use `plugins` for additional Markdown rendering behavior:
 
 ```tsx
-import { makeInlinePlugin } from '@inky/galley-editor';
+import { makeInlinePlugin } from '@inkyquill/galley-editor';
 
 const mentionPlugin = makeInlinePlugin({
   id: 'mentions',

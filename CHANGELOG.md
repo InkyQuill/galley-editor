@@ -1,21 +1,21 @@
-# [0.10.0](https://git.inkyquill.net/inky/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
+# [0.10.0](https://github.com/InkyQuill/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
 
 
 ### Bug Fixes
 
-* **build:** make lib postbuild portable ([68e778c](https://git.inkyquill.net/inky/galley-editor/commit/68e778c5e4109a926d7717eb8f1aa649ecf8dded))
-* **editor:** expand theme variable coverage ([f3fa2ce](https://git.inkyquill.net/inky/galley-editor/commit/f3fa2ced71e444d2748a12dc53b4a4b19fd45b7c))
-* **editor:** remove persistent focus and duplicate selection ([011808a](https://git.inkyquill.net/inky/galley-editor/commit/011808a1c864e00f4b8366cd95df4b746d6f5a9a))
-* sync lockfile and audit deps ([3d89d11](https://git.inkyquill.net/inky/galley-editor/commit/3d89d113a9cf04e830d10aba60f8f54ddf8a1c38))
+* **build:** make lib postbuild portable ([68e778c](https://github.com/InkyQuill/galley-editor/commit/68e778c5e4109a926d7717eb8f1aa649ecf8dded))
+* **editor:** expand theme variable coverage ([f3fa2ce](https://github.com/InkyQuill/galley-editor/commit/f3fa2ced71e444d2748a12dc53b4a4b19fd45b7c))
+* **editor:** remove persistent focus and duplicate selection ([011808a](https://github.com/InkyQuill/galley-editor/commit/011808a1c864e00f4b8366cd95df4b746d6f5a9a))
+* sync lockfile and audit deps ([3d89d11](https://github.com/InkyQuill/galley-editor/commit/3d89d113a9cf04e830d10aba60f8f54ddf8a1c38))
 
 
 ### Features
 
-* support fill-container editor layout ([381445f](https://git.inkyquill.net/inky/galley-editor/commit/381445ff9b9d3eedd47e41f775158195b2c50b46))
+* support fill-container editor layout ([381445f](https://github.com/InkyQuill/galley-editor/commit/381445ff9b9d3eedd47e41f775158195b2c50b46))
 
 # Changelog
 
-All notable changes to `@inky/galley-editor` are documented in this file.
+All notable changes to `@inkyquill/galley-editor` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
@@ -178,7 +178,7 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - `scripts/verify-publish.sh` for manual pre-tag tarball inspection.
 
 ### Changed
-- Renamed package from `@inkyquill/galley-editor` to `@inky/galley-editor`.
+- Renamed package from `@inkyquill/galley-editor` to `@inkyquill/galley-editor`.
 - Version bumped from `1.0.0` to `0.2.0`. The 1.0.0 was aspirational; v0.x indicates active pre-release development. v1.0.0 will be the public-release commitment.
 - Moved `react`, `react-dom`, all `@codemirror/*`, all `@lezer/*` from `dependencies` to `peerDependencies` so consumers deduplicate properly.
 - `vite.config.ts`: renamed `rolldownOptions` to `rollupOptions`, wired `vite-plugin-dts` for type emission, configured CSS bundling so `dist/style.css` exists.
@@ -198,13 +198,13 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.1...HEAD
-[0.9.1]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.9.0...v0.9.1
-[0.9.0]: https://git.inkyquill.net/inky/galley-editor/-/compare/v0.8.0...v0.9.0
-[0.8.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.8.0
-[0.7.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.7.0
-[0.6.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.6.0
-[0.5.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.5.0
-[0.4.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.4.0
-[0.3.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.3.0
-[0.2.0]: https://git.inkyquill.net/inky/galley-editor/-/tags/v0.2.0
+[Unreleased]: https://github.com/InkyQuill/galley-editor/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/InkyQuill/galley-editor/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/InkyQuill/galley-editor/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.8.0
+[0.7.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.7.0
+[0.6.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.6.0
+[0.5.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.5.0
+[0.4.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.4.0
+[0.3.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.3.0
+[0.2.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.2.0

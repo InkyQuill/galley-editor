@@ -14,17 +14,17 @@ Use these links when you want to give the documentation to an assistant, crawler
 
 The Markdown copy is intentionally static and source-like. It is better for retrieval, copying into prompts, and diffing than the rendered HTML page.
 
-The public GitLab Pages URLs are:
+The public GitHub Pages URLs are:
 
-- `https://pages.inkyquill.net/inky/galley-editor/llms.txt`
-- `https://pages.inkyquill.net/inky/galley-editor/llms/complete-guide.md`
+- `https://inkyquill.github.io/galley-editor/llms.txt`
+- `https://inkyquill.github.io/galley-editor/llms/complete-guide.md`
 
 ## Basic Setup
 
 ```tsx
 import { useState } from 'react';
-import { GalleyEditor } from '@inky/galley-editor';
-import '@inky/galley-editor/style.css';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
 
 export function NotesEditor() {
   const [value, setValue] = useState('# Notes\n\nStart writing...');
@@ -50,8 +50,8 @@ Commands are functions that receive the underlying CodeMirror `EditorView`. Regi
 
 ```tsx
 import { useEffect, useRef, useState } from 'react';
-import type { GalleyHandle } from '@inky/galley-editor';
-import { GalleyEditor } from '@inky/galley-editor';
+import type { GalleyHandle } from '@inkyquill/galley-editor';
+import { GalleyEditor } from '@inkyquill/galley-editor';
 
 export function EditorWithCommands() {
   const ref = useRef<GalleyHandle>(null);
@@ -236,7 +236,7 @@ import {
   RiTableLine,
 } from '@remixicon/react';
 import type { ReactNode } from 'react';
-import type { ToolbarIconName } from '@inky/galley-editor';
+import type { ToolbarIconName } from '@inkyquill/galley-editor';
 
 const icons = {
   bold: <RiBold size={16} aria-hidden="true" />,
@@ -309,7 +309,7 @@ Use `makeInlinePlugin()` for viewport-only inline decorations and `makeBlockPlug
 
 ```tsx
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin, type GalleyPlugin } from '@inky/galley-editor';
+import { makeInlinePlugin, type GalleyPlugin } from '@inkyquill/galley-editor';
 
 const markPlugin: GalleyPlugin = {
   id: 'app:mark',
@@ -340,7 +340,7 @@ Built-in IDs are `ge:headings`, `ge:emphasis`, `ge:code-inline`, `ge:code-fence`
 
 ## Styling The Editor
 
-Import `@inky/galley-editor/style.css` for the default theme. The stylesheet is intentionally small and exposes a CSS variable contract. Scope overrides with `className`.
+Import `@inkyquill/galley-editor/style.css` for the default theme. The stylesheet is intentionally small and exposes a CSS variable contract. Scope overrides with `className`.
 
 ```tsx
 <GalleyEditor className="notes-editor" value={value} onChange={setValue} />
@@ -540,7 +540,7 @@ Galley keeps storage and upload behavior app-owned. Provide `onFiles` to handle 
 
 ```tsx
 import { useState } from 'react';
-import type { GalleyFileInput, GalleyFileStatus } from '@inky/galley-editor';
+import type { GalleyFileInput, GalleyFileStatus } from '@inkyquill/galley-editor';
 
 type UploadRecord = {
   id: string;

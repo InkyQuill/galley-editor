@@ -1,6 +1,6 @@
 # Galley Editor
 
-> ⚠️ **In active development.** v0.9.1 is the current pre-1.0 build. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
+> ⚠️ **In active development.** v0.10.0 is the current pre-1.0 build. The full feature set continues toward v1.0; see [docs/specs/ROADMAP.md](docs/specs/ROADMAP.md) for status.
 
 A React component that provides a half-WYSIWYG markdown editing experience. Built on CodeMirror 6, this library renders markdown blocks as HTML when you're not editing them, similar to Obsidian's live preview mode.
 
@@ -15,35 +15,25 @@ A React component that provides a half-WYSIWYG markdown editing experience. Buil
 
 ## Installation
 
-This package is currently published to the GitLab Package Registry from a public project. Consumers only need to point the `@inky` scope at the registry; no token is required to install.
+Install from npm:
 
-1. Configure npm to resolve `@inky` against the GitLab registry. Copy [`.npmrc.example`](./.npmrc.example) to your project root as `.npmrc`, or add this line manually:
+```bash
+npm install @inkyquill/galley-editor
+```
 
-   ```
-   @inky:registry=https://git.inkyquill.net/api/v4/packages/npm/
-   ```
+Import in your code (CSS import is optional — see [Styling](docs/styling.md)):
 
-   Because `inky/galley-editor` is public, package pulls are anonymous. Maintainer publishing still uses authenticated CI.
-
-2. Install:
-
-   ```bash
-   npm install @inky/galley-editor
-   ```
-
-3. Import in your code (CSS import is optional — see [Styling](docs/styling.md)):
-
-   ```tsx
-   import { GalleyEditor } from '@inky/galley-editor';
-   import '@inky/galley-editor/style.css';
-   ```
+```tsx
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
+```
 
 ## Quick Start
 
 ```tsx
 import React, { useState } from 'react';
-import { GalleyEditor } from '@inky/galley-editor';
-import '@inky/galley-editor/style.css';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
 
 function App() {
   const [markdown, setMarkdown] = useState('# Hello\n\nStart typing...');
@@ -68,17 +58,18 @@ function App() {
 - [Styling](docs/styling.md)
 - [Roadmap](docs/specs/ROADMAP.md)
 
-Public documentation website sources live in [`docs-site/`](docs-site/). The site is built with Astro Starlight and published together with Storybook in one GitLab Pages instance.
+Public documentation website sources live in [`docs-site/`](docs-site/). The site is built with Astro Starlight and published together with Storybook in one GitHub Pages instance.
 
 The docs site includes a complete guide covering custom commands, renderers, toolbar buttons, icons, styling, themes, built-in commands, accessible naming, app-owned document workflow, and upload workflows. Static LLM-readable entry points are published at:
 
-- <https://pages.inkyquill.net/inky/galley-editor/llms.txt>
-- <https://pages.inkyquill.net/inky/galley-editor/llms/complete-guide.md>
+- <https://inkyquill.github.io/galley-editor/llms.txt>
+- <https://inkyquill.github.io/galley-editor/llms/complete-guide.md>
+- <https://inkyquill.github.io/galley-editor/storybook/>
 
 ## Development
 
 ```bash
-git clone https://git.inkyquill.net/inky/galley-editor.git
+git clone https://github.com/InkyQuill/galley-editor.git
 cd galley-editor
 npm install --legacy-peer-deps
 npm run dev          # demo app

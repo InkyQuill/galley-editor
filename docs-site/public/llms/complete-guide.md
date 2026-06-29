@@ -6,8 +6,8 @@ Galley Editor is a React component library for live-preview Markdown editing. Ma
 
 ```tsx
 import { useState } from 'react';
-import { GalleyEditor } from '@inky/galley-editor';
-import '@inky/galley-editor/style.css';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
 
 export function NotesEditor() {
   const [value, setValue] = useState('# Notes\n\nStart writing...');
@@ -31,8 +31,8 @@ Commands receive CodeMirror's `EditorView`. Register them through the imperative
 
 ```tsx
 import { useEffect, useRef, useState } from 'react';
-import type { GalleyHandle } from '@inky/galley-editor';
-import { GalleyEditor } from '@inky/galley-editor';
+import type { GalleyHandle } from '@inkyquill/galley-editor';
+import { GalleyEditor } from '@inkyquill/galley-editor';
 
 export function EditorWithCommands() {
   const ref = useRef<GalleyHandle>(null);
@@ -135,7 +135,7 @@ import {
   RiTableLine,
 } from '@remixicon/react';
 import type { ReactNode } from 'react';
-import type { ToolbarIconName } from '@inky/galley-editor';
+import type { ToolbarIconName } from '@inkyquill/galley-editor';
 
 const icons = {
   bold: <RiBold size={16} aria-hidden="true" />,
@@ -185,7 +185,7 @@ Use `makeInlinePlugin()` for viewport-only inline decorations and `makeBlockPlug
 
 ```tsx
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin, type GalleyPlugin } from '@inky/galley-editor';
+import { makeInlinePlugin, type GalleyPlugin } from '@inkyquill/galley-editor';
 
 const markPlugin: GalleyPlugin = {
   id: 'app:mark',
@@ -210,7 +210,7 @@ Disable built-ins with `disabledPlugins`. Built-in IDs are `ge:headings`, `ge:em
 
 ## Styling
 
-Import `@inky/galley-editor/style.css` for defaults. Scope CSS variable overrides with `className`.
+Import `@inkyquill/galley-editor/style.css` for defaults. Scope CSS variable overrides with `className`.
 
 ```css
 .notes-editor {

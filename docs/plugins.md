@@ -297,8 +297,8 @@ Set `uploadInteraction="overlay"` to add an editor overlay while uploads are act
 
 ```typescript
 import { Decoration } from '@codemirror/view';
-import { makeInlinePlugin } from '@inky/galley-editor';
-import type { GalleyPlugin, GalleyClassNames } from '@inky/galley-editor';
+import { makeInlinePlugin } from '@inkyquill/galley-editor';
+import type { GalleyPlugin, GalleyClassNames } from '@inkyquill/galley-editor';
 
 const todoHighlightPlugin: GalleyPlugin = {
   id: 'custom:todo-highlight',
@@ -324,8 +324,8 @@ const todoHighlightPlugin: GalleyPlugin = {
 
 ```typescript
 import { WidgetType } from '@codemirror/view';
-import { makeInlinePlugin } from '@inky/galley-editor';
-import type { GalleyPlugin } from '@inky/galley-editor';
+import { makeInlinePlugin } from '@inkyquill/galley-editor';
+import type { GalleyPlugin } from '@inkyquill/galley-editor';
 
 class EmojiWidget extends WidgetType {
   constructor(private emoji: string) { super(); }

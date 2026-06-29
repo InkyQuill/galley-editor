@@ -173,7 +173,7 @@ Use `null` for `title`, `width`, or `height` to remove that field.
 Named export:
 
 ```ts
-import { updateImageMetadata } from '@inky/galley-editor';
+import { updateImageMetadata } from '@inkyquill/galley-editor';
 
 updateImageMetadata(view, { width: 640, height: 360 });
 ```
@@ -189,7 +189,7 @@ editorRef.current?.execCommand('clearImageDimensions');
 Named export:
 
 ```ts
-import { clearImageDimensions } from '@inky/galley-editor';
+import { clearImageDimensions } from '@inkyquill/galley-editor';
 
 clearImageDimensions(view);
 ```
@@ -375,7 +375,7 @@ const matches = editorRef.current?.execCommand('findInDocument', 'todo', {
 Named export:
 
 ```ts
-import { findInDocument } from '@inky/galley-editor';
+import { findInDocument } from '@inkyquill/galley-editor';
 
 const matches = findInDocument(view, 'heading', { caseSensitive: true });
 ```

@@ -1,31 +1,21 @@
 ---
 title: Installation
-description: Install Galley Editor from the GitLab package registry.
+description: Install Galley Editor from npm.
 ---
 
-Galley is currently published from the self-hosted GitLab package registry. The project is public, so consumers do not need a token to pull packages.
-
-## Configure npm
-
-Create or update `.npmrc` in your consuming project:
-
-```ini
-@inky:registry=https://git.inkyquill.net/api/v4/packages/npm/
-```
-
-Authenticated registry access is only needed for maintainers publishing new versions.
+Galley is published on npm as `@inkyquill/galley-editor`.
 
 ## Install
 
 ```bash
-npm install @inky/galley-editor
+npm install @inkyquill/galley-editor
 ```
 
 ## Import
 
 ```tsx
-import { GalleyEditor } from '@inky/galley-editor';
-import '@inky/galley-editor/style.css';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
 ```
 
 The stylesheet is optional but recommended. It provides the default Galley theme, CSS variables, toolbar/footer styling, image widgets, tables, code fences, and overlay-style scrollbars.

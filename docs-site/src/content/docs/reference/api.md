@@ -6,7 +6,7 @@ description: Public React component props, handle methods, hooks, and extension 
 ## Component
 
 ```tsx
-import { GalleyEditor } from '@inky/galley-editor';
+import { GalleyEditor } from '@inkyquill/galley-editor';
 ```
 
 ```tsx
@@ -216,7 +216,7 @@ When a rendered image fails to load, or when an image has an empty source, Galle
 
 ```tsx
 import { useRef } from 'react';
-import type { GalleyHandle } from '@inky/galley-editor';
+import type { GalleyHandle } from '@inkyquill/galley-editor';
 
 const editor = useRef<GalleyHandle>(null);
 ```
@@ -258,7 +258,7 @@ editor.current?.execCommand('clearImageDimensions');
 Both commands are also named exports:
 
 ```ts
-import { clearImageDimensions, updateImageMetadata } from '@inky/galley-editor';
+import { clearImageDimensions, updateImageMetadata } from '@inkyquill/galley-editor';
 ```
 
 ## Table Commands and Types
@@ -294,7 +294,7 @@ Named exports include `normalizeTable`, `commitTableCell`, row/column helpers, `
 `useGalley(options?)` owns a ref, tracks controlled content, and returns stable method wrappers.
 
 ```tsx
-import { GalleyEditor, useGalley } from '@inky/galley-editor';
+import { GalleyEditor, useGalley } from '@inkyquill/galley-editor';
 
 export function Editor() {
   const editor = useGalley({ initialValue: '# Hello' });

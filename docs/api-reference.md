@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all public exports from `@inky/galley-editor`.
+Complete reference for all public exports from `@inkyquill/galley-editor`.
 
 ## Components
 
@@ -9,7 +9,7 @@ Complete reference for all public exports from `@inky/galley-editor`.
 The main editor component. A React `forwardRef` wrapper around `EditorController`.
 
 ```tsx
-import { GalleyEditor } from '@inky/galley-editor';
+import { GalleyEditor } from '@inkyquill/galley-editor';
 
 <GalleyEditor
   ref={editorRef}
@@ -201,7 +201,7 @@ type ImageControlsRenderer = (input: {
 React error boundary for graceful error handling.
 
 ```tsx
-import { ErrorBoundary } from '@inky/galley-editor';
+import { ErrorBoundary } from '@inkyquill/galley-editor';
 
 <ErrorBoundary fallback={<div>Editor failed to load</div>}>
   <GalleyEditor value={value} onChange={setValue} />
@@ -329,7 +329,7 @@ Direct access to the underlying CodeMirror `EditorView`, or `null` before the ed
 Hooks-first wrapper around the imperative handle. It owns a ref, tracks controlled content, and returns stable method wrappers.
 
 ```tsx
-import { GalleyEditor, useGalley } from '@inky/galley-editor';
+import { GalleyEditor, useGalley } from '@inkyquill/galley-editor';
 
 function Editor() {
   const editor = useGalley({
@@ -805,7 +805,7 @@ Each plugin is also exported individually for selective inclusion.
 Optional stylesheet with minimal visual defaults. Import it for quick setup:
 
 ```typescript
-import '@inky/galley-editor/style.css';
+import '@inkyquill/galley-editor/style.css';
 ```
 
 See [Styling Guide](./styling.md) for details on all classes and customization.

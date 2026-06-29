@@ -1,8 +1,8 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
-const site = process.env.GALLEY_DOCS_SITE ?? 'https://pages.inkyquill.net';
-const configuredBase = process.env.GALLEY_DOCS_BASE ?? '/inky/galley-editor';
+const site = process.env.GALLEY_DOCS_SITE ?? 'https://inkyquill.github.io';
+const configuredBase = process.env.GALLEY_DOCS_BASE ?? '/galley-editor';
 const base = configuredBase === '/' ? '' : configuredBase.replace(/\/$/, '');
 
 export default defineConfig({
@@ -21,9 +21,9 @@ export default defineConfig({
       customCss: ['./src/styles/starlight.css'],
       social: [
         {
-          icon: 'gitlab',
-          label: 'GitLab',
-          href: 'https://git.inkyquill.net/inky/galley-editor',
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/InkyQuill/galley-editor',
         },
       ],
       sidebar: [

@@ -1,17 +1,17 @@
 {
-  "name": "@inky/galley-editor",
+  "name": "@inkyquill/galley-editor",
   "version": "0.10.0",
   "description": "A React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6 with Obsidian-style live preview.",
   "type": "module",
   "license": "MIT",
   "author": "Pavel Obruchnikov <me@inkyquill.net>",
-  "homepage": "https://git.inkyquill.net/inky/galley-editor#readme",
+  "homepage": "https://github.com/InkyQuill/galley-editor#readme",
   "repository": {
     "type": "git",
-    "url": "https://git.inkyquill.net/inky/galley-editor.git"
+    "url": "git+https://github.com/InkyQuill/galley-editor.git"
   },
   "bugs": {
-    "url": "https://git.inkyquill.net/inky/galley-editor/-/issues"
+    "url": "https://github.com/InkyQuill/galley-editor/issues"
   },
   "keywords": [
     "markdown",
@@ -45,8 +45,8 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "registry": "https://git.inkyquill.net/api/v4/projects/94/packages/npm/",
-    "access": "restricted"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "dev": "vite",
@@ -88,7 +88,7 @@
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/gitlab": "^13.3.2",
+    "@semantic-release/github": "^12.0.8",
     "@semantic-release/npm": "^13.1.5",
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@storybook/addon-docs": "^10.3.4",

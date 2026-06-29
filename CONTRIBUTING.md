@@ -1,11 +1,11 @@
-# Contributing to `@inky/galley-editor`
+# Contributing to `@inkyquill/galley-editor`
 
 Thanks for your interest. This document covers how to develop, the clean-room rule for code in `src/`, and the PR checklist.
 
 ## Local development
 
 ```bash
-git clone https://git.inkyquill.net/inky/galley-editor.git
+git clone https://github.com/InkyQuill/galley-editor.git
 cd galley-editor
 npm install --legacy-peer-deps
 npm run dev          # demo app
@@ -40,11 +40,17 @@ These prevent accidental contamination of the published package:
 
 Merges to `main` run `semantic-release` after the test job passes. Release commits are inferred from Conventional Commit messages: `fix:` creates a patch release, `feat:` creates a minor release, and `BREAKING CHANGE:` creates a major release.
 
-The GitLab project must define a masked CI/CD variable named `GITLAB_TOKEN`. Use a project access token with Developer role or higher and the `api` and `write_repository` scopes. The release job uses `CI_JOB_TOKEN` for publishing to the GitLab npm registry.
+The GitHub repository must define an Actions secret named `NPM_TOKEN`. Use an npm automation token with publish access to `@inkyquill/galley-editor`. The release workflow uses the built-in `GITHUB_TOKEN` for tags and GitHub releases, and `NPM_TOKEN` for publishing to npmjs with provenance.
+
+Set the secret after the GitHub repository exists:
+
+```bash
+gh secret set NPM_TOKEN --repo InkyQuill/galley-editor
+```
 
 ## PR checklist
 
-Every merge request must include:
+Every pull request must include:
 
 - [ ] No code in this PR was copied or translated from another editor. Behavior was specified in writing first.
 - [ ] All tests pass locally (`npm run test`).

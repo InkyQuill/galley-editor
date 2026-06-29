@@ -3,7 +3,7 @@
 Galley Editor styles rendered markdown with semantic classes and a CSS custom property contract. Import the base stylesheet for defaults, then override `--ge-*` variables from your app.
 
 ```ts
-import '@inky/galley-editor/style.css';
+import '@inkyquill/galley-editor/style.css';
 ```
 
 The `theme` prop resolves to `data-theme="light"` or `data-theme="dark"` on the editor wrapper, so the same variables drive rendered markdown and CodeMirror chrome.
@@ -187,7 +187,7 @@ Tailwind v4 theme variables are CSS variables, so map your app tokens into the G
 
 ```css
 @import "tailwindcss";
-@import "@inky/galley-editor/style.css";
+@import "@inkyquill/galley-editor/style.css";
 
 @theme static {
   --color-editor-text: var(--color-slate-950);

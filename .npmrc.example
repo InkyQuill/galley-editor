@@ -1,5 +1,0 @@
-# Copy this file to .npmrc in your consuming project root.
-# The galley-editor project is public, so package installs do not need
-# a read_package_registry token. Maintainer publishing is handled by CI.
-
-@inky:registry=https://git.inkyquill.net/api/v4/packages/npm/

@@ -7,8 +7,8 @@ Galley is a controlled React component. Keep Markdown in your application state 
 
 ```tsx
 import { useState } from 'react';
-import { GalleyEditor } from '@inky/galley-editor';
-import '@inky/galley-editor/style.css';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+import '@inkyquill/galley-editor/style.css';
 
 export function NotesEditor() {
   const [markdown, setMarkdown] = useState(`# Design notes
@@ -57,7 +57,7 @@ Use the ref when you need focus, commands, or direct CodeMirror access.
 
 ```tsx
 import { useRef } from 'react';
-import type { GalleyHandle } from '@inky/galley-editor';
+import type { GalleyHandle } from '@inkyquill/galley-editor';
 
 const editor = useRef<GalleyHandle>(null);
 
