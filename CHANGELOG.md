@@ -1,3 +1,18 @@
+# [0.10.0](https://git.inkyquill.net/inky/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
+
+
+### Bug Fixes
+
+* **build:** make lib postbuild portable ([68e778c](https://git.inkyquill.net/inky/galley-editor/commit/68e778c5e4109a926d7717eb8f1aa649ecf8dded))
+* **editor:** expand theme variable coverage ([f3fa2ce](https://git.inkyquill.net/inky/galley-editor/commit/f3fa2ced71e444d2748a12dc53b4a4b19fd45b7c))
+* **editor:** remove persistent focus and duplicate selection ([011808a](https://git.inkyquill.net/inky/galley-editor/commit/011808a1c864e00f4b8366cd95df4b746d6f5a9a))
+* sync lockfile and audit deps ([3d89d11](https://git.inkyquill.net/inky/galley-editor/commit/3d89d113a9cf04e830d10aba60f8f54ddf8a1c38))
+
+
+### Features
+
+* support fill-container editor layout ([381445f](https://git.inkyquill.net/inky/galley-editor/commit/381445ff9b9d3eedd47e41f775158195b2c50b46))
+
 # Changelog
 
 All notable changes to `@inky/galley-editor` are documented in this file.

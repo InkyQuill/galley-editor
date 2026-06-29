@@ -36,6 +36,12 @@ These prevent accidental contamination of the published package:
 - `package.json` uses an explicit `files` allowlist — only the directories and files named there are included in the published tarball.
 - The CI test job greps `dist/` for external editor source markers such as `joplin` and `@joplin`, and fails the pipeline on any hit.
 
+## Releases
+
+Merges to `main` run `semantic-release` after the test job passes. Release commits are inferred from Conventional Commit messages: `fix:` creates a patch release, `feat:` creates a minor release, and `BREAKING CHANGE:` creates a major release.
+
+The GitLab project must define a masked CI/CD variable named `GITLAB_TOKEN`. Use a project access token with Developer role or higher and the `api` and `write_repository` scopes. The release job uses `CI_JOB_TOKEN` for publishing to the GitLab npm registry.
+
 ## PR checklist
 
 Every merge request must include:
