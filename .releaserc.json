@@ -16,11 +16,25 @@
         "npmPublish": true
       }
     ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node scripts/sync-release-docs.mjs ${nextRelease.version}"
+      }
+    ],
     "@semantic-release/github",
     [
       "@semantic-release/git",
       {
-        "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
+        "assets": [
+          "package.json",
+          "package-lock.json",
+          "CHANGELOG.md",
+          "docs-site/src/components/GalleyHome.astro",
+          "docs-site/src/content/docs/releases/*.md",
+          "docs-site/astro.config.mjs",
+          "docs/specs/ROADMAP.md"
+        ],
         "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ]

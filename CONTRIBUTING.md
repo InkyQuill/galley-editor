@@ -40,7 +40,7 @@ These prevent accidental contamination of the published package:
 
 Merges to `main` run `semantic-release` after the test job passes. Release commits are inferred from Conventional Commit messages: `fix:` creates a patch release, `feat:` creates a minor release, and `BREAKING CHANGE:` creates a major release.
 
-The GitHub repository must define an Actions secret named `NPM_TOKEN`. Use an npm automation token with publish access to `@inkyquill/galley-editor`. The release workflow uses the built-in `GITHUB_TOKEN` for tags and GitHub releases, and `NPM_TOKEN` for publishing to npmjs with provenance.
+The GitHub repository must define an Actions secret named `NPM_TOKEN`. Use an npm automation token, or a granular npm token with publish access to `@inkyquill/galley-editor` and 2FA bypass enabled. The release workflow uses the built-in `GITHUB_TOKEN` for tags and GitHub releases, and `NPM_TOKEN` for publishing to npmjs with provenance.
 
 Set the secret after the GitHub repository exists:
 

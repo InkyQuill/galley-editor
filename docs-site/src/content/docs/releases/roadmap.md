@@ -3,7 +3,7 @@ title: Roadmap
 description: Current roadmap toward Galley Editor v1.0.
 ---
 
-Galley is in active development. v0.9.1 is the current consumer-polish baseline, and the remaining work is split into v0.10 renderer examples and v1.0 API stabilization.
+Galley is in active development. v0.10.0 is the current public build.
 
 ## Done
 
@@ -18,12 +18,12 @@ Galley is in active development. v0.9.1 is the current consumer-polish baseline,
 - Image metadata parsing, rendering metadata, and command-backed resize helpers.
 - Hybrid visual editing for simple GFM pipe tables, including cell navigation and row, column, alignment, delete, and Source controls.
 - Consumer integration polish for accessible editor naming, public LLM-readable docs, dense workspace styling, custom icon contracts, and app-owned document workflow guidance.
+- Public GitHub and npmjs publishing, with GitHub Pages hosting docs and Storybook.
 
 ## Next Milestones
 
 | Version | Focus | Scope |
 | --- | --- | --- |
-| 0.10.0 | KaTeX/Mermaid Examples | Markdown extension registration examples for KaTeX and Mermaid. |
 | 1.0.0 | API Stabilization | More Storybook integration examples; final public API review and release hardening. |
 
 ## Publishing

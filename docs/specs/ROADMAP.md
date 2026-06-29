@@ -36,7 +36,7 @@ Each milestone is independently shippable to npmjs. Implementation is sequential
 | 0.8.0 | Asset Workflows | shipped 2026-04-30 | [v0.8 asset workflows design](../superpowers/specs/2026-04-30-v0.8-asset-workflows-design.md) | v0.8.0 |
 | 0.9.0 | Table Editing | shipped 2026-05-01 | [v0.9 table editing design](../superpowers/specs/2026-04-30-v0.9-advanced-authoring-design.md) | v0.9.0 |
 | 0.9.1 | Consumer Integration Polish | shipped 2026-05-01 | Consumer feedback patch: accessible naming, public LLM docs, and customization recipes | v0.9.1 |
-| 0.10.0 | KaTeX/Mermaid Renderer Examples | draft | — | — |
+| 0.10.0 | Public GitHub/npmjs Transition | shipped 2026-06-29 | — | v0.10.0 |
 | 1.0.0 | Public Release & API Stabilization | draft | [v1.0 API stabilization design](../superpowers/specs/2026-04-30-v1.0-api-stabilization-design.md), [v1.0-public-release.md](./v1.0-public-release.md) | — |
 
 **Status values:** `draft` (spec written, not started) → `in-progress` (work began) → `shipped vX.Y.Z on YYYY-MM-DD` (frozen; corrections go in the spec's Post-ship notes section).

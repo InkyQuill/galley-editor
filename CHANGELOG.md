@@ -198,7 +198,8 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 - This release contains zero behavior changes. Bug fixes from the pre-spec code review land in v0.3.0.
 - Distribution is private (GitLab Package Registry on `git.inkyquill.net`). Public publication deferred to v1.0.0.
 
-[Unreleased]: https://github.com/InkyQuill/galley-editor/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/InkyQuill/galley-editor/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/InkyQuill/galley-editor/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/InkyQuill/galley-editor/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/InkyQuill/galley-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/InkyQuill/galley-editor/releases/tag/v0.8.0
