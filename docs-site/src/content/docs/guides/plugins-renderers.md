@@ -78,6 +78,24 @@ Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer
 />
 ```
 
+## Table Controls
+
+Use `tableControlIcons` to replace the visible table editor control labels. Accessible labels stay on the buttons.
+
+```tsx
+<GalleyEditor
+  tableControlIcons={{
+    insertRowAfter: '+ row',
+    deleteColumn: ({ label }) => {
+      const icon = document.createElement('span');
+      icon.textContent = 'del col';
+      icon.title = label;
+      return icon;
+    },
+  }}
+/>
+```
+
 ## Custom Plugins
 
 A `GalleyPlugin` is a stable id plus a function that returns CodeMirror extensions:

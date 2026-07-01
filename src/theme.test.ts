@@ -194,6 +194,18 @@ describe('galley-base.css theme contract', () => {
     expect(block).not.toMatch(/width:\s*100%/);
   });
 
+  it('constrains rendered tables to the editor content width', () => {
+    const css = readCss();
+    const widgetBlock = getBlock(css, /\.ge-table-widget\s*\{(?<body>[\s\S]*?)\}/);
+    const scrollBlock = getBlock(css, /\.ge-table-scroll\s*\{(?<body>[\s\S]*?)\}/);
+
+    expect(widgetBlock).toContain('box-sizing: border-box;');
+    expect(widgetBlock).toContain('max-width: 100%;');
+    expect(widgetBlock).toContain('min-width: 0;');
+    expect(scrollBlock).toContain('max-width: 100%;');
+    expect(scrollBlock).toContain('min-width: 0;');
+  });
+
   it('lets fill layout stretch the CodeMirror content area', () => {
     const css = readCss();
     const fillBlock = getBlock(css, /\.ge-layout-fill\s+\.cm-content\s*\{(?<body>[\s\S]*?)\}/);

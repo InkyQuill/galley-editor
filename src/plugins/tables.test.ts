@@ -473,6 +473,32 @@ describe('tablesPlugin', () => {
     expect(view.dom.querySelector('.ge-table-cell-selected')).toBeInstanceOf(HTMLElement);
   });
 
+  it('uses custom table control icons from render context', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc, 'plain', {
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowAfter: ({ label }) => {
+          const icon = document.createElement('span');
+          icon.className = 'custom-table-icon';
+          icon.dataset.label = label;
+          icon.textContent = 'ROW+';
+          return icon;
+        },
+        deleteColumn: 'COL-',
+      },
+    });
+
+    clickCell(view, '1:1');
+
+    const addRowAfter = view.dom.querySelector('button[aria-label="Add row after"]');
+    expect(addRowAfter?.textContent).toBe('ROW+');
+    expect(addRowAfter?.querySelector('.custom-table-icon')).toBeInstanceOf(HTMLElement);
+    expect(addRowAfter?.querySelector('.custom-table-icon')?.getAttribute('data-label')).toBe('Add row after');
+    expect(view.dom.querySelector('button[aria-label="Delete column"]')?.textContent).toBe('COL-');
+    expect(view.dom.querySelector('button[aria-label="Add row before"]')?.textContent).toBe('+R^');
+  });
+
   it('hides controls and ignores cell editing in preview/read-only context', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
     const view = tableEditor(doc, 'one', previewReadonlyContext);

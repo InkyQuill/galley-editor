@@ -108,6 +108,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       imageRenderer,
       missingImageRenderer,
       imageControlsRenderer,
+      tableControlIcons,
       onLinkClick,
       bidi = false,
       toolbar = true,
@@ -301,6 +302,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       imageRenderer,
       missingImageRenderer,
       imageControlsRenderer,
+      tableControlIcons,
       onLinkClick,
       bidi,
       mode: effectiveMode,
@@ -357,7 +359,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
-    }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, layout, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
+    }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, layout, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, tableControlIcons, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {
