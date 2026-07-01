@@ -58,6 +58,7 @@ Extension props:
 | `imageRenderer` | Render Markdown image widgets. |
 | `missingImageRenderer` | Render empty or failed images. |
 | `imageControlsRenderer` | Render selected-image controls. |
+| `tableControlIcons` | Replace rendered table editor control icons/text. |
 | `onLinkClick` | Intercept Cmd/Ctrl-click links. |
 | `plugins` | Add Galley plugins. |
 | `disabledPlugins` | Disable built-in plugin ids. |

@@ -34,7 +34,13 @@ import {
   type GalleyTableCell,
   type TableCellRef,
 } from '../table-markdown';
-import type { GalleyPlugin, GalleyClassNames } from '../types';
+import type {
+  GalleyPlugin,
+  GalleyClassNames,
+  GalleyTableControlIcon,
+  GalleyTableControlIconName,
+  GalleyTableControlIcons,
+} from '../types';
 
 interface SelectedTableCell {
   tableFrom: number;
@@ -132,6 +138,7 @@ class TableWidget extends WidgetType {
   selected: SelectedTableCell | null;
   canEdit: boolean;
   preview: boolean;
+  tableControlIcons?: GalleyTableControlIcons;
 
   constructor(
     table: GalleyTable,
@@ -139,6 +146,7 @@ class TableWidget extends WidgetType {
     selected: SelectedTableCell | null,
     canEdit: boolean,
     preview: boolean,
+    tableControlIcons?: GalleyTableControlIcons,
   ) {
     super();
     this.table = table;
@@ -146,6 +154,7 @@ class TableWidget extends WidgetType {
     this.selected = selected;
     this.canEdit = canEdit;
     this.preview = preview;
+    this.tableControlIcons = tableControlIcons;
   }
 
   eq(other: TableWidget): boolean {
@@ -155,6 +164,7 @@ class TableWidget extends WidgetType {
       other.tableClass === this.tableClass &&
       other.canEdit === this.canEdit &&
       other.preview === this.preview &&
+      other.tableControlIcons === this.tableControlIcons &&
       JSON.stringify(other.table.rows) === JSON.stringify(this.table.rows) &&
       other.table.alignments.join('\0') === this.table.alignments.join('\0') &&
       selectedTableCellKey(other.selected) === selectedTableCellKey(this.selected);
@@ -421,18 +431,24 @@ class TableWidget extends WidgetType {
       event.stopPropagation();
     });
 
-    const buttons: Array<{ label: string; text: string; reveal?: boolean; run: TableCommand }> = [
-      { label: 'Add row before', text: '+R^', run: insertTableRowBefore },
-      { label: 'Add row after', text: '+R', run: insertTableRowAfter },
-      { label: 'Add column before', text: '+C<', run: insertTableColumnBefore },
-      { label: 'Add column after', text: '+C>', run: insertTableColumnAfter },
-      { label: 'Delete row', text: '-R', run: deleteTableRow },
-      { label: 'Delete column', text: '-C', run: deleteTableColumn },
-      { label: 'Align column left', text: 'L', run: (editorView) => setTableColumnAlignment(editorView, 'left') },
-      { label: 'Align column center', text: 'C', run: (editorView) => setTableColumnAlignment(editorView, 'center') },
-      { label: 'Align column right', text: 'R', run: (editorView) => setTableColumnAlignment(editorView, 'right') },
-      { label: 'Clear column alignment', text: 'x', run: (editorView) => setTableColumnAlignment(editorView, null) },
-      { label: 'Edit table source', text: '{}', reveal: true, run: (editorView) => this.revealSource(editorView) },
+    const buttons: Array<{
+      name: GalleyTableControlIconName;
+      label: string;
+      text: string;
+      reveal?: boolean;
+      run: TableCommand;
+    }> = [
+      { name: 'insertRowBefore', label: 'Add row before', text: '+R^', run: insertTableRowBefore },
+      { name: 'insertRowAfter', label: 'Add row after', text: '+R', run: insertTableRowAfter },
+      { name: 'insertColumnBefore', label: 'Add column before', text: '+C<', run: insertTableColumnBefore },
+      { name: 'insertColumnAfter', label: 'Add column after', text: '+C>', run: insertTableColumnAfter },
+      { name: 'deleteRow', label: 'Delete row', text: '-R', run: deleteTableRow },
+      { name: 'deleteColumn', label: 'Delete column', text: '-C', run: deleteTableColumn },
+      { name: 'alignLeft', label: 'Align column left', text: 'L', run: (editorView) => setTableColumnAlignment(editorView, 'left') },
+      { name: 'alignCenter', label: 'Align column center', text: 'C', run: (editorView) => setTableColumnAlignment(editorView, 'center') },
+      { name: 'alignRight', label: 'Align column right', text: 'R', run: (editorView) => setTableColumnAlignment(editorView, 'right') },
+      { name: 'clearAlignment', label: 'Clear column alignment', text: 'x', run: (editorView) => setTableColumnAlignment(editorView, null) },
+      { name: 'editSource', label: 'Edit table source', text: '{}', reveal: true, run: (editorView) => this.revealSource(editorView) },
     ];
 
     for (const buttonInfo of buttons) {
@@ -440,7 +456,14 @@ class TableWidget extends WidgetType {
       button.type = 'button';
       button.className = 'ge-table-control';
       button.ariaLabel = buttonInfo.label;
-      button.textContent = buttonInfo.text;
+      renderTableControlIcon(
+        button,
+        this.tableControlIcons?.[buttonInfo.name],
+        buttonInfo.name,
+        buttonInfo.label,
+        buttonInfo.text,
+        view,
+      );
       button.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -467,6 +490,42 @@ class TableWidget extends WidgetType {
     });
     return true;
   }
+}
+
+function renderTableControlIcon(
+  button: HTMLButtonElement,
+  configured: GalleyTableControlIcon | undefined,
+  name: GalleyTableControlIconName,
+  label: string,
+  fallback: string,
+  view: EditorView,
+): void {
+  const icon = resolveTableControlIcon(configured, name, label, view);
+  if (!icon) {
+    button.textContent = fallback;
+    return;
+  }
+
+  if (typeof icon === 'string') {
+    button.textContent = icon;
+    return;
+  }
+
+  button.replaceChildren(icon);
+}
+
+function resolveTableControlIcon(
+  configured: GalleyTableControlIcon | undefined,
+  name: GalleyTableControlIconName,
+  label: string,
+  view: EditorView,
+): string | HTMLElement | null {
+  if (!configured) return null;
+  if (typeof configured === 'function') {
+    return configured({ name, label, view });
+  }
+  if (typeof configured === 'string') return configured;
+  return configured.cloneNode(true) as HTMLElement;
 }
 
 function syncCellEditorSize(input: HTMLInputElement): void {
@@ -710,6 +769,7 @@ function buildTableDecorations(
   tableClass: string,
   preview: boolean,
   canEdit: boolean,
+  tableControlIcons?: GalleyTableControlIcons,
 ): DecorationSet {
   const widgets: Range<Decoration>[] = [];
   const selectedCell = selectedTableCellState(state);
@@ -729,7 +789,14 @@ function buildTableDecorations(
 
       widgets.push(
         Decoration.replace({
-          widget: new TableWidget(table, tableClass, selectedForTable, canEdit, preview),
+          widget: new TableWidget(
+            table,
+            tableClass,
+            selectedForTable,
+            canEdit,
+            preview,
+            tableControlIcons,
+          ),
           block: true,
         }).range(node.from, node.to),
       );
@@ -743,10 +810,11 @@ function makeTableDecorationsField(
   tableClass: string,
   preview: boolean,
   canEdit: boolean,
+  tableControlIcons?: GalleyTableControlIcons,
 ) {
   return StateField.define<DecorationSet>({
     create(state) {
-      return buildTableDecorations(state, tableClass, preview, canEdit);
+      return buildTableDecorations(state, tableClass, preview, canEdit, tableControlIcons);
     },
     update(decorations, transaction) {
       const selectedChanged =
@@ -765,7 +833,13 @@ function makeTableDecorationsField(
         sourceEscapeChanged ||
         treeChanged
       ) {
-        return buildTableDecorations(transaction.state, tableClass, preview, canEdit);
+        return buildTableDecorations(
+          transaction.state,
+          tableClass,
+          preview,
+          canEdit,
+          tableControlIcons,
+        );
       }
 
       return decorations.map(transaction.changes);
@@ -833,11 +907,12 @@ const tablesPlugin: GalleyPlugin = {
     const tableClass = classNames.table ?? 'ge-table';
     const preview = context?.mode === 'preview';
     const canEdit = context?.canEdit ?? !preview;
+    const tableControlIcons = context?.tableControlIcons;
 
     return [
       selectedTableCellField,
       sourceEscapedTableField,
-      makeTableDecorationsField(tableClass, preview, canEdit),
+      makeTableDecorationsField(tableClass, preview, canEdit, tableControlIcons),
       makeTablesViewPlugin(preview, canEdit),
     ];
   },
