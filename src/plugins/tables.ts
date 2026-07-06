@@ -477,6 +477,7 @@ class TableWidget extends WidgetType {
       button.type = 'button';
       button.className = 'ge-table-control';
       button.ariaLabel = buttonInfo.label;
+      button.title = buttonInfo.label;
       renderTableControlIcon(
         button,
         this.tableControlIcons?.[buttonInfo.name],

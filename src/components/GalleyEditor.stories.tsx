@@ -421,6 +421,48 @@ export const VisualTableEditingReadOnly: Story = {
   },
 };
 
+function ConstrainedTableEditingStory() {
+  const [value, setValue] = useState([
+    '## Narrow table block',
+    '',
+    '| Column | Description | Status |',
+    '| :--- | :--- | :---: |',
+    '| Alpha | SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious | Ready |',
+    '| Beta | A long sentence with normal spaces should wrap inside the rendered table block instead of widening the editor content area. | Draft |',
+    '',
+    'The rendered table should stay inside the narrow editor frame.',
+  ].join('\n'));
+
+  return (
+    <div
+      data-testid="constrained-table-mockup"
+      style={{
+        border: '1px solid #cbd5e1',
+        borderRadius: '10px',
+        margin: '0 auto',
+        maxWidth: '360px',
+        overflow: 'hidden',
+      }}
+    >
+      <GalleyEditor
+        value={value}
+        onChange={setValue}
+        minRows={9}
+        toolbar={false}
+        footer={false}
+      />
+    </div>
+  );
+}
+
+/**
+ * Reproduces a narrow host surface with long table-cell content. The rendered
+ * table block should wrap within the editor instead of widening the host.
+ */
+export const ConstrainedTableEditing: Story = {
+  render: ConstrainedTableEditingStory,
+};
+
 // ── Image Rendering ────────────────────────────────────────────────────────
 
 function ImageRenderingStory() {
