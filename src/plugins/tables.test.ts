@@ -499,6 +499,7 @@ describe('tablesPlugin', () => {
 
     const addRowAfter = view.dom.querySelector('button[aria-label="Add row after"]');
     expect(addRowAfter?.textContent).toBe('ROW+');
+    expect(addRowAfter?.getAttribute('title')).toBe('Add row after');
     expect(addRowAfter?.querySelector('.custom-table-icon')).toBeInstanceOf(HTMLElement);
     expect(addRowAfter?.querySelector('.custom-table-icon')?.getAttribute('data-label')).toBe('Add row after');
     expect(view.dom.querySelector('button[aria-label="Delete column"]')?.textContent).toBe('COL-');

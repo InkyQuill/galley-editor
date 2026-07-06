@@ -188,16 +188,19 @@ describe('galley-base.css theme contract', () => {
     const css = readCss();
     const block = getBlock(css, /^\.ge-table-cell-editor\s*\{(?<body>[\s\S]*?)\}/m);
 
+    expect(block).toContain('max-width: 100%;');
     expect(block).toContain('padding: 0;');
     expect(block).toContain('width: auto;');
     expect(block).not.toMatch(/min-width:\s*12ch/);
-    expect(block).not.toMatch(/width:\s*100%/);
+    expect(block).not.toMatch(/(^|\n)\s*width:\s*100%/);
   });
 
   it('constrains rendered tables to the editor content width', () => {
     const css = readCss();
     const widgetBlock = getBlock(css, /^\.ge-table-widget\s*\{(?<body>[\s\S]*?)\}/m);
     const scrollBlock = getBlock(css, /^\.ge-table-scroll\s*\{(?<body>[\s\S]*?)\}/m);
+    const tableBlock = getBlock(css, /^\.ge-table-rendered\s*\{(?<body>[\s\S]*?)\}/m);
+    const cellBlock = getBlock(css, /^\.ge-table-rendered th,\n\.ge-table-rendered td\s*\{(?<body>[\s\S]*?)\}/m);
 
     expect(widgetBlock).toContain('box-sizing: border-box;');
     expect(widgetBlock).toContain('max-width: 100%;');
@@ -205,6 +208,25 @@ describe('galley-base.css theme contract', () => {
     expect(scrollBlock).toContain('box-sizing: border-box;');
     expect(scrollBlock).toContain('max-width: 100%;');
     expect(scrollBlock).toContain('min-width: 0;');
+    expect(tableBlock).toContain('table-layout: fixed;');
+    expect(tableBlock).toContain('width: 100%;');
+    expect(tableBlock).not.toContain('width: max-content;');
+    expect(cellBlock).toContain('overflow-wrap: anywhere;');
+    expect(cellBlock).toContain('word-break: normal;');
+  });
+
+  it('sizes table block controls like toolbar icon buttons', () => {
+    const css = readCss();
+    const controlBlock = getBlock(css, /^\.ge-table-control\s*\{(?<body>[\s\S]*?)\}/m);
+    const iconBlock = getBlock(css, /^\.ge-table-control svg\s*\{(?<body>[\s\S]*?)\}/m);
+
+    expect(controlBlock).toContain('align-items: center;');
+    expect(controlBlock).toContain('display: inline-flex;');
+    expect(controlBlock).toContain('height: 34px;');
+    expect(controlBlock).toContain('justify-content: center;');
+    expect(controlBlock).toContain('min-width: 34px;');
+    expect(iconBlock).toContain('height: 16px;');
+    expect(iconBlock).toContain('width: 16px;');
   });
 
   it('lets fill layout stretch the CodeMirror content area', () => {

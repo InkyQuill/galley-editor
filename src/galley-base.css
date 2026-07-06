@@ -476,15 +476,19 @@
   background: var(--ge-color-surface-elevated);
   border-collapse: collapse;
   min-width: 100%;
-  width: max-content;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .ge-table-rendered th,
 .ge-table-rendered td {
   border-bottom: 1px solid var(--ge-color-table-border);
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 7px 10px;
   text-align: left;
   vertical-align: top;
+  word-break: normal;
 }
 
 .ge-table-rendered th {
@@ -509,6 +513,7 @@
   box-sizing: content-box;
   color: var(--ge-color-text);
   font: inherit;
+  max-width: 100%;
   min-width: 1ch;
   outline: 2px solid var(--ge-color-focus-ring);
   outline-offset: 2px;
@@ -525,15 +530,24 @@
 }
 
 .ge-table-control {
+  align-items: center;
   background: var(--ge-color-surface-elevated);
   border: 1px solid var(--ge-color-table-border);
-  border-radius: var(--ge-radius-code);
+  border-radius: 7px;
   color: var(--ge-color-text);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
-  min-height: 26px;
-  min-width: 28px;
-  padding: 2px 7px;
+  height: 34px;
+  justify-content: center;
+  min-width: 34px;
+  padding: 0 8px;
+}
+
+.ge-table-control svg {
+  display: block;
+  height: 16px;
+  width: 16px;
 }
 
 .ge-table-control:hover,

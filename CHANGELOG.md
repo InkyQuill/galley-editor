@@ -1,3 +1,10 @@
+## Unreleased
+
+### Bug Fixes
+
+* constrain rendered table blocks in narrow editor surfaces and wrap long table cell content
+* add native title tooltips to table block controls and size them consistently with toolbar buttons
+
 ## [0.10.1](https://github.com/InkyQuill/galley-editor/compare/v0.10.0...v0.10.1) (2026-07-06)
 
 

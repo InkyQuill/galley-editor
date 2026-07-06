@@ -131,7 +131,9 @@ When controls run editor commands from inside a widget, prevent the button mouse
 
 Galley renders GitHub-flavored Markdown tables as an editable table block in live mode. Users can edit cells directly, use the block controls for rows, columns, and alignment, or Cmd/Ctrl-click the block to reveal the Markdown source. In read-only or preview-oriented screens, keep `editable={false}` so the table renders without editing affordances.
 
-Use `tableControlIcons` to replace the visible labels or icons in the rendered table editor controls. The controls keep their built-in accessible `aria-label` values, so the custom icon only changes what is shown inside the button.
+Rendered table blocks fit the editor content width and wrap long cell content instead of widening the host surface. Use a horizontally constrained host in Storybook's **Constrained Table Editing** story when checking table-heavy layouts.
+
+Use `tableControlIcons` to replace the visible labels or icons in the rendered table editor controls. The controls keep their built-in accessible `aria-label` and title tooltip values, so the custom icon only changes what is shown inside the button.
 
 Each entry is keyed by a `GalleyTableControlIconName`:
 
