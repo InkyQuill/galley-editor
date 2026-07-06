@@ -52,9 +52,28 @@ Use renderer props for common customization points:
 
 `onLinkClick` runs for Cmd/Ctrl-click link activation. Return `true` to suppress Galley's default `window.open` behavior.
 
-## Image Controls
+## Image Rendering
 
-Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer` for selected-image controls:
+Use `imageRenderer` when images should render as product thumbnails, responsive figures, lazy-loaded media, or another DOM structure owned by your app.
+
+```tsx
+<GalleyEditor
+  imageRenderer={({ alt, title, url, width, height }) => {
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = alt;
+    if (title) image.title = title;
+    image.loading = 'lazy';
+    image.style.display = 'block';
+    image.style.maxWidth = '100%';
+    if (width) image.style.width = `${width}px`;
+    if (height) image.style.height = `${height}px`;
+    return image;
+  }}
+/>
+```
+
+Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer` for selected-image controls. This is the pattern to build an image metadata editor, resize buttons, or a "show Markdown source" action without replacing the whole editor.
 
 ```tsx
 <GalleyEditor
@@ -78,7 +97,39 @@ Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer
 />
 ```
 
-## Table Controls
+The image metadata commands work well with those controls:
+
+```tsx
+<GalleyEditor
+  imageControlsRenderer={({ image, update, clearDimensions, revealSource }) => {
+    const node = document.createElement('div');
+
+    const small = document.createElement('button');
+    small.type = 'button';
+    small.textContent = '320px';
+    small.onclick = () => update({ width: 320, height: 180 });
+
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.textContent = 'Clear size';
+    clear.onclick = () => clearDimensions();
+
+    const source = document.createElement('button');
+    source.type = 'button';
+    source.textContent = 'Source';
+    source.onclick = () => revealSource();
+
+    node.append(small, clear, source);
+    return node;
+  }}
+/>
+```
+
+When controls run editor commands from inside a widget, prevent the button mouse-down from taking focus if the current selection matters.
+
+## Table Editor Block Controls
+
+Galley renders GitHub-flavored Markdown tables as an editable table block in live mode. Users can edit cells directly, use the block controls for rows, columns, and alignment, or Cmd/Ctrl-click the block to reveal the Markdown source. In read-only or preview-oriented screens, keep `editable={false}` so the table renders without editing affordances.
 
 Use `tableControlIcons` to replace the visible labels or icons in the rendered table editor controls. The controls keep their built-in accessible `aria-label` values, so the custom icon only changes what is shown inside the button.
 
@@ -100,9 +151,18 @@ Each entry is keyed by a `GalleyTableControlIconName`:
 
 Values can be strings, `HTMLElement`s, or renderer functions. Renderer functions receive `{ name, label, view }` and may return a string, an `HTMLElement`, or `null`. Returning `null`, omitting a key, or throwing from a renderer falls back to the built-in text for that control.
 
+Use icon renderers for real products and short text only when it is clearer than an icon:
+
 ```tsx
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Code2, Plus, Trash2 } from 'lucide-react';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Code2,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 
 function icon(node: React.ReactElement, label: string) {
   const template = document.createElement('template');
@@ -119,6 +179,9 @@ function icon(node: React.ReactElement, label: string) {
   tableControlIcons={{
     insertRowAfter: ({ label }) => icon(<Plus size={14} />, label),
     deleteColumn: ({ label }) => icon(<Trash2 size={14} />, label),
+    alignLeft: ({ label }) => icon(<AlignLeft size={14} />, label),
+    alignCenter: ({ label }) => icon(<AlignCenter size={14} />, label),
+    alignRight: ({ label }) => icon(<AlignRight size={14} />, label),
     editSource: ({ label }) => icon(<Code2 size={14} />, label),
     clearAlignment: 'clear',
   }}
@@ -154,6 +217,8 @@ const tableControlIcons = useMemo(
 
 <GalleyEditor tableControlIcons={tableControlIcons} />;
 ```
+
+Use top-level toolbar icons for the editor chrome and `tableControlIcons` for the table block controls. They are separate surfaces: a custom Bold icon belongs in `toolbar.icons`, while custom insert-row and alignment icons belong in `tableControlIcons`.
 
 ## Custom Plugins
 

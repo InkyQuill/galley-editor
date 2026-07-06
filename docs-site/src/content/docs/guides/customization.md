@@ -91,16 +91,121 @@ Use `className`, `editorClassName`, and `surface` for layout-level styling:
 
 Keep toolbar buttons at least 44 by 44 CSS pixels when replacing chrome in touch-heavy interfaces.
 
+## Replace Built-In Toolbar Icons
+
+Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, shortcuts, and accessible labels; the icon value only replaces the visible button contents.
+
+```tsx
+import { Bold, Code2, Eye, Italic, Link } from 'lucide-react';
+import { GalleyEditor } from '@inkyquill/galley-editor';
+
+<GalleyEditor
+  toolbar={{
+    icons: {
+      bold: <Bold size={16} aria-hidden="true" />,
+      italic: <Italic size={16} aria-hidden="true" />,
+      link: <Link size={16} aria-hidden="true" />,
+      mode: ({ mode }) =>
+        mode === 'preview'
+          ? <Eye size={16} aria-hidden="true" />
+          : <Code2 size={16} aria-hidden="true" />,
+    },
+  }}
+/>;
+```
+
+Icon values can be React nodes or render functions. Use a render function when the icon depends on toolbar state, such as the current editor mode:
+
+```tsx
+<GalleyEditor
+  toolbar={{
+    icons: {
+      mode: ({ mode }) => <span>{mode === 'markdown' ? 'MD' : mode}</span>,
+    },
+  }}
+/>;
+```
+
+Use `aria-hidden="true"` on decorative icon components because Galley already supplies the button labels.
+
+## Add Controls to Built-In Chrome
+
+Use toolbar and footer slots when you want to keep Galley's built-in controls and add app-owned actions, status pills, save buttons, or workflow state.
+
+```tsx
+<GalleyEditor
+  toolbar={{
+    before: <span className="ge-status-pill">Draft</span>,
+    after: ({ execCommand, canEdit }) => (
+      <>
+        <button
+          type="button"
+          className="ge-toolbar-button"
+          disabled={!canEdit}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => execCommand('insertHr')}
+        >
+          Section
+        </button>
+        <button
+          type="button"
+          className="ge-toolbar-button"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={saveDraft}
+        >
+          Save
+        </button>
+      </>
+    ),
+  }}
+  footer={{
+    before: <span className="ge-status-pill">Local draft</span>,
+    after: ({ mode, wordCount }) => (
+      <span>
+        {mode} - {wordCount} words
+      </span>
+    ),
+  }}
+/>;
+```
+
+Call `event.preventDefault()` from mouse-down handlers on toolbar buttons so clicking a control does not steal the editor selection before the command runs.
+
 ## App-Owned Toolbar
 
 For a fully custom toolbar, disable the built-in toolbar and call commands from your own controls:
 
 ```tsx
-<GalleyEditor ref={editor} toolbar={false} />
+const editor = useRef<GalleyHandle>(null);
 
-<button type="button" onClick={() => editor.current?.execCommand('toggleBold')}>
-  Bold
-</button>
+<div className="app-toolbar">
+  <button
+    type="button"
+    aria-label="Bold"
+    onMouseDown={(event) => event.preventDefault()}
+    onClick={() => editor.current?.execCommand('toggleBold')}
+  >
+    <Bold size={16} aria-hidden="true" />
+  </button>
+  <button
+    type="button"
+    onMouseDown={(event) => event.preventDefault()}
+    onClick={() => editor.current?.execCommand('insertTable')}
+  >
+    Insert table
+  </button>
+</div>
+
+<GalleyEditor ref={editor} toolbar={false} />;
 ```
 
 Use real buttons with visible focus states and accessible names. Do not make icon-only controls without `aria-label`.
+
+## Related Use Cases
+
+| Use case | Guide |
+| --- | --- |
+| Replace rendered table block controls | [Plugins and Renderers](/galley-editor/guides/plugins-renderers/#table-editor-block-controls) |
+| Build a full command toolbar | [Commands](/galley-editor/guides/commands/) |
+| Track selection for contextual controls | [API Reference](/galley-editor/reference/api/#callbacks) |
+| Theme the shell and toolbar | [Surface Hooks](#surface-hooks) |

@@ -86,3 +86,15 @@ All non-merge commits must use Conventional Commits so `semantic-release` can in
 Merge commits are allowed as Git creates them. Do not use vague subjects such as `update docs`, `review fixes`, or `commit changes`; they will not produce releases.
 
 The repository installs a versioned `commit-msg` hook from `.githooks/` via `npm install` / `npm run prepare`. The hook rejects non-conventional commit subjects locally before they can be merged.
+
+## Documentation Discipline
+
+Text documentation is required for every new or changed public feature. Storybook is useful for interactive inspection, but it is not a substitute for docs and should not be the only place a feature or integration pattern is explained.
+
+When adding or changing a public prop, command, renderer, plugin hook, styling token, or workflow:
+
+- Update the relevant docs under `docs-site/src/content/docs/` before considering the work complete.
+- Add practical, user-oriented examples that show how an app would use the feature, not only what the API shape is.
+- Keep Storybook examples aligned with text docs. If a Storybook story demonstrates a distinct use case, make sure the docs cover that use case directly or link to the guide section that does.
+- Prefer docs-first for new public examples: write the guide/API text before adding Storybook-only showcases.
+- Update release notes or reference docs when the public contract changes.

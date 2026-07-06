@@ -68,6 +68,28 @@ Galley emits `start` before calling `onFiles`, `complete` after successful inser
 
 Use `input.report()` inside your handler for progress updates. Galley forwards those updates to `onFileStatus` and active upload renderers.
 
+For app-level progress UI, keep a small upload log or status summary outside the editor:
+
+```tsx
+const [uploads, setUploads] = useState<GalleyFileStatus[]>([]);
+
+<GalleyEditor
+  onFiles={uploadFiles}
+  onFileStatus={(status) => {
+    setUploads((current) => [
+      ...current.filter((upload) => upload.id !== status.id),
+      status,
+    ]);
+  }}
+  footer={{
+    after: () => {
+      const active = uploads.filter((upload) => upload.phase !== 'complete');
+      return active.length ? <span>{active.length} upload active</span> : null;
+    },
+  }}
+/>;
+```
+
 ## Upload UI Modes
 
 ```tsx
@@ -101,4 +123,44 @@ Renderers return an `HTMLElement` or `null`.
 />
 ```
 
-Keep custom upload UI concise and non-blocking. If uploads can fail, show a recovery path in your surrounding application UI.
+Use a custom placeholder for inline progress when uploads are slow:
+
+```tsx
+<GalleyEditor
+  onFiles={async (input) => {
+    for (let step = 1; step <= 4; step += 1) {
+      await wait(250);
+      input.report({
+        phase: 'progress',
+        progress: step / 4,
+        message: `Uploading ${input.files[0]?.name ?? 'file'}`,
+      });
+    }
+
+    return input.files.map((file) => `![${file.name}](${createAssetUrl(file)})`);
+  }}
+  uploadPlaceholderRenderer={(upload) => {
+    const node = document.createElement('span');
+    const percent = Math.round((upload.progress ?? 0) * 100);
+    node.textContent = `${upload.message ?? 'Uploading'} - ${percent}%`;
+    return node;
+  }}
+/>
+```
+
+Use `uploadInteraction="locked"` when partial edits during upload would confuse the workflow, such as inserting a batch of dropped photos into a fixed section:
+
+```tsx
+<GalleyEditor
+  onFiles={uploadFiles}
+  uploadInteraction="locked"
+  uploadOverlayRenderer={(uploads) => {
+    const node = document.createElement('div');
+    const done = uploads.filter((upload) => upload.phase === 'complete').length;
+    node.textContent = `${done}/${uploads.length} files uploaded`;
+    return node;
+  }}
+/>
+```
+
+Keep custom upload UI concise and non-blocking unless you intentionally use locked mode. If uploads can fail, show a recovery path in your surrounding application UI through `onFileError` or app-owned status controls.

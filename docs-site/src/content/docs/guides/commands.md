@@ -29,6 +29,49 @@ export function Editor() {
 
 Most editing commands return `true` when they changed the document and `false` when the command cannot apply at the current selection.
 
+## Command Toolbar Recipe
+
+Use commands for app-owned toolbars, menus, palettes, or side panels. Prevent mouse-down from taking focus before command execution when the command should apply to the current editor selection.
+
+```tsx
+const editor = useRef<GalleyHandle>(null);
+
+function run(command: string, ...args: unknown[]) {
+  editor.current?.execCommand(command, ...args);
+}
+
+return (
+  <>
+    <div className="app-toolbar">
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => run('toggleBold')}
+      >
+        Bold
+      </button>
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => run('insertTable')}
+      >
+        Table
+      </button>
+      <button
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => run('insertImage', 'Alt text', '/uploads/image.png')}
+      >
+        Image
+      </button>
+    </div>
+    <GalleyEditor ref={editor} toolbar={false} />
+  </>
+);
+```
+
+Keep the built-in toolbar when it already fits your workflow and use [`toolbar.icons`](/galley-editor/guides/customization/#replace-built-in-toolbar-icons) or toolbar slots for lighter customization.
+
 ## Built-In Commands
 
 Inline formatting:
