@@ -522,7 +522,7 @@ function renderTableControlIcon(
   view: EditorView,
 ): void {
   const icon = resolveTableControlIcon(configured, name, label, view);
-  if (!icon) {
+  if (icon == null) {
     button.textContent = fallback;
     return;
   }
@@ -541,11 +541,15 @@ function resolveTableControlIcon(
   label: string,
   view: EditorView,
 ): string | HTMLElement | null {
-  if (!configured) return null;
+  if (configured == null) return null;
   if (typeof configured === 'function') {
     try {
       return configured({ name, label, view });
-    } catch {
+    } catch (error) {
+      console.error(
+        `Galley table control icon renderer failed for "${name}" (${label})`,
+        error,
+      );
       return null;
     }
   }

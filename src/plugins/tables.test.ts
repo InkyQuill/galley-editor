@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   Compartment,
   EditorSelection,
@@ -15,6 +15,7 @@ const editableLiveContext: GalleyRenderContext = { theme: 'light', mode: 'live',
 const previewReadonlyContext: GalleyRenderContext = { theme: 'light', mode: 'preview', canEdit: false };
 
 afterEach(() => {
+  vi.restoreAllMocks();
   destroyViews(views);
 });
 
@@ -506,11 +507,13 @@ describe('tablesPlugin', () => {
 
   it('falls back to default table control text when a custom icon renderer throws', () => {
     const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = new Error('broken icon');
     const view = tableEditor(doc, 'plain', {
       ...editableLiveContext,
       tableControlIcons: {
         insertRowBefore: () => {
-          throw new Error('broken icon');
+          throw error;
         },
         insertRowAfter: 'ROW+',
       },
@@ -520,6 +523,24 @@ describe('tablesPlugin', () => {
 
     expect(view.dom.querySelector('button[aria-label="Add row before"]')?.textContent).toBe('+R^');
     expect(view.dom.querySelector('button[aria-label="Add row after"]')?.textContent).toBe('ROW+');
+    expect(consoleError).toHaveBeenCalledWith(
+      'Galley table control icon renderer failed for "insertRowBefore" (Add row before)',
+      error,
+    );
+  });
+
+  it('allows an empty string table control icon', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc, 'plain', {
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowAfter: '',
+      },
+    });
+
+    clickCell(view, '1:1');
+
+    expect(view.dom.querySelector('button[aria-label="Add row after"]')?.textContent).toBe('');
   });
 
   it('keeps table widgets stable for equivalent recreated table control elements', () => {
