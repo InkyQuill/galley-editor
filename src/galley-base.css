@@ -446,7 +446,11 @@
 }
 
 .ge-table-widget {
+  box-sizing: border-box;
   margin: 0.65em 0;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
 }
 
 .ge-table-selected {
@@ -456,7 +460,11 @@
 .ge-table-scroll {
   border: 1px solid var(--ge-color-table-border);
   border-radius: var(--ge-radius-block);
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  width: 100%;
 }
 
 .ge-table-selected .ge-table-scroll {

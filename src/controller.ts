@@ -75,6 +75,7 @@ import {
   type GalleyLayoutMode,
   type GalleyMode,
   type GalleyPlugin,
+  type GalleyTableControlIcons,
   type UploadOverlayRenderer,
   type UploadPlaceholderRenderer,
 } from './types';
@@ -119,6 +120,7 @@ export interface ControllerSettings {
   imageRenderer?: ImageRenderer;
   missingImageRenderer?: MissingImageRenderer;
   imageControlsRenderer?: ImageControlsRenderer;
+  tableControlIcons?: GalleyTableControlIcons;
   onLinkClick?: LinkClickHandler;
   bidi: boolean;
   mode: GalleyMode;
@@ -636,6 +638,7 @@ export class EditorController implements GalleyHandle {
       imageRenderer: settings.imageRenderer,
       missingImageRenderer: settings.missingImageRenderer,
       imageControlsRenderer: settings.imageControlsRenderer,
+      tableControlIcons: settings.tableControlIcons,
       onLinkClick: settings.onLinkClick,
     };
     const pluginExtensions = settings.mode === 'markdown'

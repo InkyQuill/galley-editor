@@ -1,5 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { EditorSelection, type Transaction, type TransactionSpec } from '@codemirror/state';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  Compartment,
+  EditorSelection,
+  type Transaction,
+  type TransactionSpec,
+} from '@codemirror/state';
 import type { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
 import { resolveClassNames, type GalleyRenderContext } from '../types';
@@ -10,6 +15,7 @@ const editableLiveContext: GalleyRenderContext = { theme: 'light', mode: 'live',
 const previewReadonlyContext: GalleyRenderContext = { theme: 'light', mode: 'preview', canEdit: false };
 
 afterEach(() => {
+  vi.restoreAllMocks();
   destroyViews(views);
 });
 
@@ -471,6 +477,105 @@ describe('tablesPlugin', () => {
     expect(view.state.doc.toString()).toContain('| one | two |\n|  |  |\n| three | four |');
     expect(view.dom.querySelector('.ge-table-widget table')).toBeInstanceOf(HTMLTableElement);
     expect(view.dom.querySelector('.ge-table-cell-selected')).toBeInstanceOf(HTMLElement);
+  });
+
+  it('uses custom table control icons from render context', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc, 'plain', {
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowAfter: ({ label }) => {
+          const icon = document.createElement('span');
+          icon.className = 'custom-table-icon';
+          icon.dataset.label = label;
+          icon.textContent = 'ROW+';
+          return icon;
+        },
+        deleteColumn: 'COL-',
+      },
+    });
+
+    clickCell(view, '1:1');
+
+    const addRowAfter = view.dom.querySelector('button[aria-label="Add row after"]');
+    expect(addRowAfter?.textContent).toBe('ROW+');
+    expect(addRowAfter?.querySelector('.custom-table-icon')).toBeInstanceOf(HTMLElement);
+    expect(addRowAfter?.querySelector('.custom-table-icon')?.getAttribute('data-label')).toBe('Add row after');
+    expect(view.dom.querySelector('button[aria-label="Delete column"]')?.textContent).toBe('COL-');
+    expect(view.dom.querySelector('button[aria-label="Add row before"]')?.textContent).toBe('+R^');
+  });
+
+  it('falls back to default table control text when a custom icon renderer throws', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = new Error('broken icon');
+    const view = tableEditor(doc, 'plain', {
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowBefore: () => {
+          throw error;
+        },
+        insertRowAfter: 'ROW+',
+      },
+    });
+
+    clickCell(view, '1:1');
+
+    expect(view.dom.querySelector('button[aria-label="Add row before"]')?.textContent).toBe('+R^');
+    expect(view.dom.querySelector('button[aria-label="Add row after"]')?.textContent).toBe('ROW+');
+    expect(consoleError).toHaveBeenCalledWith(
+      'Galley table control icon renderer failed for "insertRowBefore" (Add row before)',
+      error,
+    );
+  });
+
+  it('allows an empty string table control icon', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = tableEditor(doc, 'plain', {
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowAfter: '',
+      },
+    });
+
+    clickCell(view, '1:1');
+
+    expect(view.dom.querySelector('button[aria-label="Add row after"]')?.textContent).toBe('');
+  });
+
+  it('keeps table widgets stable for equivalent recreated table control elements', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const tableControls = new Compartment();
+    const iconElement = () => {
+      const icon = document.createElement('span');
+      icon.className = 'custom-table-icon';
+      icon.textContent = 'ROW+';
+      return icon;
+    };
+    const context = (): GalleyRenderContext => ({
+      ...editableLiveContext,
+      tableControlIcons: {
+        insertRowAfter: iconElement(),
+      },
+    });
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: [
+        tableControls.of(tablesPlugin.extensions(resolveClassNames(), context())),
+      ],
+    });
+    views.push(view);
+
+    clickCell(view, '1:1');
+    const widgetBefore = view.dom.querySelector('.ge-table-widget');
+    expect(widgetBefore).toBeInstanceOf(HTMLElement);
+
+    view.dispatch({
+      effects: tableControls.reconfigure(tablesPlugin.extensions(resolveClassNames(), context())),
+    });
+
+    expect(view.dom.querySelector('.ge-table-widget')).toBe(widgetBefore);
   });
 
   it('hides controls and ignores cell editing in preview/read-only context', () => {

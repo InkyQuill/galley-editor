@@ -19,6 +19,7 @@ export interface GalleyRenderContext {
   imageRenderer?: ImageRenderer;
   missingImageRenderer?: MissingImageRenderer;
   imageControlsRenderer?: ImageControlsRenderer;
+  tableControlIcons?: GalleyTableControlIcons;
   onLinkClick?: LinkClickHandler;
 }
 
@@ -126,6 +127,37 @@ export type ImageControlsRenderer = (input: {
 }) => HTMLElement | null;
 
 export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
+
+export const TABLE_CONTROL_ICON_NAMES = [
+  'insertRowBefore',
+  'insertRowAfter',
+  'insertColumnBefore',
+  'insertColumnAfter',
+  'deleteRow',
+  'deleteColumn',
+  'alignLeft',
+  'alignCenter',
+  'alignRight',
+  'clearAlignment',
+  'editSource',
+] as const;
+
+export type GalleyTableControlIconName = typeof TABLE_CONTROL_ICON_NAMES[number];
+
+export type GalleyTableControlIconRenderer = (input: {
+  name: GalleyTableControlIconName;
+  label: string;
+  view: EditorView;
+}) => string | HTMLElement | null;
+
+export type GalleyTableControlIcon =
+  | string
+  | HTMLElement
+  | GalleyTableControlIconRenderer;
+
+export type GalleyTableControlIcons = Partial<
+  Record<GalleyTableControlIconName, GalleyTableControlIcon>
+>;
 
 export type ToolbarIconName =
   | 'bold'
@@ -464,6 +496,8 @@ export interface GalleyEditorProps {
   missingImageRenderer?: MissingImageRenderer;
   /** Optional renderer for selected markdown image controls. */
   imageControlsRenderer?: ImageControlsRenderer;
+  /** Optional icons/text for the rendered table editor controls. */
+  tableControlIcons?: GalleyTableControlIcons;
   /** Optional Cmd/Ctrl-click link handler. Return true to suppress default opening. */
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */

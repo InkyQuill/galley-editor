@@ -140,7 +140,7 @@ describe('galley-base.css theme contract', () => {
     const css = readCss();
     const lightBlock = getBlock(
       css,
-      /:root\s*,\s*\[data-theme="light"\]\s*\{(?<body>[\s\S]*?)\}/,
+      /^:root\s*,\s*\[data-theme="light"\]\s*\{(?<body>[\s\S]*?)\}/m,
     );
 
     expect(parseVariables(lightBlock)).toEqual(lightVariables);
@@ -171,7 +171,7 @@ describe('galley-base.css theme contract', () => {
 
   it('defines dark theme overrides for key color variables', () => {
     const css = readCss();
-    const darkBlock = getBlock(css, /\[data-theme="dark"\]\s*\{(?<body>[\s\S]*?)\}/);
+    const darkBlock = getBlock(css, /^\[data-theme="dark"\]\s*\{(?<body>[\s\S]*?)\}/m);
 
     expect(parseVariables(darkBlock)).toEqual(darkVariables);
   });
@@ -186,7 +186,7 @@ describe('galley-base.css theme contract', () => {
 
   it('keeps the table cell editor from forcing column width through padding or fixed width', () => {
     const css = readCss();
-    const block = getBlock(css, /\.ge-table-cell-editor\s*\{(?<body>[\s\S]*?)\}/);
+    const block = getBlock(css, /^\.ge-table-cell-editor\s*\{(?<body>[\s\S]*?)\}/m);
 
     expect(block).toContain('padding: 0;');
     expect(block).toContain('width: auto;');
@@ -194,9 +194,22 @@ describe('galley-base.css theme contract', () => {
     expect(block).not.toMatch(/width:\s*100%/);
   });
 
+  it('constrains rendered tables to the editor content width', () => {
+    const css = readCss();
+    const widgetBlock = getBlock(css, /^\.ge-table-widget\s*\{(?<body>[\s\S]*?)\}/m);
+    const scrollBlock = getBlock(css, /^\.ge-table-scroll\s*\{(?<body>[\s\S]*?)\}/m);
+
+    expect(widgetBlock).toContain('box-sizing: border-box;');
+    expect(widgetBlock).toContain('max-width: 100%;');
+    expect(widgetBlock).toContain('min-width: 0;');
+    expect(scrollBlock).toContain('box-sizing: border-box;');
+    expect(scrollBlock).toContain('max-width: 100%;');
+    expect(scrollBlock).toContain('min-width: 0;');
+  });
+
   it('lets fill layout stretch the CodeMirror content area', () => {
     const css = readCss();
-    const fillBlock = getBlock(css, /\.ge-layout-fill\s+\.cm-content\s*\{(?<body>[\s\S]*?)\}/);
+    const fillBlock = getBlock(css, /^\.ge-layout-fill\s+\.cm-content\s*\{(?<body>[\s\S]*?)\}/m);
 
     expect(fillBlock).toContain('min-height: 100%;');
   });
@@ -207,10 +220,10 @@ describe('galley-base.css theme contract', () => {
 
   it('uses syntax token variables for exposed comment token classes', () => {
     const css = readCss();
-    const renderedCommentBlock = getBlock(css, /\.ge-token-comment\s*\{(?<body>[\s\S]*?)\}/);
+    const renderedCommentBlock = getBlock(css, /^\.ge-token-comment\s*\{(?<body>[\s\S]*?)\}/m);
     const lezerCommentBlock = getBlock(
       css,
-      /\.tok-url\s*,\s*\.tok-meta\s*,\s*\.tok-comment\s*\{(?<body>[\s\S]*?)\}/,
+      /^\.tok-url\s*,\s*\.tok-meta\s*,\s*\.tok-comment\s*\{(?<body>[\s\S]*?)\}/m,
     );
 
     expect(renderedCommentBlock).toContain('color: var(--ge-color-token-comment);');
