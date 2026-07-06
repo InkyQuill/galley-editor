@@ -1,3 +1,11 @@
+## [0.10.1](https://github.com/InkyQuill/galley-editor/compare/v0.10.0...v0.10.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* enforce conventional commit messages ([3ba402d](https://github.com/InkyQuill/galley-editor/commit/3ba402d9f8a7a8920d9e9bf0a9f9109f243c6861))
+* sync release docs with starlight layout ([acec931](https://github.com/InkyQuill/galley-editor/commit/acec931ab0dd7ac65125b1fd1876afe2888803e8))
+
 # [0.10.0](https://github.com/InkyQuill/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
 
 
