@@ -80,20 +80,79 @@ Use `missingImageRenderer` for broken or empty images and `imageControlsRenderer
 
 ## Table Controls
 
-Use `tableControlIcons` to replace the visible table editor control labels. Accessible labels stay on the buttons.
+Use `tableControlIcons` to replace the visible labels or icons in the rendered table editor controls. The controls keep their built-in accessible `aria-label` values, so the custom icon only changes what is shown inside the button.
+
+Each entry is keyed by a `GalleyTableControlIconName`:
+
+| Key | Control |
+| --- | --- |
+| `insertRowBefore` | Add row before the selected row. |
+| `insertRowAfter` | Add row after the selected row. |
+| `insertColumnBefore` | Add column before the selected column. |
+| `insertColumnAfter` | Add column after the selected column. |
+| `deleteRow` | Delete the selected body row. |
+| `deleteColumn` | Delete the selected column. |
+| `alignLeft` | Align the selected column left. |
+| `alignCenter` | Align the selected column center. |
+| `alignRight` | Align the selected column right. |
+| `clearAlignment` | Clear selected-column alignment. |
+| `editSource` | Reveal the Markdown table source. |
+
+Values can be strings, `HTMLElement`s, or renderer functions. Renderer functions receive `{ name, label, view }` and may return a string, an `HTMLElement`, or `null`. Returning `null`, omitting a key, or throwing from a renderer falls back to the built-in text for that control.
 
 ```tsx
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Code2, Plus, Trash2 } from 'lucide-react';
+
+function icon(node: React.ReactElement, label: string) {
+  const template = document.createElement('template');
+  template.innerHTML = renderToStaticMarkup(node);
+  const svg = template.content.firstElementChild as HTMLElement | null;
+  if (!svg) return null;
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('title', label);
+  return svg;
+}
+
 <GalleyEditor
   tableControlIcons={{
-    insertRowAfter: '+ row',
-    deleteColumn: ({ label }) => {
-      const icon = document.createElement('span');
-      icon.textContent = 'del col';
-      icon.title = label;
-      return icon;
-    },
+    insertRowAfter: ({ label }) => icon(<Plus size={14} />, label),
+    deleteColumn: ({ label }) => icon(<Trash2 size={14} />, label),
+    editSource: ({ label }) => icon(<Code2 size={14} />, label),
+    clearAlignment: 'clear',
   }}
 />
+```
+
+When you create icons in React, keep function renderers stable with `useMemo` or `useCallback` if they close over component state. Recreated but equivalent `HTMLElement` values are compared structurally, but function values are compared by reference so Galley can detect changed closures.
+
+```tsx
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Code2, Plus } from 'lucide-react';
+
+function icon(node: React.ReactElement, label: string) {
+  const template = document.createElement('template');
+  template.innerHTML = renderToStaticMarkup(node);
+  const svg = template.content.firstElementChild as HTMLElement | null;
+  if (!svg) return null;
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('title', label);
+  return svg;
+}
+
+const tableControlIcons = useMemo(
+  () => ({
+    insertRowBefore: ({ label }) => icon(<Plus size={14} />, label),
+    insertRowAfter: ({ label }) => icon(<Plus size={14} />, label),
+    editSource: ({ label }) => icon(<Code2 size={14} />, label),
+    clearAlignment: 'clear',
+  }),
+  [],
+);
+
+<GalleyEditor tableControlIcons={tableControlIcons} />;
 ```
 
 ## Custom Plugins

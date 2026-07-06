@@ -34,12 +34,13 @@ import {
   type GalleyTableCell,
   type TableCellRef,
 } from '../table-markdown';
-import type {
-  GalleyPlugin,
-  GalleyClassNames,
-  GalleyTableControlIcon,
-  GalleyTableControlIconName,
-  GalleyTableControlIcons,
+import {
+  TABLE_CONTROL_ICON_NAMES,
+  type GalleyPlugin,
+  type GalleyClassNames,
+  type GalleyTableControlIcon,
+  type GalleyTableControlIconName,
+  type GalleyTableControlIcons,
 } from '../types';
 
 interface SelectedTableCell {
@@ -56,20 +57,6 @@ interface SourceEscapedTable {
 }
 
 type TableCommand = (view: EditorView) => boolean;
-
-const tableControlIconNames = [
-  'insertRowBefore',
-  'insertRowAfter',
-  'insertColumnBefore',
-  'insertColumnAfter',
-  'deleteRow',
-  'deleteColumn',
-  'alignLeft',
-  'alignCenter',
-  'alignRight',
-  'clearAlignment',
-  'editSource',
-] as const satisfies readonly GalleyTableControlIconName[];
 
 const selectTableCell = StateEffect.define<SelectedTableCell | null>({
   map(value, changes) {
@@ -153,7 +140,17 @@ function tableControlIconsEqual(
   if (a === b) return true;
   if (!a || !b) return false;
 
-  return tableControlIconNames.every((name) => a[name] === b[name]);
+  return TABLE_CONTROL_ICON_NAMES.every((name) => tableControlIconEqual(a[name], b[name]));
+}
+
+function tableControlIconEqual(
+  a: GalleyTableControlIcon | undefined,
+  b: GalleyTableControlIcon | undefined,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a instanceof HTMLElement && b instanceof HTMLElement) return a.isEqualNode(b);
+  return false;
 }
 
 class TableWidget extends WidgetType {
@@ -546,7 +543,11 @@ function resolveTableControlIcon(
 ): string | HTMLElement | null {
   if (!configured) return null;
   if (typeof configured === 'function') {
-    return configured({ name, label, view });
+    try {
+      return configured({ name, label, view });
+    } catch {
+      return null;
+    }
   }
   if (typeof configured === 'string') return configured;
   return configured.cloneNode(true) as HTMLElement;

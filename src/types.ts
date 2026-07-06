@@ -128,18 +128,21 @@ export type ImageControlsRenderer = (input: {
 
 export type LinkClickHandler = (url: string, event: MouseEvent) => boolean | void;
 
-export type GalleyTableControlIconName =
-  | 'insertRowBefore'
-  | 'insertRowAfter'
-  | 'insertColumnBefore'
-  | 'insertColumnAfter'
-  | 'deleteRow'
-  | 'deleteColumn'
-  | 'alignLeft'
-  | 'alignCenter'
-  | 'alignRight'
-  | 'clearAlignment'
-  | 'editSource';
+export const TABLE_CONTROL_ICON_NAMES = [
+  'insertRowBefore',
+  'insertRowAfter',
+  'insertColumnBefore',
+  'insertColumnAfter',
+  'deleteRow',
+  'deleteColumn',
+  'alignLeft',
+  'alignCenter',
+  'alignRight',
+  'clearAlignment',
+  'editSource',
+] as const;
+
+export type GalleyTableControlIconName = typeof TABLE_CONTROL_ICON_NAMES[number];
 
 export type GalleyTableControlIconRenderer = (input: {
   name: GalleyTableControlIconName;

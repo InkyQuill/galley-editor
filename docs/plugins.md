@@ -208,6 +208,58 @@ Simple GFM pipe tables render as visual widgets in live and preview modes. In ed
 
 Unsupported table syntax falls back to Markdown source. Complex escaped-pipe parsing, range selection, rectangular paste, and spreadsheet formulas are not part of v0.9.
 
+#### Table editor control icons
+
+Use the `tableControlIcons` prop to replace the visible text or icon for rendered table editor controls. The buttons keep their built-in accessible labels; only the button contents change.
+
+Supported keys are:
+
+| Key | Control |
+|---|---|
+| `insertRowBefore` | Add row before the selected row |
+| `insertRowAfter` | Add row after the selected row |
+| `insertColumnBefore` | Add column before the selected column |
+| `insertColumnAfter` | Add column after the selected column |
+| `deleteRow` | Delete the selected body row |
+| `deleteColumn` | Delete the selected column |
+| `alignLeft` | Align the selected column left |
+| `alignCenter` | Align the selected column center |
+| `alignRight` | Align the selected column right |
+| `clearAlignment` | Clear selected-column alignment |
+| `editSource` | Reveal the Markdown table source |
+
+Each value may be a string, an `HTMLElement`, or a renderer function receiving `{ name, label, view }`. Renderer functions may return a string, an `HTMLElement`, or `null`. Missing keys, `null` returns, and renderer exceptions fall back to the built-in text for that control.
+
+```tsx
+import { renderToStaticMarkup } from 'react-dom/server';
+import { Code2, Plus, Trash2 } from 'lucide-react';
+
+function icon(node: React.ReactElement, label: string) {
+  const template = document.createElement('template');
+  template.innerHTML = renderToStaticMarkup(node);
+  const svg = template.content.firstElementChild as HTMLElement | null;
+  if (!svg) return null;
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  svg.setAttribute('title', label);
+  return svg;
+}
+
+const tableControlIcons = useMemo(
+  () => ({
+    insertRowAfter: ({ label }) => icon(<Plus size={14} />, label),
+    deleteColumn: ({ label }) => icon(<Trash2 size={14} />, label),
+    editSource: ({ label }) => icon(<Code2 size={14} />, label),
+    clearAlignment: 'clear',
+  }),
+  [],
+);
+
+<GalleyEditor tableControlIcons={tableControlIcons} />;
+```
+
+Keep renderer functions stable with `useMemo` or `useCallback` when they close over React state. Recreated equivalent `HTMLElement` values are compared structurally, but function values are intentionally compared by reference so changed closures can update the controls.
+
 ### Images (`ge:images`)
 
 **File:** `src/plugins/images.ts`
