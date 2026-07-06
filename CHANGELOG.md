@@ -1,3 +1,10 @@
+## [0.10.2](https://github.com/InkyQuill/galley-editor/compare/v0.10.1...v0.10.2) (2026-07-06)
+
+
+### Bug Fixes
+
+* **editor:** constrain table blocks ([40c9cdd](https://github.com/InkyQuill/galley-editor/commit/40c9cddadbc57fe16a0643779647b6fa2f2f7c32))
+
 ## Unreleased
 
 ### Bug Fixes
