@@ -50,11 +50,11 @@ function syncReleasePage() {
   write(releasePath, content);
 }
 
-function syncHomeVersion() {
-  const path = 'docs-site/src/components/GalleyHome.astro';
+function syncOverviewVersion() {
+  const path = 'docs-site/src/content/docs/index.mdx';
   const content = read(path).replace(
-    /<span class="galley-version">v[^<]+<\/span>/,
-    `<span class="galley-version">${releaseTitle}</span>`,
+    /Galley is currently `v[^`]+` and still pre-1\.0\./,
+    `Galley is currently \`${releaseTitle}\` and still pre-1.0.`,
   );
   write(path, content);
 }
@@ -62,8 +62,8 @@ function syncHomeVersion() {
 function syncDocsRoadmap() {
   const path = 'docs-site/src/content/docs/releases/roadmap.md';
   const content = read(path).replace(
-    /^Galley is in active development\..*$/m,
-    `Galley is in active development. ${releaseTitle} is the current public build.`,
+    /^Galley Editor is currently `v[^`]+` and still pre-1\.0\.$/m,
+    `Galley Editor is currently \`${releaseTitle}\` and still pre-1.0.`,
   );
   write(path, content);
 }
@@ -102,7 +102,7 @@ function syncLegacyDocsRoadmap() {
 }
 
 syncReleasePage();
-syncHomeVersion();
+syncOverviewVersion();
 syncDocsRoadmap();
 syncAstroSidebar();
 syncLegacyDocsRoadmap();

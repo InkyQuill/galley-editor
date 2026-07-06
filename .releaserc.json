@@ -30,7 +30,7 @@
           "package.json",
           "package-lock.json",
           "CHANGELOG.md",
-          "docs-site/src/components/GalleyHome.astro",
+          "docs-site/src/content/docs/index.mdx",
           "docs-site/src/content/docs/releases/*.md",
           "docs-site/astro.config.mjs",
           "docs/specs/ROADMAP.md"
