@@ -57,6 +57,20 @@ interface SourceEscapedTable {
 
 type TableCommand = (view: EditorView) => boolean;
 
+const tableControlIconNames = [
+  'insertRowBefore',
+  'insertRowAfter',
+  'insertColumnBefore',
+  'insertColumnAfter',
+  'deleteRow',
+  'deleteColumn',
+  'alignLeft',
+  'alignCenter',
+  'alignRight',
+  'clearAlignment',
+  'editSource',
+] as const satisfies readonly GalleyTableControlIconName[];
+
 const selectTableCell = StateEffect.define<SelectedTableCell | null>({
   map(value, changes) {
     if (!value) return null;
@@ -132,6 +146,16 @@ function sourceEscapedTableState(state: EditorState): SourceEscapedTable | null 
   return state.field(sourceEscapedTableField, false) ?? null;
 }
 
+function tableControlIconsEqual(
+  a: GalleyTableControlIcons | undefined,
+  b: GalleyTableControlIcons | undefined,
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+
+  return tableControlIconNames.every((name) => a[name] === b[name]);
+}
+
 class TableWidget extends WidgetType {
   table: GalleyTable;
   tableClass: string;
@@ -164,7 +188,7 @@ class TableWidget extends WidgetType {
       other.tableClass === this.tableClass &&
       other.canEdit === this.canEdit &&
       other.preview === this.preview &&
-      other.tableControlIcons === this.tableControlIcons &&
+      tableControlIconsEqual(other.tableControlIcons, this.tableControlIcons) &&
       JSON.stringify(other.table.rows) === JSON.stringify(this.table.rows) &&
       other.table.alignments.join('\0') === this.table.alignments.join('\0') &&
       selectedTableCellKey(other.selected) === selectedTableCellKey(this.selected);
