@@ -72,6 +72,35 @@ return (
 
 Keep the built-in toolbar when it already fits your workflow and use [`toolbar.icons`](/galley-editor/guides/customization/#replace-built-in-toolbar-icons) or toolbar slots for lighter customization.
 
+## Built-In Search Panel
+
+Galley includes CodeMirror's search panel. Press `Ctrl+F` on Windows/Linux or
+`Cmd+F` on macOS while the editor is focused. Search also works in preview and
+read-only editors; replacement controls are omitted in those modes.
+
+Open the same panel from an application toolbar through `GalleyHandle`:
+
+```tsx
+import { useRef } from 'react';
+import { GalleyEditor, type GalleyHandle } from '@inkyquill/galley-editor';
+
+export function SearchableEditor() {
+  const editor = useRef<GalleyHandle>(null);
+
+  return (
+    <>
+      <button type="button" onClick={() => editor.current?.openSearch()}>
+        Find in document
+      </button>
+      <GalleyEditor ref={editor} />
+    </>
+  );
+}
+```
+
+The existing `findInDocument()` helper remains useful when an application needs
+matching ranges as data instead of the built-in interactive panel.
+
 ## Built-In Commands
 
 Inline formatting:
