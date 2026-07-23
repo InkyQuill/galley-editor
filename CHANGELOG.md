@@ -1,3 +1,18 @@
+# [0.11.0](https://github.com/InkyQuill/galley-editor/compare/v0.10.2...v0.11.0) (2026-07-23)
+
+
+### Bug Fixes
+
+* apply CodeRabbit auto-fixes ([edb1294](https://github.com/InkyQuill/galley-editor/commit/edb12943861da9d3814a046242a19d93ee05e070))
+* **editor:** constrain rendered block widths ([5bef48c](https://github.com/InkyQuill/galley-editor/commit/5bef48c3a789b923e4b119ab26153733c4c59afe))
+* **editor:** keep code controls within constrained layout ([831b0fa](https://github.com/InkyQuill/galley-editor/commit/831b0fa5f3e61201dc0f6127493dcf6b84e050d6))
+
+
+### Features
+
+* **editor:** add built-in search ([ef67ca1](https://github.com/InkyQuill/galley-editor/commit/ef67ca16308ff9243278d8715314ed7334b4b6ac))
+* **editor:** add horizontal scroll mode ([45f6c8b](https://github.com/InkyQuill/galley-editor/commit/45f6c8bd64f1ee7d6a935d1ae12a6fa4a19da8bb))
+
 ## [0.10.2](https://github.com/InkyQuill/galley-editor/compare/v0.10.1...v0.10.2) (2026-07-06)
 
 
