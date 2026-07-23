@@ -223,6 +223,90 @@ describe('galley-base.css theme contract', () => {
     expect(cellBlock).toContain('word-break: normal;');
   });
 
+  it('lets constrained CodeMirror children and rendered blocks shrink', () => {
+    const css = readCss();
+    const childBlock = getBlock(
+      css,
+      /^\.ge-width-constrained \.cm-content > \*\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const codeBlock = getBlock(css, /^\.ge-code-block\s*\{(?<body>[\s\S]*?)\}/m);
+
+    expect(childBlock).toContain('box-sizing: border-box;');
+    expect(childBlock).toContain('max-width: 100%;');
+    expect(childBlock).toContain('min-width: 0;');
+    expect(codeBlock).toContain('box-sizing: border-box;');
+    expect(codeBlock).toContain('max-width: 100%;');
+    expect(codeBlock).toContain('min-width: 0;');
+    expect(codeBlock).toContain('width: 100%;');
+  });
+
+  it('wraps code blocks in constrained mode without a nested scrollbar', () => {
+    const css = readCss();
+    const bodyBlock = getBlock(
+      css,
+      /^\.ge-width-constrained \.ge-code-body\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const codeBlock = getBlock(
+      css,
+      /^\.ge-width-constrained \.ge-code-body code\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+
+    expect(bodyBlock).toContain('overflow-x: clip;');
+    expect(codeBlock).toContain('overflow-wrap: anywhere;');
+    expect(codeBlock).toContain('white-space: pre-wrap;');
+  });
+
+  it('lets code blocks widen the main scroller in horizontal mode', () => {
+    const css = readCss();
+    const wrapperBlock = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-code-block\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const bodyBlock = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-code-body\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const codeBlock = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-code-body code\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+
+    expect(wrapperBlock).toContain('max-width: none;');
+    expect(wrapperBlock).toContain('overflow: visible;');
+    expect(wrapperBlock).toContain('width: max-content;');
+    expect(bodyBlock).toContain('overflow-x: visible;');
+    expect(codeBlock).toContain('overflow-wrap: normal;');
+    expect(codeBlock).toContain('white-space: pre;');
+  });
+
+  it('gates table sizing and overflow by editor layout mode', () => {
+    const css = readCss();
+    const constrainedScroll = getBlock(
+      css,
+      /^\.ge-width-constrained \.ge-table-scroll\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const horizontalWidget = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-table-widget\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const horizontalScroll = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-table-scroll\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const horizontalTable = getBlock(
+      css,
+      /^\.ge-horizontal-scroll \.ge-table-rendered\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+
+    expect(constrainedScroll).toContain('overflow-x: clip;');
+    expect(horizontalWidget).toContain('max-width: none;');
+    expect(horizontalWidget).toContain('width: max-content;');
+    expect(horizontalScroll).toContain('max-width: none;');
+    expect(horizontalScroll).toContain('overflow-x: visible;');
+    expect(horizontalTable).toContain('table-layout: auto;');
+    expect(horizontalTable).toContain('width: max-content;');
+  });
+
   it('sizes table block controls like toolbar icon buttons', () => {
     const css = readCss();
     const controlBlock = getBlock(css, /^\.ge-table-control\s*\{(?<body>[\s\S]*?)\}/m);
