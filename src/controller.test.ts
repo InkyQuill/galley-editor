@@ -418,6 +418,18 @@ describe('EditorController key handling', () => {
     expect(controller.view.dom.querySelector('button[name="replaceAll"]')).toBeNull();
   });
 
+  it('keeps search available without replacement controls when editable=false', () => {
+    const controller = createController('alpha beta alpha', {}, { editable: false });
+
+    expect(controller.openSearch()).toBe(true);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+    expect(controller.view.dom.querySelector('input[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replaceAll"]')).toBeNull();
+  });
+
   it('lets array-form keymap replace defaults completely', () => {
     const custom = vi.fn(() => true);
     const controller = createController('one\ntwo', {}, {
