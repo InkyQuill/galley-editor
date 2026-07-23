@@ -376,6 +376,47 @@ describe('EditorController key handling', () => {
     expect(controller.getContent()).toBe('one\none\ntwo');
   });
 
+  it('opens the built-in search panel with Mod-f', () => {
+    const controller = createController('alpha beta alpha');
+
+    const event = dispatchKey(controller.view, {
+      key: 'f',
+      code: 'KeyF',
+      keyCode: 70,
+      which: 70,
+      ctrlKey: true,
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(controller.view.dom.querySelector('.cm-search')).toBeInstanceOf(HTMLElement);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+  });
+
+  it('opens and reuses the built-in search panel through the imperative API', () => {
+    const controller = createController('alpha beta alpha');
+
+    expect(controller.openSearch()).toBe(true);
+    const panel = controller.view.dom.querySelector('.cm-search');
+
+    expect(panel).toBeInstanceOf(HTMLElement);
+    expect(controller.openSearch()).toBe(true);
+    expect(controller.view.dom.querySelector('.cm-search')).toBe(panel);
+  });
+
+  it('keeps search available without replacement controls in preview mode', () => {
+    const controller = createController('alpha beta alpha', {}, { mode: 'preview' });
+
+    expect(controller.openSearch()).toBe(true);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+    expect(controller.view.dom.querySelector('input[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replaceAll"]')).toBeNull();
+  });
+
   it('lets array-form keymap replace defaults completely', () => {
     const custom = vi.fn(() => true);
     const controller = createController('one\ntwo', {}, {
@@ -396,11 +437,20 @@ describe('EditorController key handling', () => {
       keyCode: 119,
       which: 119,
     });
+    const find = dispatchKey(controller.view, {
+      key: 'f',
+      code: 'KeyF',
+      keyCode: 70,
+      which: 70,
+      ctrlKey: true,
+    });
 
     expect(duplicate.defaultPrevented).toBe(false);
     expect(controller.getContent()).toBe('one\ntwo');
     expect(custom).toHaveBeenCalledOnce();
     expect(f8.defaultPrevented).toBe(true);
+    expect(find.defaultPrevented).toBe(false);
+    expect(controller.view.dom.querySelector('.cm-search')).toBeNull();
   });
 
   it('passes exported defaults to the function-form keymap', () => {
@@ -415,6 +465,7 @@ describe('EditorController key handling', () => {
     expect(receivedDefaults).toEqual(
       expect.arrayContaining(DEFAULT_KEYMAP.map((binding) => binding.key ?? '')),
     );
+    expect(receivedDefaults).toContain('Mod-f');
   });
 });
 

@@ -407,6 +407,8 @@ export interface GalleyHandle {
   focus(): void;
   /** Blur the editor. */
   blur(): void;
+  /** Open and focus the built-in CodeMirror search panel. */
+  openSearch(): boolean;
   /** Set the selection range. */
   select(anchor: number, head?: number): void;
   /** Get the current selection. */

@@ -31,6 +31,7 @@ import {
 } from '@codemirror/commands';
 import { indentOnInput, bracketMatching } from '@codemirror/language';
 import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/view';
+import { openSearchPanel, search, searchKeymap } from '@codemirror/search';
 
 import { buildCmTheme, type ColorScheme } from './theme';
 import { autosizeExtension } from './autosize';
@@ -287,6 +288,7 @@ export class EditorController implements GalleyHandle {
       dropCursor(),
       indentOnInput(),
       bracketMatching(),
+      search(),
       EditorState.allowMultipleSelections.of(true),
       EditorView.lineWrapping,
       EditorState.tabSize.of(2),
@@ -609,6 +611,7 @@ export class EditorController implements GalleyHandle {
     const combinedKeymap = [
       ...controllerDefaults,
       ...this.buildCommandKeymap(),
+      ...searchKeymap,
       ...standardKeymap,
       ...historyKeymap,
     ];
@@ -753,6 +756,10 @@ export class EditorController implements GalleyHandle {
 
   blur(): void {
     this.view.contentDOM.blur();
+  }
+
+  openSearch(): boolean {
+    return openSearchPanel(this.view);
   }
 
   select(anchor: number, head?: number): void {

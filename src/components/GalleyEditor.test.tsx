@@ -181,6 +181,22 @@ describe('GalleyEditor React wrapper', () => {
     expect(focusCalls).toEqual(['called']);
   });
 
+  it('returns false when openSearch is called before the controller mounts', () => {
+    let observed: boolean | undefined;
+
+    function Parent() {
+      const editorRef = useRef<GalleyHandle>(null);
+      useLayoutEffect(() => {
+        observed = editorRef.current?.openSearch();
+      }, []);
+      return <GalleyEditor ref={editorRef} value="alpha" theme="light" />;
+    }
+
+    mount(<Parent />);
+
+    expect(observed).toBe(false);
+  });
+
   it('returns null from the view getter before the controller mounts', () => {
     let observedView: EditorView | null | undefined;
 

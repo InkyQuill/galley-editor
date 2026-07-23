@@ -146,6 +146,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         insertText: (t: string) => controllerRef.current?.insertText(t),
         focus: () => controllerRef.current?.focus(),
         blur: () => controllerRef.current?.blur(),
+        openSearch: () => controllerRef.current?.openSearch() ?? false,
         select: (a: number, h?: number) => controllerRef.current?.select(a, h),
         getSelection: () => controllerRef.current?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
         execCommand: (name: string, ...args: unknown[]) => controllerRef.current?.execCommand(name, ...args),
