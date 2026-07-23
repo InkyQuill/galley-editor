@@ -36,6 +36,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     classNames: {},
     minRows: 3,
     layout: 'autosize',
+    horizontalScroll: false,
     tabIndents: true,
     bidi: false,
     mode: 'live',
@@ -470,6 +471,42 @@ describe('EditorController key handling', () => {
 });
 
 describe('EditorController runtime state', () => {
+  it('uses width-constrained line wrapping by default', () => {
+    const controller = createController('a very long line');
+
+    expect(controller.view.dom.classList.contains('ge-width-constrained')).toBe(true);
+    expect(controller.view.dom.classList.contains('ge-horizontal-scroll')).toBe(false);
+    expect(controller.view.contentDOM.classList.contains('cm-lineWrapping')).toBe(true);
+    expect(getComputedStyle(controller.view.scrollDOM).overflowX).toBe('hidden');
+  });
+
+  it('reconfigures horizontal layout without recreating the editor or its state', () => {
+    const controller = createController('alpha');
+    const originalView = controller.view;
+    const runtimeField = StateField.define<number>({
+      create: () => 7,
+      update: (value) => value,
+    });
+    const runtimeHandle = controller.addExtension(runtimeField);
+    controller.select(2);
+    controller.insertText('X');
+
+    controller.updateSettings(defaultSettings({ horizontalScroll: true }));
+
+    expect(controller.view).toBe(originalView);
+    expect(controller.getContent()).toBe('alXpha');
+    expect(controller.getSelection()).toMatchObject({ anchor: 3, head: 3 });
+    expect(controller.view.state.field(runtimeField)).toBe(7);
+    expect(controller.view.dom.classList.contains('ge-width-constrained')).toBe(false);
+    expect(controller.view.dom.classList.contains('ge-horizontal-scroll')).toBe(true);
+    expect(controller.view.contentDOM.classList.contains('cm-lineWrapping')).toBe(false);
+    expect(getComputedStyle(controller.view.scrollDOM).overflowX).toBe('auto');
+
+    controller.undo();
+    expect(controller.getContent()).toBe('alpha');
+    runtimeHandle.remove();
+  });
+
   it('accepts file workflow callbacks through stable callbacks', () => {
     const controller = createController('', {
       onFiles: () => '![demo](demo.png)',

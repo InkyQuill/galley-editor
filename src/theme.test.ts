@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 const cssPath = resolve(dirname(fileURLToPath(import.meta.url)), 'galley-base.css');
+const themeSourcePath = resolve(dirname(fileURLToPath(import.meta.url)), 'theme.ts');
 
 const lightVariables = {
   '--ge-color-text': '#1a1a1a',
@@ -136,6 +137,13 @@ function getSelectors(css: string) {
 }
 
 describe('galley-base.css theme contract', () => {
+  it('leaves horizontal scroller overflow to the layout compartment', () => {
+    const source = readFileSync(themeSourcePath, 'utf8');
+
+    expect(source).not.toContain("overflowX: 'hidden'");
+    expect(source).not.toContain("overflowX: 'auto'");
+  });
+
   it('defines the canonical light variable defaults', () => {
     const css = readCss();
     const lightBlock = getBlock(
