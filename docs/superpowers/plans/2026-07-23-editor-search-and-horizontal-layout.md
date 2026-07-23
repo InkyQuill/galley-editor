@@ -12,6 +12,7 @@
 
 - `@codemirror/search` peer dependency: `>=6.5.0`.
 - `@codemirror/search` development dependency: `^6.7.1`.
+- `tailwindcss` and `@tailwindcss/postcss` development dependencies: `^4.3.3`.
 - Node.js support remains `>=20`.
 - `horizontalScroll` defaults to `false`.
 - Constrained root class: `ge-width-constrained`.
@@ -32,6 +33,7 @@
 ## File Map
 
 - `package.json`, `package-lock.json`: declare and lock `@codemirror/search`.
+- `package.json`, `package-lock.json`: update the Tailwind test toolchain so Node 26 uses `module.registerHooks()` without `DEP0205`.
 - `vite.config.ts`: externalize and dedupe `@codemirror/search` in library mode.
 - `src/types.ts`: add `GalleyEditorProps.horizontalScroll` and `GalleyHandle.openSearch()`.
 - `src/controller.ts`: install search, compose its keymap, expose `openSearch()`, and own the dynamic horizontal-layout compartment.
@@ -46,6 +48,76 @@
 - `docs-site/src/content/docs/guides/commands.md`: show user-owned search activation.
 - `docs-site/src/content/docs/guides/plugins-renderers.md`: explain the editor-wide block-width policy.
 - `CHANGELOG.md`: record both public additions and the code-block overflow fix.
+
+---
+
+### Task 0: Remove the Baseline Node Deprecation Warning
+
+**Files:**
+- Modify: `package.json`
+- Modify: `package-lock.json`
+
+**Interfaces:**
+- Consumes: Tailwind's PostCSS integration loaded by the Vitest/Vite configuration.
+- Produces: `tailwindcss@^4.3.3`, `@tailwindcss/postcss@^4.3.3`, and a warning-free Vitest baseline on Node 26.
+
+- [ ] **Step 1: Reproduce the warning with a focused test**
+
+Run:
+
+```bash
+NODE_OPTIONS=--trace-deprecation npx vitest run src/commands/navigation/findInDocument.test.ts
+```
+
+Expected: the test passes, but stderr contains `[DEP0205]` with a stack frame in `node_modules/@tailwindcss/node/dist/index.js` calling deprecated `module.register()`. This warning is the RED condition.
+
+- [ ] **Step 2: Update the minimal direct dependency pair**
+
+Run:
+
+```bash
+npm install --save-dev tailwindcss@^4.3.3 @tailwindcss/postcss@^4.3.3 --legacy-peer-deps
+```
+
+Expected `package.json` entries:
+
+```json
+{
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
+```
+
+`package-lock.json` must resolve `@tailwindcss/node` to `4.3.3`, whose Node 26 path uses `module.registerHooks()`.
+
+- [ ] **Step 3: Verify the focused test is warning-free**
+
+Run:
+
+```bash
+NODE_OPTIONS=--trace-deprecation npx vitest run src/commands/navigation/findInDocument.test.ts
+```
+
+Expected: 1 test file and 5 tests PASS; output contains neither `DEP0205` nor another deprecation warning.
+
+- [ ] **Step 4: Verify the full baseline is warning-free**
+
+Run:
+
+```bash
+npm run test
+```
+
+Expected: 31 test files and 440 tests PASS with no Node deprecation warnings.
+
+- [ ] **Step 5: Commit the toolchain update**
+
+```bash
+git add package.json package-lock.json
+git commit -m "chore(deps): update Tailwind test toolchain"
+```
 
 ---
 
@@ -1084,12 +1156,13 @@ git status --short
 git log -6 --oneline
 ```
 
-Expected: `git diff --check` prints nothing; only the user's pre-existing untracked `.agents/` and `skills-lock.json` may remain; the four implementation commits are visible with Conventional Commit subjects.
+Expected: `git diff --check` prints nothing; the worktree is clean; the five implementation commits are visible with Conventional Commit subjects.
 
 - [ ] **Step 6: Review the requirements one final time**
 
 Confirm from fresh test/build evidence:
 
+- the full test run emits no Node deprecation warnings;
 - default code/table content wraps inside the editor viewport;
 - `horizontalScroll` switches the existing view to one main horizontal scroller;
 - `Mod-f` and `openSearch()` open the same panel;
