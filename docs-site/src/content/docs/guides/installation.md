@@ -33,6 +33,7 @@ Galley expects React, React DOM, CodeMirror 6, and Lezer packages to be installe
 | `@codemirror/commands` | `>=6.10.0` |
 | `@codemirror/lang-markdown` | `>=6.5.0` |
 | `@codemirror/language` | `>=6.12.0` |
+| `@codemirror/search` | `>=6.5.0` |
 | `@lezer/markdown` | `>=1.6.0` |
 | `@lezer/highlight` | `>=1.2.0` |
 

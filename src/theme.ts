@@ -88,7 +88,6 @@ export function buildCmTheme(scheme: ColorScheme): Extension[] {
           backgroundColor: 'var(--ge-color-selection)',
         },
         '.cm-scroller': {
-          overflowX: 'hidden',
           overflowY: 'auto',
         },
         '.cm-line': {
