@@ -36,6 +36,7 @@ function defaultSettings(overrides: Partial<ControllerSettings> = {}): Controlle
     classNames: {},
     minRows: 3,
     layout: 'autosize',
+    horizontalScroll: false,
     tabIndents: true,
     bidi: false,
     mode: 'live',
@@ -376,6 +377,59 @@ describe('EditorController key handling', () => {
     expect(controller.getContent()).toBe('one\none\ntwo');
   });
 
+  it('opens the built-in search panel with Mod-f', () => {
+    const controller = createController('alpha beta alpha');
+
+    const event = dispatchKey(controller.view, {
+      key: 'f',
+      code: 'KeyF',
+      keyCode: 70,
+      which: 70,
+      ctrlKey: true,
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(controller.view.dom.querySelector('.cm-search')).toBeInstanceOf(HTMLElement);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+  });
+
+  it('opens and reuses the built-in search panel through the imperative API', () => {
+    const controller = createController('alpha beta alpha');
+
+    expect(controller.openSearch()).toBe(true);
+    const panel = controller.view.dom.querySelector('.cm-search');
+
+    expect(panel).toBeInstanceOf(HTMLElement);
+    expect(controller.openSearch()).toBe(true);
+    expect(controller.view.dom.querySelector('.cm-search')).toBe(panel);
+  });
+
+  it('keeps search available without replacement controls in preview mode', () => {
+    const controller = createController('alpha beta alpha', {}, { mode: 'preview' });
+
+    expect(controller.openSearch()).toBe(true);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+    expect(controller.view.dom.querySelector('input[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replaceAll"]')).toBeNull();
+  });
+
+  it('keeps search available without replacement controls when editable=false', () => {
+    const controller = createController('alpha beta alpha', {}, { editable: false });
+
+    expect(controller.openSearch()).toBe(true);
+    expect(
+      controller.view.dom.querySelector<HTMLInputElement>('input[name="search"]'),
+    ).toBeInstanceOf(HTMLInputElement);
+    expect(controller.view.dom.querySelector('input[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replace"]')).toBeNull();
+    expect(controller.view.dom.querySelector('button[name="replaceAll"]')).toBeNull();
+  });
+
   it('lets array-form keymap replace defaults completely', () => {
     const custom = vi.fn(() => true);
     const controller = createController('one\ntwo', {}, {
@@ -396,11 +450,20 @@ describe('EditorController key handling', () => {
       keyCode: 119,
       which: 119,
     });
+    const find = dispatchKey(controller.view, {
+      key: 'f',
+      code: 'KeyF',
+      keyCode: 70,
+      which: 70,
+      ctrlKey: true,
+    });
 
     expect(duplicate.defaultPrevented).toBe(false);
     expect(controller.getContent()).toBe('one\ntwo');
     expect(custom).toHaveBeenCalledOnce();
     expect(f8.defaultPrevented).toBe(true);
+    expect(find.defaultPrevented).toBe(false);
+    expect(controller.view.dom.querySelector('.cm-search')).toBeNull();
   });
 
   it('passes exported defaults to the function-form keymap', () => {
@@ -415,10 +478,47 @@ describe('EditorController key handling', () => {
     expect(receivedDefaults).toEqual(
       expect.arrayContaining(DEFAULT_KEYMAP.map((binding) => binding.key ?? '')),
     );
+    expect(receivedDefaults).toContain('Mod-f');
   });
 });
 
 describe('EditorController runtime state', () => {
+  it('uses width-constrained line wrapping by default', () => {
+    const controller = createController('a very long line');
+
+    expect(controller.view.dom.classList.contains('ge-width-constrained')).toBe(true);
+    expect(controller.view.dom.classList.contains('ge-horizontal-scroll')).toBe(false);
+    expect(controller.view.contentDOM.classList.contains('cm-lineWrapping')).toBe(true);
+    expect(getComputedStyle(controller.view.scrollDOM).overflowX).toBe('hidden');
+  });
+
+  it('reconfigures horizontal layout without recreating the editor or its state', () => {
+    const controller = createController('alpha');
+    const originalView = controller.view;
+    const runtimeField = StateField.define<number>({
+      create: () => 7,
+      update: (value) => value,
+    });
+    const runtimeHandle = controller.addExtension(runtimeField);
+    controller.select(2);
+    controller.insertText('X');
+
+    controller.updateSettings(defaultSettings({ horizontalScroll: true }));
+
+    expect(controller.view).toBe(originalView);
+    expect(controller.getContent()).toBe('alXpha');
+    expect(controller.getSelection()).toMatchObject({ anchor: 3, head: 3 });
+    expect(controller.view.state.field(runtimeField)).toBe(7);
+    expect(controller.view.dom.classList.contains('ge-width-constrained')).toBe(false);
+    expect(controller.view.dom.classList.contains('ge-horizontal-scroll')).toBe(true);
+    expect(controller.view.contentDOM.classList.contains('cm-lineWrapping')).toBe(false);
+    expect(getComputedStyle(controller.view.scrollDOM).overflowX).toBe('auto');
+
+    controller.undo();
+    expect(controller.getContent()).toBe('alpha');
+    runtimeHandle.remove();
+  });
+
   it('accepts file workflow callbacks through stable callbacks', () => {
     const controller = createController('', {
       onFiles: () => '![demo](demo.png)',

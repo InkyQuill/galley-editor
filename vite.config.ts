@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
     '@codemirror/lang-markdown',
     '@codemirror/language',
     '@codemirror/commands',
+    '@codemirror/search',
     '@lezer/highlight',
     '@lezer/markdown',
     '@lezer/common',

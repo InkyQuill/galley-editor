@@ -170,6 +170,12 @@
   padding: var(--ge-content-padding);
 }
 
+.ge-width-constrained .cm-content > * {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .ge-layout-fill .cm-content {
   min-height: 100%;
 }
@@ -364,11 +370,15 @@
   background: var(--ge-color-code-fence-bg);
   border: 1px solid var(--ge-color-border);
   border-radius: var(--ge-radius-block);
+  box-sizing: border-box;
   color: var(--ge-color-code-fg);
   font-family: var(--ge-font-mono);
   font-size: var(--ge-code-font-size);
   margin: 0.65em 0;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
+  width: 100%;
 }
 
 .ge-code-block-header {
@@ -389,6 +399,11 @@
   text-transform: uppercase;
 }
 
+.ge-width-constrained .ge-code-language {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .ge-code-copy {
   background: var(--ge-color-surface-elevated);
   border: 1px solid var(--ge-color-border);
@@ -401,13 +416,38 @@
   padding: 3px 8px;
 }
 
+.ge-width-constrained .ge-code-copy {
+  flex-shrink: 0;
+}
+
 .ge-code-body {
   margin: 0;
-  overflow-x: auto;
   padding: 12px;
 }
 
-.ge-code-body code {
+.ge-width-constrained .ge-code-body {
+  overflow-x: clip;
+}
+
+.ge-width-constrained .ge-code-body code {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: normal;
+}
+
+.ge-horizontal-scroll .ge-code-block {
+  max-width: none;
+  min-width: 100%;
+  overflow: visible;
+  width: max-content;
+}
+
+.ge-horizontal-scroll .ge-code-body {
+  overflow-x: visible;
+}
+
+.ge-horizontal-scroll .ge-code-body code {
+  overflow-wrap: normal;
   white-space: pre;
 }
 
@@ -463,8 +503,27 @@
   box-sizing: border-box;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
   width: 100%;
+}
+
+.ge-width-constrained .ge-table-scroll {
+  overflow-x: clip;
+}
+
+.ge-horizontal-scroll .ge-table-widget {
+  max-width: none;
+  width: max-content;
+}
+
+.ge-horizontal-scroll .ge-table-scroll {
+  max-width: none;
+  overflow-x: visible;
+  width: max-content;
+}
+
+.ge-horizontal-scroll .ge-table-rendered {
+  table-layout: auto;
+  width: max-content;
 }
 
 .ge-table-selected .ge-table-scroll {

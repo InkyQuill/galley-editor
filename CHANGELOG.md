@@ -7,8 +7,15 @@
 
 ## Unreleased
 
+### Features
+
+* add the built-in CodeMirror search panel with `Mod-f` and `GalleyHandle.openSearch()`
+* add opt-in editor-wide horizontal scrolling with `horizontalScroll`
+
 ### Bug Fixes
 
+* constrain fenced code and rendered blocks to the editor viewport by default
+* delegate code and table overflow to the main editor scroller in horizontal mode
 * constrain rendered table blocks in narrow editor surfaces and wrap long table cell content
 * add native title tooltips to table block controls and size them consistently with toolbar buttons
 

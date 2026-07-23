@@ -407,6 +407,8 @@ export interface GalleyHandle {
   focus(): void;
   /** Blur the editor. */
   blur(): void;
+  /** Open and focus the built-in CodeMirror search panel. */
+  openSearch(): boolean;
   /** Set the selection range. */
   select(anchor: number, head?: number): void;
   /** Get the current selection. */
@@ -474,6 +476,8 @@ export interface GalleyEditorProps {
   maxRows?: number;
   /** Layout behavior. Use 'fill' inside fixed-height host containers. Default: 'autosize'. */
   layout?: GalleyLayoutMode;
+  /** Disable line wrapping and scroll the main editor viewport horizontally. Default: false. */
+  horizontalScroll?: boolean;
 
   /** CSS class for the outer wrapper div. */
   className?: string;

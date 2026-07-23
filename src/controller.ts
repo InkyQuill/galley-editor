@@ -31,6 +31,7 @@ import {
 } from '@codemirror/commands';
 import { indentOnInput, bracketMatching } from '@codemirror/language';
 import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/view';
+import { openSearchPanel, search, searchKeymap } from '@codemirror/search';
 
 import { buildCmTheme, type ColorScheme } from './theme';
 import { autosizeExtension } from './autosize';
@@ -114,6 +115,7 @@ export interface ControllerSettings {
   minRows: number;
   maxRows?: number;
   layout: GalleyLayoutMode;
+  horizontalScroll: boolean;
   tabIndents: boolean;
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
@@ -213,6 +215,7 @@ export class EditorController implements GalleyHandle {
   readonly view: EditorView;
 
   private readonly dynamicCompartment = new Compartment();
+  private readonly horizontalLayoutCompartment = new Compartment();
   private readonly autosizeCompartment = new Compartment();
   private readonly historyCompartment = new Compartment();
   private readonly keymapCompartment = new Compartment();
@@ -255,6 +258,10 @@ export class EditorController implements GalleyHandle {
         ...this.buildStaticExtensions(),
         // Dynamic (reconfigured on settings change)
         this.dynamicCompartment.of(this.buildDynamicExtensions()),
+        // Horizontal layout (reconfigured when line wrapping changes)
+        this.horizontalLayoutCompartment.of(
+          this.buildHorizontalLayoutExtension(settings.horizontalScroll),
+        ),
         // Autosize (reconfigured on minRows/maxRows change)
         this.autosizeCompartment.of(
           settings.layout === 'autosize'
@@ -279,6 +286,20 @@ export class EditorController implements GalleyHandle {
 
   // ── Static extensions (created once) ──────────────────────────────────
 
+  private buildHorizontalLayoutExtension(horizontalScroll: boolean): Extension {
+    return [
+      EditorView.editorAttributes.of({
+        class: horizontalScroll ? 'ge-horizontal-scroll' : 'ge-width-constrained',
+      }),
+      ...(horizontalScroll ? [] : [EditorView.lineWrapping]),
+      EditorView.theme({
+        '.cm-scroller': {
+          overflowX: horizontalScroll ? 'auto' : 'hidden',
+        },
+      }),
+    ];
+  }
+
   private buildStaticExtensions(): Extension[] {
     return [
       markdown({ extensions: [GFM] }),
@@ -287,8 +308,8 @@ export class EditorController implements GalleyHandle {
       dropCursor(),
       indentOnInput(),
       bracketMatching(),
+      search(),
       EditorState.allowMultipleSelections.of(true),
-      EditorView.lineWrapping,
       EditorState.tabSize.of(2),
 
       // Event listeners (use callback refs so they never go stale)
@@ -609,6 +630,7 @@ export class EditorController implements GalleyHandle {
     const combinedKeymap = [
       ...controllerDefaults,
       ...this.buildCommandKeymap(),
+      ...searchKeymap,
       ...standardKeymap,
       ...historyKeymap,
     ];
@@ -680,6 +702,14 @@ export class EditorController implements GalleyHandle {
     const keymapChanged =
       newSettings.tabIndents !== this.settings.tabIndents ||
       newSettings.keymap !== this.settings.keymap;
+
+    if (newSettings.horizontalScroll !== this.settings.horizontalScroll) {
+      effects.push(
+        this.horizontalLayoutCompartment.reconfigure(
+          this.buildHorizontalLayoutExtension(newSettings.horizontalScroll),
+        ),
+      );
+    }
 
     // Check if autosize needs reconfiguring
     if (
@@ -753,6 +783,10 @@ export class EditorController implements GalleyHandle {
 
   blur(): void {
     this.view.contentDOM.blur();
+  }
+
+  openSearch(): boolean {
+    return openSearchPanel(this.view);
   }
 
   select(anchor: number, head?: number): void {

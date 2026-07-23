@@ -106,6 +106,24 @@ afterEach(() => {
 });
 
 describe('GalleyEditor React wrapper', () => {
+  it('reconfigures horizontalScroll without replacing the CodeMirror view', () => {
+    const { container, root } = mount(
+      <GalleyEditor value="alpha" theme="light" horizontalScroll={false} />,
+    );
+    const editor = container.querySelector('.cm-editor');
+
+    expect(editor?.classList.contains('ge-width-constrained')).toBe(true);
+
+    rerender(
+      root,
+      <GalleyEditor value="alpha" theme="light" horizontalScroll />,
+    );
+
+    expect(container.querySelector('.cm-editor')).toBe(editor);
+    expect(editor?.classList.contains('ge-width-constrained')).toBe(false);
+    expect(editor?.classList.contains('ge-horizontal-scroll')).toBe(true);
+  });
+
   it('updates editorClassName on the CodeMirror editor element', () => {
     const { container, root } = mount(<GalleyEditor value="hello" editorClassName="a" theme="light" />);
     const editor = container.querySelector('.cm-editor');
@@ -179,6 +197,22 @@ describe('GalleyEditor React wrapper', () => {
 
     expect(() => mount(<Parent />)).not.toThrow();
     expect(focusCalls).toEqual(['called']);
+  });
+
+  it('returns false when openSearch is called before the controller mounts', () => {
+    let observed: boolean | undefined;
+
+    function Parent() {
+      const editorRef = useRef<GalleyHandle>(null);
+      useLayoutEffect(() => {
+        observed = editorRef.current?.openSearch();
+      }, []);
+      return <GalleyEditor ref={editorRef} value="alpha" theme="light" />;
+    }
+
+    mount(<Parent />);
+
+    expect(observed).toBe(false);
   });
 
   it('returns null from the view getter before the controller mounts', () => {

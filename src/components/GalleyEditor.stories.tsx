@@ -35,6 +35,7 @@ const meta = {
     minRows: { control: { type: 'number', min: 1, max: 24, step: 1 } },
     maxRows: { control: { type: 'number', min: 1, max: 30, step: 1 } },
     layout: { control: 'inline-radio', options: ['autosize', 'fill'] },
+    horizontalScroll: { control: 'boolean' },
     theme: { control: 'inline-radio', options: ['light', 'dark', 'auto'] },
     mode: { control: 'inline-radio', options: ['live', 'markdown', 'preview'] },
     toolbar: { control: 'boolean' },
@@ -421,21 +422,29 @@ export const VisualTableEditingReadOnly: Story = {
   },
 };
 
-function ConstrainedTableEditingStory() {
-  const [value, setValue] = useState([
-    '## Narrow table block',
-    '',
-    '| Column | Description | Status |',
-    '| :--- | :--- | :---: |',
-    '| Alpha | SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious | Ready |',
-    '| Beta | A long sentence with normal spaces should wrap inside the rendered table block instead of widening the editor content area. | Draft |',
-    '',
-    'The rendered table should stay inside the narrow editor frame.',
-  ].join('\n'));
+const blockWidthMarkdown = [
+  '## Block width policy',
+  '',
+  'ThisUnbrokenSourceLineDemonstratesTheEditorViewportPolicyBeforeAnyRenderedBlockWidgetAppearsInTheDocument',
+  '',
+  'Move the cursor through this introduction to compare source wrapping with rendered block sizing.',
+  '',
+  '```ts',
+  'const extremelyLongIdentifier = "SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious";',
+  '```',
+  '',
+  '| Column | Description | Status |',
+  '| :--- | :--- | :---: |',
+  '| Alpha | SupercalifragilisticexpialidociousSupercalifragilisticexpialidocious | Ready |',
+  '| Beta | A long sentence with normal spaces demonstrates the table policy. | Draft |',
+].join('\n');
+
+function BlockWidthStory({ horizontalScroll }: { horizontalScroll: boolean }) {
+  const [value, setValue] = useState(blockWidthMarkdown);
 
   return (
     <div
-      data-testid="constrained-table-mockup"
+      data-testid={horizontalScroll ? 'horizontal-block-layout' : 'constrained-block-layout'}
       style={{
         border: '1px solid #cbd5e1',
         borderRadius: '10px',
@@ -447,7 +456,8 @@ function ConstrainedTableEditingStory() {
       <GalleyEditor
         value={value}
         onChange={setValue}
-        minRows={9}
+        horizontalScroll={horizontalScroll}
+        minRows={12}
         toolbar={false}
         footer={false}
       />
@@ -456,11 +466,18 @@ function ConstrainedTableEditingStory() {
 }
 
 /**
- * Reproduces a narrow host surface with long table-cell content. The rendered
- * table block should wrap within the editor instead of widening the host.
+ * Long code and table content wrap inside the editor viewport by default.
  */
-export const ConstrainedTableEditing: Story = {
-  render: ConstrainedTableEditingStory,
+export const ConstrainedBlockLayout: Story = {
+  render: () => <BlockWidthStory horizontalScroll={false} />,
+};
+
+/**
+ * `horizontalScroll` disables wrapping and delegates horizontal navigation to
+ * the main editor scroller for source lines and rendered blocks.
+ */
+export const HorizontalBlockLayout: Story = {
+  render: () => <BlockWidthStory horizontalScroll />,
 };
 
 // ── Image Rendering ────────────────────────────────────────────────────────
@@ -1718,6 +1735,9 @@ function ImperativeHandleStory() {
         <button onClick={() => ref.current?.blur()}>
           blur()
         </button>
+        <button onClick={() => ref.current?.openSearch()}>
+          openSearch()
+        </button>
         <button onClick={() => ref.current?.select(0, ref.current.getContent().length)}>
           selectAll
         </button>
@@ -1761,7 +1781,7 @@ function ImperativeHandleStory() {
 /**
  * Demonstrates the imperative handle API (`GalleyHandle`). Use the buttons
  * to call methods like `getContent()`, `setContent()`, `insertText()`,
- * `focus()`, `blur()`, `select()`, `getSelection()`, `scrollTo()`, etc.
+ * `focus()`, `blur()`, `openSearch()`, `select()`, `getSelection()`, `scrollTo()`, etc.
  */
 export const ImperativeHandle: Story = {
   render: ImperativeHandleStory,
