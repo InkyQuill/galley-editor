@@ -256,6 +256,22 @@ describe('galley-base.css theme contract', () => {
     expect(codeBlock).toContain('white-space: pre-wrap;');
   });
 
+  it('keeps constrained code header controls inside the viewport', () => {
+    const css = readCss();
+    const languageBlock = getBlock(
+      css,
+      /^\.ge-width-constrained \.ge-code-language\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+    const copyBlock = getBlock(
+      css,
+      /^\.ge-width-constrained \.ge-code-copy\s*\{(?<body>[\s\S]*?)\}/m,
+    );
+
+    expect(languageBlock).toContain('min-width: 0;');
+    expect(languageBlock).toContain('overflow-wrap: anywhere;');
+    expect(copyBlock).toContain('flex-shrink: 0;');
+  });
+
   it('lets code blocks widen the main scroller in horizontal mode', () => {
     const css = readCss();
     const wrapperBlock = getBlock(

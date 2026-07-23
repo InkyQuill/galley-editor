@@ -399,6 +399,11 @@
   text-transform: uppercase;
 }
 
+.ge-width-constrained .ge-code-language {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .ge-code-copy {
   background: var(--ge-color-surface-elevated);
   border: 1px solid var(--ge-color-border);
@@ -409,6 +414,10 @@
   font-family: var(--ge-font-body);
   font-size: 0.75rem;
   padding: 3px 8px;
+}
+
+.ge-width-constrained .ge-code-copy {
+  flex-shrink: 0;
 }
 
 .ge-code-body {
