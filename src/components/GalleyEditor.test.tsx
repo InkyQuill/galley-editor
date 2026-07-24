@@ -398,6 +398,65 @@ describe('GalleyEditor React wrapper', () => {
     ).toMatch(/^(Bold \(⌥B\)|Bold \(Alt\+B\))$/);
   });
 
+  it('resolves a function keymap only once', () => {
+    const resolveKeymap = vi.fn((defaults) => defaults);
+
+    mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        keymap={resolveKeymap}
+      />,
+    );
+
+    expect(resolveKeymap).toHaveBeenCalledOnce();
+  });
+
+  it('uses the same controller defaults for function keymap tooltips and execution', () => {
+    const onChange = vi.fn();
+    const { container } = mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        onChange={onChange}
+        keymap={(defaults) => {
+          const hasSearchBinding = defaults.some(
+            (binding) => binding.key === 'Mod-f',
+          );
+          return defaults.map((binding) =>
+            'command' in binding &&
+            binding.command === 'toggleBold' &&
+            hasSearchBinding
+              ? { ...binding, key: 'Alt-b' }
+              : binding,
+          );
+        }}
+      />,
+    );
+    const bold = container.querySelector(
+      '[aria-label="Bold"]',
+    ) as HTMLButtonElement;
+    const content = container.querySelector('.cm-content') as HTMLElement;
+    const event = new KeyboardEvent('keydown', {
+      key: 'b',
+      code: 'KeyB',
+      keyCode: 66,
+      which: 66,
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    expect(bold.getAttribute('title')).toMatch(
+      /^(Bold \(⌥B\)|Bold \(Alt\+B\))$/,
+    );
+    act(() => {
+      content.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(true);
+    expect(onChange).toHaveBeenCalledWith('****Hello');
+  });
+
   it('does not render the toolbar when toolbar=false', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={false} />);
 

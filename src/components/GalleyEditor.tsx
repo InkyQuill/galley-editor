@@ -18,11 +18,10 @@ import {
   type ControllerSettings,
   type EditorCallbacks,
 } from '../controller';
-import { DEFAULT_KEYMAP } from '../commands';
+import { DEFAULT_KEYMAP, type GalleyKeyBinding } from '../commands';
 import {
   findCommandKey,
   formatKeybinding,
-  resolveDisplayKeymap,
 } from '../commands/keymapDisplay';
 import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
@@ -172,9 +171,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const requestedMode = mode ?? internalMode;
     const effectiveMode: GalleyMode = editable ? requestedMode : 'preview';
     const canEditDocument = editable && effectiveMode !== 'preview';
-    const displayKeymap = useMemo(
-      () => resolveDisplayKeymap(DEFAULT_KEYMAP, keymap),
-      [keymap],
+    const [displayKeymap, setDisplayKeymap] = useState<readonly GalleyKeyBinding[]>(
+      () => Array.isArray(keymap) ? keymap : DEFAULT_KEYMAP,
     );
     const shortcutPlatform =
       typeof navigator !== 'undefined' &&
@@ -373,6 +371,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       );
 
       controllerRef.current = controller;
+      setDisplayKeymap(controller.getResolvedKeymap());
 
       return () => {
         controller.destroy();
@@ -385,6 +384,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!controllerRef.current || !settingsRef.current) return;
 
       controllerRef.current.updateSettings(settingsRef.current);
+      setDisplayKeymap(controllerRef.current.getResolvedKeymap());
     }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, layout, horizontalScroll, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, tableControlIcons, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
