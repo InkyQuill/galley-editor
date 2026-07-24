@@ -2,7 +2,7 @@ import type { KeyBinding } from "@codemirror/view";
 import type { BuiltinCommand, GalleyEditorProps } from "../types";
 import type { GalleyKeyBinding } from "./index";
 
-export type ShortcutPlatform = "mac" | "other";
+export type ShortcutPlatform = "mac" | "win" | "linux" | "other";
 
 export function resolveDisplayKeymap(
   defaults: readonly GalleyKeyBinding[],
@@ -17,12 +17,19 @@ export function resolveDisplayKeymap(
 export function findCommandKey(
   bindings: readonly KeyBinding[],
   command: BuiltinCommand,
+  platform: ShortcutPlatform = "other",
 ): string | undefined {
-  return bindings.find(
+  const binding = bindings.find(
     (binding) =>
       "command" in binding &&
       (binding as GalleyKeyBinding).command === command,
-  )?.key;
+  );
+
+  if (!binding) return undefined;
+  if (platform === "mac") return binding.mac ?? binding.key;
+  if (platform === "win") return binding.win ?? binding.key;
+  if (platform === "linux") return binding.linux ?? binding.key;
+  return binding.key;
 }
 
 export function formatKeybinding(
@@ -44,7 +51,7 @@ export function formatKeybinding(
       modifiers.includes("Shift") ? "⇧" : "",
       modifiers.includes("Ctrl") ? "⌃" : "",
       modifiers.includes("Alt") ? "⌥" : "",
-      modifiers.includes("Mod") ? "⌘" : "",
+      modifiers.includes("Mod") || modifiers.includes("Cmd") ? "⌘" : "",
     ].join("");
     return `${symbols}${displayKey}`;
   }

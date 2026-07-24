@@ -1,5 +1,6 @@
 import { act, useLayoutEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import GalleyEditor, { type GalleyHandle } from './GalleyEditor';
 import type { EditorView } from '@codemirror/view';
@@ -364,6 +365,20 @@ describe('GalleyEditor React wrapper', () => {
     );
     expect(table.getAttribute('aria-label')).toBe('Insert table');
     expect(table.getAttribute('title')).toBe('Insert table');
+  });
+
+  it('uses stable non-mac shortcut markup during server rendering', () => {
+    const platform = vi
+      .spyOn(window.navigator, 'platform', 'get')
+      .mockReturnValue('MacIntel');
+
+    const markup = renderToString(
+      <GalleyEditor value="Hello" theme="light" />,
+    );
+
+    expect(markup).toContain('title="Bold (Ctrl+B)"');
+    expect(markup).not.toContain('title="Bold (⌘B)"');
+    platform.mockRestore();
   });
 
   it('removes a tooltip shortcut when array keymap replaces defaults', () => {

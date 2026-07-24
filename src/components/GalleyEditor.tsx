@@ -22,6 +22,7 @@ import { DEFAULT_KEYMAP, type GalleyKeyBinding } from '../commands';
 import {
   findCommandKey,
   formatKeybinding,
+  type ShortcutPlatform,
 } from '../commands/keymapDisplay';
 import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
@@ -174,11 +175,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const [displayKeymap, setDisplayKeymap] = useState<readonly GalleyKeyBinding[]>(
       () => Array.isArray(keymap) ? keymap : DEFAULT_KEYMAP,
     );
-    const shortcutPlatform =
-      typeof navigator !== 'undefined' &&
-      /Mac|iPhone|iPad|iPod/.test(navigator.platform)
-        ? 'mac'
-        : 'other';
+    const [shortcutPlatform, setShortcutPlatform] =
+      useState<ShortcutPlatform>('other');
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
     const showModeToggle = toolbarOptions.showModeToggle !== false;
@@ -267,7 +265,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       command: BuiltinCommand,
       ...args: unknown[]
     ) => {
-      const key = findCommandKey(displayKeymap, command);
+      const key = findCommandKey(displayKeymap, command, shortcutPlatform);
       const title = key
         ? `${ariaLabel} (${formatKeybinding(key, shortcutPlatform)})`
         : ariaLabel;
@@ -396,6 +394,17 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         controllerRef.current.updateSettings(settingsRef.current);
       });
     }, [theme]);
+
+    useEffect(() => {
+      const platform = navigator.platform;
+      if (/Mac|iPhone|iPad|iPod/.test(platform)) {
+        setShortcutPlatform('mac');
+      } else if (/Win/.test(platform)) {
+        setShortcutPlatform('win');
+      } else if (/Linux|X11/.test(platform)) {
+        setShortcutPlatform('linux');
+      }
+    }, []);
 
     // ── Sync controlled value ───────────────────────────────────────────
     useEffect(() => {
