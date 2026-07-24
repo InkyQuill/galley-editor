@@ -1,11 +1,13 @@
 import { act, useLayoutEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import GalleyEditor, { type GalleyHandle } from './GalleyEditor';
 import type { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { GALLEY_VERSION } from '../version';
 import { EditorController } from '../controller';
+import { DEFAULT_KEYMAP } from '../commands';
 import type { GalleyClassNames, GalleyPlugin } from '../types';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -344,6 +346,130 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
     expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
+  });
+
+  it('shows bound shortcuts in titles without changing accessible labels', () => {
+    const { container } = mount(
+      <GalleyEditor value="Hello" theme="light" />,
+    );
+    const bold = container.querySelector(
+      '[aria-label="Bold"]',
+    ) as HTMLButtonElement;
+    const table = container.querySelector(
+      '[aria-label="Insert table"]',
+    ) as HTMLButtonElement;
+
+    expect(bold.getAttribute('aria-label')).toBe('Bold');
+    expect(bold.getAttribute('title')).toMatch(
+      /^(Bold \(⌘B\)|Bold \(Ctrl\+B\))$/,
+    );
+    expect(table.getAttribute('aria-label')).toBe('Insert table');
+    expect(table.getAttribute('title')).toBe('Insert table');
+  });
+
+  it('uses stable non-mac shortcut markup during server rendering', () => {
+    const platform = vi
+      .spyOn(window.navigator, 'platform', 'get')
+      .mockReturnValue('MacIntel');
+
+    const markup = renderToString(
+      <GalleyEditor value="Hello" theme="light" />,
+    );
+
+    expect(markup).toContain('title="Bold (Ctrl+B)"');
+    expect(markup).not.toContain('title="Bold (⌘B)"');
+    platform.mockRestore();
+  });
+
+  it('removes a tooltip shortcut when array keymap replaces defaults', () => {
+    const { container } = mount(
+      <GalleyEditor value="Hello" theme="light" keymap={[]} />,
+    );
+    expect(
+      container.querySelector('[aria-label="Bold"]')?.getAttribute('title'),
+    ).toBe('Bold');
+  });
+
+  it('uses command metadata returned by a function keymap', () => {
+    const bold = DEFAULT_KEYMAP.find(
+      (binding) => binding.command === 'toggleBold',
+    )!;
+    const { container } = mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        keymap={(defaults) => [
+          ...defaults.filter(
+            (binding) =>
+              !('command' in binding) ||
+              binding.command !== 'toggleBold',
+          ),
+          { ...bold, key: 'Alt-b' },
+        ]}
+      />,
+    );
+    expect(
+      container.querySelector('[aria-label="Bold"]')?.getAttribute('title'),
+    ).toMatch(/^(Bold \(⌥B\)|Bold \(Alt\+B\))$/);
+  });
+
+  it('resolves a function keymap only once', () => {
+    const resolveKeymap = vi.fn((defaults) => defaults);
+
+    mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        keymap={resolveKeymap}
+      />,
+    );
+
+    expect(resolveKeymap).toHaveBeenCalledOnce();
+  });
+
+  it('uses the same controller defaults for function keymap tooltips and execution', () => {
+    const onChange = vi.fn();
+    const { container } = mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        onChange={onChange}
+        keymap={(defaults) => {
+          const hasSearchBinding = defaults.some(
+            (binding) => binding.key === 'Mod-f',
+          );
+          return defaults.map((binding) =>
+            'command' in binding &&
+            binding.command === 'toggleBold' &&
+            hasSearchBinding
+              ? { ...binding, key: 'Alt-b' }
+              : binding,
+          );
+        }}
+      />,
+    );
+    const bold = container.querySelector(
+      '[aria-label="Bold"]',
+    ) as HTMLButtonElement;
+    const content = container.querySelector('.cm-content') as HTMLElement;
+    const event = new KeyboardEvent('keydown', {
+      key: 'b',
+      code: 'KeyB',
+      keyCode: 66,
+      which: 66,
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    expect(bold.getAttribute('title')).toMatch(
+      /^(Bold \(⌥B\)|Bold \(Alt\+B\))$/,
+    );
+    act(() => {
+      content.dispatchEvent(event);
+    });
+    expect(event.defaultPrevented).toBe(true);
+    expect(onChange).toHaveBeenCalledWith('****Hello');
   });
 
   it('does not render the toolbar when toolbar=false', () => {

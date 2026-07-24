@@ -52,6 +52,7 @@ import {
   makeSmartBackspaceTransaction,
   makeSmartEnterTransaction,
   makeSmartTabTransaction,
+  type GalleyKeyBinding,
 } from './commands';
 import { parseListLine } from './commands/list-syntax';
 import {
@@ -223,6 +224,7 @@ export class EditorController implements GalleyHandle {
   private readonly editorClassNameCompartment = new Compartment();
   private readonly runtimeExtensions = new Map<symbol, Extension>();
   private readonly pendingFileRanges = new Set<{ from: number; to: number }>();
+  private resolvedKeymap: GalleyKeyBinding[] = [];
 
   private fileOperationSeq = 0;
   private readonly customCommands = new Map<string, CommandFn>();
@@ -594,18 +596,14 @@ export class EditorController implements GalleyHandle {
     return true;
   }
 
-  private buildCommandKeymap(): KeyBinding[] {
+  private buildCommandKeymap(): GalleyKeyBinding[] {
     return DEFAULT_KEYMAP.map((binding) => {
       if (!binding.command) return binding;
       const { command, args = [] } = binding;
       return {
-        key: binding.key,
-        shift: binding.shift,
-        preventDefault: binding.preventDefault,
-        stopPropagation: binding.stopPropagation,
-        scope: binding.scope,
+        ...binding,
         run: () => this.execCommand(command, ...args) !== false,
-      } satisfies KeyBinding;
+      } satisfies GalleyKeyBinding;
     });
   }
 
@@ -627,20 +625,23 @@ export class EditorController implements GalleyHandle {
       },
     ];
 
-    const combinedKeymap = [
+    const combinedKeymap: GalleyKeyBinding[] = [
       ...controllerDefaults,
       ...this.buildCommandKeymap(),
       ...searchKeymap,
       ...standardKeymap,
       ...historyKeymap,
     ];
+    let resolvedKeymap: KeyBinding[];
     if (typeof settings.keymap === 'function') {
-      return keymap.of(settings.keymap(combinedKeymap));
+      resolvedKeymap = settings.keymap(combinedKeymap);
+    } else if (settings.keymap) {
+      resolvedKeymap = settings.keymap;
+    } else {
+      resolvedKeymap = combinedKeymap;
     }
-    if (settings.keymap) {
-      return keymap.of(settings.keymap);
-    }
-    return keymap.of(combinedKeymap);
+    this.resolvedKeymap = resolvedKeymap as GalleyKeyBinding[];
+    return keymap.of(resolvedKeymap);
   }
 
   // ── Dynamic extensions (reconfigured on settings change) ──────────────
@@ -753,6 +754,10 @@ export class EditorController implements GalleyHandle {
   }
 
   // ── GalleyHandle implementation ─────────────────────────────────────
+
+  getResolvedKeymap(): readonly GalleyKeyBinding[] {
+    return this.resolvedKeymap;
+  }
 
   getContent(): string {
     return this.view.state.doc.toString();
