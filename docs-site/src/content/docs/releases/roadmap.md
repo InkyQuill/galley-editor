@@ -5,7 +5,7 @@ sidebar:
   order: 10
 ---
 
-Galley Editor is currently `v0.11.0` and still pre-1.0.
+Galley Editor is currently `v0.12.0` and still pre-1.0.
 
 ## Current Focus
 

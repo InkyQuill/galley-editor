@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/InkyQuill/galley-editor/compare/v0.11.0...v0.12.0) (2026-07-24)
+
+
+### Features
+
+* **toolbar:** show command shortcuts in tooltips ([5806415](https://github.com/InkyQuill/galley-editor/commit/580641520b5cdf031c1c5624959823211bd9e320))
+
 # [0.11.0](https://github.com/InkyQuill/galley-editor/compare/v0.10.2...v0.11.0) (2026-07-23)
 
 
