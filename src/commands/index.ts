@@ -39,6 +39,12 @@ import { makeSmartBackspaceTransaction } from './smartBackspace';
 import { makeSmartEnterTransaction } from './smartEnter';
 import { makeSmartTabTransaction } from './smartTab';
 export { makeSmartBackspaceTransaction, makeSmartEnterTransaction, makeSmartTabTransaction };
+export {
+  findCommandKey,
+  formatKeybinding,
+  resolveDisplayKeymap,
+  type ShortcutPlatform,
+} from './keymapDisplay';
 export { duplicateLine } from './editing/duplicateLine';
 export { insertLineAfter, insertLineBefore } from './editing/insertLine';
 export { sortSelectedLines, type SortSelectedLinesOptions } from './editing/sortSelectedLines';
