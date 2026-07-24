@@ -6,6 +6,7 @@ import type { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
 import { GALLEY_VERSION } from '../version';
 import { EditorController } from '../controller';
+import { DEFAULT_KEYMAP } from '../commands';
 import type { GalleyClassNames, GalleyPlugin } from '../types';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -344,6 +345,57 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
     expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
+  });
+
+  it('shows bound shortcuts in titles without changing accessible labels', () => {
+    const { container } = mount(
+      <GalleyEditor value="Hello" theme="light" />,
+    );
+    const bold = container.querySelector(
+      '[aria-label="Bold"]',
+    ) as HTMLButtonElement;
+    const table = container.querySelector(
+      '[aria-label="Insert table"]',
+    ) as HTMLButtonElement;
+
+    expect(bold.getAttribute('aria-label')).toBe('Bold');
+    expect(bold.getAttribute('title')).toMatch(
+      /^(Bold \(⌘B\)|Bold \(Ctrl\+B\))$/,
+    );
+    expect(table.getAttribute('aria-label')).toBe('Insert table');
+    expect(table.getAttribute('title')).toBe('Insert table');
+  });
+
+  it('removes a tooltip shortcut when array keymap replaces defaults', () => {
+    const { container } = mount(
+      <GalleyEditor value="Hello" theme="light" keymap={[]} />,
+    );
+    expect(
+      container.querySelector('[aria-label="Bold"]')?.getAttribute('title'),
+    ).toBe('Bold');
+  });
+
+  it('uses command metadata returned by a function keymap', () => {
+    const bold = DEFAULT_KEYMAP.find(
+      (binding) => binding.command === 'toggleBold',
+    )!;
+    const { container } = mount(
+      <GalleyEditor
+        value="Hello"
+        theme="light"
+        keymap={(defaults) => [
+          ...defaults.filter(
+            (binding) =>
+              !('command' in binding) ||
+              binding.command !== 'toggleBold',
+          ),
+          { ...bold, key: 'Alt-b' },
+        ]}
+      />,
+    );
+    expect(
+      container.querySelector('[aria-label="Bold"]')?.getAttribute('title'),
+    ).toMatch(/^(Bold \(⌥B\)|Bold \(Alt\+B\))$/);
   });
 
   it('does not render the toolbar when toolbar=false', () => {

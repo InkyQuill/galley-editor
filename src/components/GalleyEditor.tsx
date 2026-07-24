@@ -18,8 +18,15 @@ import {
   type ControllerSettings,
   type EditorCallbacks,
 } from '../controller';
+import { DEFAULT_KEYMAP } from '../commands';
+import {
+  findCommandKey,
+  formatKeybinding,
+  resolveDisplayKeymap,
+} from '../commands/keymapDisplay';
 import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
+  type BuiltinCommand,
   resolveClassNames,
   type GalleyEditorProps,
   type GalleyFooterContext,
@@ -165,6 +172,15 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const requestedMode = mode ?? internalMode;
     const effectiveMode: GalleyMode = editable ? requestedMode : 'preview';
     const canEditDocument = editable && effectiveMode !== 'preview';
+    const displayKeymap = useMemo(
+      () => resolveDisplayKeymap(DEFAULT_KEYMAP, keymap),
+      [keymap],
+    );
+    const shortcutPlatform =
+      typeof navigator !== 'undefined' &&
+      /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+        ? 'mac'
+        : 'other';
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
     const showModeToggle = toolbarOptions.showModeToggle !== false;
@@ -250,21 +266,28 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       name: ToolbarIconName,
       label: string,
       ariaLabel: string,
-      command: string,
+      command: BuiltinCommand,
       ...args: unknown[]
-    ) => (
-      <button
-        type="button"
-        className="ge-toolbar-button"
-        aria-label={ariaLabel}
-        title={ariaLabel}
-        disabled={!canEditDocument}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={() => runCommand(command, ...args)}
-      >
-        {renderIcon(name, label, ariaLabel)}
-      </button>
-    );
+    ) => {
+      const key = findCommandKey(displayKeymap, command);
+      const title = key
+        ? `${ariaLabel} (${formatKeybinding(key, shortcutPlatform)})`
+        : ariaLabel;
+
+      return (
+        <button
+          type="button"
+          className="ge-toolbar-button"
+          aria-label={ariaLabel}
+          title={title}
+          disabled={!canEditDocument}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => runCommand(command, ...args)}
+        >
+          {renderIcon(name, label, ariaLabel)}
+        </button>
+      );
+    };
 
     // Stable callback refs — updated every render, never cause re-init
     const callbacksRef = useRef<EditorCallbacks>({});
