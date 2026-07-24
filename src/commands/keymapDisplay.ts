@@ -36,7 +36,17 @@ export function formatKeybinding(
   key: string,
   platform: ShortcutPlatform,
 ): string {
-  const parts = key.split("-");
+  return key
+    .split(" ")
+    .map((stroke) => formatKeybindingStroke(stroke, platform))
+    .join(" ");
+}
+
+function formatKeybindingStroke(
+  stroke: string,
+  platform: ShortcutPlatform,
+): string {
+  const parts = stroke.split("-");
   const keyName = parts.pop() ?? "";
   const modifiers = parts;
   const displayKey = keyName
@@ -51,13 +61,19 @@ export function formatKeybinding(
       modifiers.includes("Shift") ? "⇧" : "",
       modifiers.includes("Ctrl") ? "⌃" : "",
       modifiers.includes("Alt") ? "⌥" : "",
-      modifiers.includes("Mod") || modifiers.includes("Cmd") ? "⌘" : "",
+      modifiers.includes("Mod") ||
+      modifiers.includes("Cmd") ||
+      modifiers.includes("Meta")
+        ? "⌘"
+        : "",
     ].join("");
     return `${symbols}${displayKey}`;
   }
 
   const labels = [
     modifiers.includes("Mod") || modifiers.includes("Ctrl") ? "Ctrl" : "",
+    modifiers.includes("Cmd") ? "Cmd" : "",
+    modifiers.includes("Meta") ? "Meta" : "",
     modifiers.includes("Alt") ? "Alt" : "",
     modifiers.includes("Shift") ? "Shift" : "",
   ].filter(Boolean);

@@ -11,10 +11,15 @@ describe("keymap display", () => {
     ["Mod-b", "mac", "⌘B"],
     ["Mod-b", "other", "Ctrl+B"],
     ["Cmd-b", "mac", "⌘B"],
+    ["Cmd-b", "other", "Cmd+B"],
+    ["Meta-b", "mac", "⌘B"],
+    ["Meta-b", "other", "Meta+B"],
     ["Mod-Shift-z", "mac", "⇧⌘Z"],
     ["Mod-Shift-z", "other", "Ctrl+Shift+Z"],
     ["Alt-ArrowUp", "mac", "⌥↑"],
     ["Alt-ArrowUp", "other", "Alt+↑"],
+    ["Mod-k Mod-c", "mac", "⌘K ⌘C"],
+    ["Mod-k Mod-c", "other", "Ctrl+K Ctrl+C"],
   ] as const)("formats %s for %s", (key, platform, expected) => {
     expect(formatKeybinding(key, platform)).toBe(expected);
   });
