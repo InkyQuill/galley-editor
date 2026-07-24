@@ -111,6 +111,11 @@ export {
   revealTableSource,
   setTableColumnAlignment,
 } from '../commands';
+export {
+  findCommandKey,
+  formatKeybinding,
+  type ShortcutPlatform,
+} from '../commands/keymapDisplay';
 export type {
   GalleyTableReplacement,
   GalleyKeyBinding,

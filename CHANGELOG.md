@@ -69,6 +69,10 @@ from v1.0.0 onward. Versions in the 0.x series may include breaking changes.
 
 ### Added
 - `layout="fill"` for fixed-height host containers, allowing the editor body to fill available height while the footer stays at the bottom without app-level overrides of CodeMirror internals.
+- Built-in toolbar title tooltips now show effective command shortcuts while
+  keeping label-only accessible names.
+- `formatKeybinding()` and `findCommandKey()` helpers for reusable shortcut
+  presentation.
 
 ## [0.9.1] — 2026-05-01
 

@@ -195,6 +195,17 @@ Use the function form of `keymap` to extend the defaults:
 
 Use the array form only when you want to replace every default binding.
 
+### Built-in toolbar shortcut hints
+
+Buttons in Galley's built-in toolbar append their effective command shortcut
+to the hover title, such as `Bold (⌘B)` on macOS or `Bold (Ctrl+B)` elsewhere.
+The accessible name remains `Bold`.
+
+Array-form keymaps replace the defaults, so removed commands lose their
+shortcut hint. Function-form keymaps can preserve, remove, or remap command
+metadata. Keep the `command` field when cloning a `DEFAULT_KEYMAP` binding if
+the built-in toolbar should display the remapped key.
+
 ## Custom Commands
 
 Register custom commands after mount:
