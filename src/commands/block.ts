@@ -91,7 +91,9 @@ function applyListMarkerToggle(
 
 // CommonMark allows up to 3 leading spaces before an ATX marker; 4+ spaces
 // is an indented code block instead. Matches headingsPlugin/headingStyleAt.
-const ATX_HEADING_RE = /^( {0,3})(#{1,6})\s/;
+// Accepts either whitespace or end-of-line after the hash markers to support
+// marker-only headings like "###" with no content.
+const ATX_HEADING_RE = /^( {0,3})(#{1,6})(?:\s|$)/;
 
 function toggleHeadingRange(level: number, lineText: string): string {
   const target = '#'.repeat(level);

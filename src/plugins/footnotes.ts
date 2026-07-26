@@ -242,6 +242,9 @@ function footnotePopoverExtensions(canEdit: boolean, refSelectorClass: string) {
     },
     provide: (field) =>
       showTooltip.from(field, (value) => {
+        // The falsy-value branch intentionally resets stableLabel and stableCreate
+        // as a side effect of facet derivation, ensuring each new popover starts
+        // with fresh state rather than reusing DOM from a previous footnote.
         if (!value) {
           // Closing (from any path: same-chip click, saveDefinition, a
           // different chip) always starts the next open fresh.

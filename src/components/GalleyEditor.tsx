@@ -64,7 +64,9 @@ type TextStyleOption = 'normal' | `h${1 | 2 | 3 | 4 | 5 | 6}`;
 // Setext headings aren't rendered as headings by headingsPlugin and
 // toggleHeading can't toggle them off, so they're intentionally excluded here
 // to avoid the selector claiming a style the app can't actually remove.
-const ATX_HEADING_RE = /^ {0,3}(#{1,6})\s/;
+// Accepts either whitespace or end-of-line after the hash markers to support
+// marker-only headings like "###" with no content.
+const ATX_HEADING_RE = /^ {0,3}(#{1,6})(?:\s|$)/;
 
 function headingStyleAt(value: string, pos: number): TextStyleOption {
   const clamped = Math.max(0, Math.min(pos, value.length));

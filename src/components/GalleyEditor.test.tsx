@@ -758,6 +758,20 @@ describe('GalleyEditor text style selector', () => {
     expect(select.value).toBe('h2');
   });
 
+  it('reflects the heading level for marker-only headings', async () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(
+      <GalleyEditor ref={ref} value={'###\n\nbody'} theme="light" />,
+    );
+    const select = styleSelect(container);
+
+    act(() => {
+      ref.current?.select(2);
+    });
+    await flushSelectionFrame();
+    expect(select.value).toBe('h3');
+  });
+
   it('choosing Normal removes the heading at the cursor', async () => {
     const ref = { current: null as GalleyHandle | null };
     const { container } = mount(

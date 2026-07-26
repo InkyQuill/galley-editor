@@ -222,6 +222,24 @@ describe('headings', () => {
     expect(docOf(view)).toBe('# ' + '    ## hello');
   });
 
+  it('toggleHeading recognizes marker-only heading with no content', () => {
+    const view = tracked(createView('###', 3));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('');
+  });
+
+  it('toggleHeading adds content to marker-only heading when upgrading level', () => {
+    const view = tracked(createView('##', 2));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('### ');
+  });
+
+  it('toggleHeading recognizes indented marker-only heading', () => {
+    const view = tracked(createView('  ###', 5));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('  ');
+  });
+
   it.each(
     Array.from({ length: 6 }, (_, sourceIndex) =>
       Array.from({ length: 6 }, (_, targetIndex) => [
