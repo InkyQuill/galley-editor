@@ -73,6 +73,7 @@ const lightVariables = {
   '--ge-scrollbar-radius': '999px',
   '--ge-code-font-size': '0.9em',
   '--ge-shadow-editor': '0 12px 30px rgba(15, 23, 42, 0.06)',
+  '--ge-shadow-popover': '0 4px 12px rgba(15, 23, 42, 0.15)',
 };
 
 const darkVariables = {

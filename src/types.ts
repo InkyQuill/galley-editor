@@ -307,6 +307,8 @@ export interface GalleyClassNames {
   checkbox?: string;
   completedTask?: string;
   listMarker?: string;
+  footnoteRef?: string;
+  footnoteDef?: string;
 }
 
 export const DEFAULT_CLASS_NAMES: Required<GalleyClassNames> = {
@@ -331,6 +333,8 @@ export const DEFAULT_CLASS_NAMES: Required<GalleyClassNames> = {
   checkbox: 'ge-checkbox',
   completedTask: 'ge-completed-task',
   listMarker: 'ge-list-marker',
+  footnoteRef: 'ge-footnote-ref',
+  footnoteDef: 'ge-footnote-def',
 };
 
 export function resolveClassNames(overrides?: GalleyClassNames): Required<GalleyClassNames> {
@@ -398,8 +402,14 @@ export interface FindResult {
 export interface GalleyHandle {
   /** Get the current document content. */
   getContent(): string;
-  /** Replace the entire document content. */
+  /** Replace the entire document content, preserving selection and undo history. */
   setContent(value: string): void;
+  /**
+   * Replace the content with a different document: clears undo history and
+   * resets the selection and scroll position to the start. Use when switching
+   * files; use setContent for in-place updates of the same document.
+   */
+  setDocument(value: string): void;
   /** Insert text at the current cursor position, replacing any selection. */
   insertText(text: string): void;
 
@@ -462,6 +472,13 @@ export interface GalleyEditorProps {
   value?: string;
   /** Called when the document changes. */
   onChange?: (value: string) => void;
+  /**
+   * Identity of the current document (e.g. a file path or tab id). When it
+   * changes, the editor treats the new value as a different document: undo
+   * history is cleared and selection and scroll reset to the start, instead of
+   * carrying over from the previous document.
+   */
+  docKey?: string | number;
 
   /** Whether the editor is editable. Default: true. */
   editable?: boolean;

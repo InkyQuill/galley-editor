@@ -5,6 +5,7 @@ import codeInlinePlugin from './code-inline';
 import codeFencePlugin from './code-fence';
 import blockquotePlugin from './blockquote';
 import linksPlugin from './links';
+import footnotesPlugin from './footnotes';
 import imagesPlugin from './images';
 import listsPlugin from './lists';
 import checkboxesPlugin from './checkboxes';
@@ -18,6 +19,7 @@ export const BUILT_IN_PLUGINS: GalleyPlugin[] = [
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  footnotesPlugin,
   imagesPlugin,
   listsPlugin,
   checkboxesPlugin,
@@ -32,6 +34,7 @@ export {
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  footnotesPlugin,
   imagesPlugin,
   listsPlugin,
   checkboxesPlugin,

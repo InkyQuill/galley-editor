@@ -637,3 +637,131 @@ describe('GalleyEditor React wrapper', () => {
     expect(changes).toEqual(['markdown', 'preview']);
   });
 });
+
+describe('GalleyEditor document switching via docKey', () => {
+  it('resets selection and history when docKey changes with the value', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { root } = mount(
+      <GalleyEditor ref={ref} value="first document" docKey="a" theme="light" />,
+    );
+    act(() => {
+      ref.current?.select(5, 8);
+    });
+
+    rerender(
+      root,
+      <GalleyEditor ref={ref} value="second document" docKey="b" theme="light" />,
+    );
+
+    expect(ref.current?.getContent()).toBe('second document');
+    expect(ref.current?.getSelection()).toEqual({ from: 0, to: 0, anchor: 0, head: 0 });
+
+    act(() => {
+      ref.current?.undo();
+    });
+    expect(ref.current?.getContent()).toBe('second document');
+  });
+
+  it('resets selection when docKey changes but content is identical', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { root } = mount(
+      <GalleyEditor ref={ref} value="same content" docKey="a" theme="light" />,
+    );
+    act(() => {
+      ref.current?.select(4);
+    });
+
+    rerender(
+      root,
+      <GalleyEditor ref={ref} value="same content" docKey="b" theme="light" />,
+    );
+
+    expect(ref.current?.getSelection()).toEqual({ from: 0, to: 0, anchor: 0, head: 0 });
+  });
+
+  it('preserves selection for value updates within the same docKey', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { root } = mount(
+      <GalleyEditor ref={ref} value="hello world" docKey="a" theme="light" />,
+    );
+    act(() => {
+      ref.current?.select(5);
+    });
+
+    rerender(
+      root,
+      <GalleyEditor ref={ref} value="hello there world" docKey="a" theme="light" />,
+    );
+
+    expect(ref.current?.getSelection()).toEqual({ from: 5, to: 5, anchor: 5, head: 5 });
+  });
+});
+
+describe('GalleyEditor text style selector', () => {
+  async function flushSelectionFrame(): Promise<void> {
+    await act(async () => {
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+    });
+  }
+
+  function styleSelect(container: HTMLElement): HTMLSelectElement {
+    const select = container.querySelector<HTMLSelectElement>('.ge-toolbar-select');
+    if (!select) throw new Error('style select not rendered');
+    return select;
+  }
+
+  it('does not suppress mousedown on the style select so the dropdown can open', () => {
+    const { container } = mount(<GalleyEditor value="hello" theme="light" />);
+    const select = styleSelect(container);
+
+    let notPrevented = true;
+    act(() => {
+      notPrevented = select.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+      );
+    });
+
+    expect(notPrevented).toBe(true);
+  });
+
+  it('reflects the heading level at the cursor', async () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(
+      <GalleyEditor ref={ref} value={'# Title\n\nbody text'} theme="light" />,
+    );
+    const select = styleSelect(container);
+
+    act(() => {
+      ref.current?.select(2);
+    });
+    await flushSelectionFrame();
+    expect(select.value).toBe('h1');
+
+    act(() => {
+      ref.current?.select(10);
+    });
+    await flushSelectionFrame();
+    expect(select.value).toBe('normal');
+  });
+
+  it('choosing Normal removes the heading at the cursor', async () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(
+      <GalleyEditor ref={ref} value={'## Title'} theme="light" />,
+    );
+    const select = styleSelect(container);
+
+    act(() => {
+      ref.current?.select(4);
+    });
+    await flushSelectionFrame();
+    expect(select.value).toBe('h2');
+
+    act(() => {
+      select.value = 'normal';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(ref.current?.getContent()).toBe('Title');
+  });
+});

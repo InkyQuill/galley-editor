@@ -9,6 +9,7 @@ import type { EditorView } from '@codemirror/view';
 import { createEditorView, destroyViews, lineElement } from '../test-utils/editor';
 import { resolveClassNames, type GalleyRenderContext } from '../types';
 import tablesPlugin, { safeTableCellHref } from './tables';
+import { history, undo } from '@codemirror/commands';
 
 const views: EditorView[] = [];
 const editableLiveContext: GalleyRenderContext = { theme: 'light', mode: 'live', canEdit: true };
@@ -628,5 +629,64 @@ describe('tablesPlugin', () => {
 
     expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
     expect(lineElement(view, 1).textContent).toContain('| A | B |');
+  });
+});
+
+describe('tablesPlugin cell editor undo handling', () => {
+  function historyTableEditor(doc: string): EditorView {
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: [
+        history(),
+        tablesPlugin.extensions(resolveClassNames(), editableLiveContext),
+      ],
+    });
+    views.push(view);
+    return view;
+  }
+
+  it('applies document undo on Mod-z when the cell draft is unedited', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = historyTableEditor(doc);
+    view.dispatch({ changes: { from: view.state.doc.length, insert: ' tail' } });
+    expect(view.state.doc.toString()).toContain('plain tail');
+
+    clickCell(view, '1:1');
+    clickCell(view, '1:1');
+    keydown(activeInput(view), 'z', { ctrlKey: true });
+
+    expect(view.state.doc.toString()).toBe(doc);
+    expect(view.dom.querySelector('.ge-table-cell-editor')).toBeNull();
+  });
+
+  it('applies document redo on Mod-Shift-z when the cell draft is unedited', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = historyTableEditor(doc);
+    view.dispatch({ changes: { from: view.state.doc.length, insert: ' tail' } });
+    undo(view);
+    expect(view.state.doc.toString()).toBe(doc);
+
+    clickCell(view, '1:1');
+    clickCell(view, '1:1');
+    keydown(activeInput(view), 'Z', { ctrlKey: true, shiftKey: true });
+
+    expect(view.state.doc.toString()).toContain('plain tail');
+    expect(view.dom.querySelector('.ge-table-cell-editor')).toBeNull();
+  });
+
+  it('leaves Mod-z to the input while the draft has local edits', () => {
+    const doc = '| A | B |\n| - | - |\n| one | two |\n\nplain';
+    const view = historyTableEditor(doc);
+    view.dispatch({ changes: { from: view.state.doc.length, insert: ' tail' } });
+
+    clickCell(view, '1:1');
+    clickCell(view, '1:1');
+    const input = activeInput(view);
+    setEditorValue(input, 'twoX');
+    keydown(input, 'z', { ctrlKey: true });
+
+    expect(view.state.doc.toString()).toContain('plain tail');
+    expect(activeInput(view)).toBe(input);
   });
 });

@@ -75,6 +75,7 @@ export {
   codeFencePlugin,
   blockquotePlugin,
   linksPlugin,
+  footnotesPlugin,
   imagesPlugin,
   listsPlugin,
   checkboxesPlugin,

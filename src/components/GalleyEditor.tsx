@@ -57,6 +57,17 @@ function wordCount(value: string): number {
   return words?.length ?? 0;
 }
 
+type TextStyleOption = 'normal' | `h${1 | 2 | 3 | 4 | 5 | 6}`;
+
+function headingStyleAt(value: string, pos: number): TextStyleOption {
+  const clamped = Math.max(0, Math.min(pos, value.length));
+  const lineStart = clamped === 0 ? 0 : value.lastIndexOf('\n', clamped - 1) + 1;
+  const newlineIndex = value.indexOf('\n', lineStart);
+  const lineEnd = newlineIndex === -1 ? value.length : newlineIndex;
+  const headingMarks = /^(#{1,6})\s/.exec(value.slice(lineStart, lineEnd));
+  return headingMarks ? (`h${headingMarks[1].length}` as TextStyleOption) : 'normal';
+}
+
 function plural(value: number, singular: string, pluralValue: string): string {
   return `${value} ${value === 1 ? singular : pluralValue}`;
 }
@@ -99,6 +110,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const {
       value = '',
       onChange,
+      docKey,
       editable = true,
       placeholder = '',
       ariaLabel,
@@ -151,6 +163,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         get view() { return controllerRef.current?.view ?? null; },
         getContent: () => controllerRef.current?.getContent() ?? '',
         setContent: (v: string) => controllerRef.current?.setContent(v),
+        setDocument: (v: string) => controllerRef.current?.setDocument(v),
         insertText: (t: string) => controllerRef.current?.insertText(t),
         focus: () => controllerRef.current?.focus(),
         blur: () => controllerRef.current?.blur(),
@@ -177,6 +190,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     );
     const [shortcutPlatform, setShortcutPlatform] =
       useState<ShortcutPlatform>('other');
+    const [selectionHead, setSelectionHead] = useState(0);
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
     const showModeToggle = toolbarOptions.showModeToggle !== false;
@@ -186,6 +200,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const showFooter = footer !== false;
     const currentWordCount = wordCount(value);
     const currentCharacterCount = value.length;
+    const currentTextStyle = headingStyleAt(value, selectionHead);
     const shellClassName = [
       'ge-editor-shell',
       `ge-layout-${layout}`,
@@ -290,7 +305,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     useSafeLayoutEffect(() => {
       callbacksRef.current = {
         onChange,
-        onSelectionChange,
+        onSelectionChange: (sel) => {
+          setSelectionHead(sel.head);
+          onSelectionChange?.(sel);
+        },
         onFocus,
         onBlur,
         onScroll,
@@ -407,13 +425,20 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     }, []);
 
     // ── Sync controlled value ───────────────────────────────────────────
+    const lastDocKeyRef = useRef(docKey);
     useEffect(() => {
       if (!controllerRef.current) return;
+      const docKeyChanged = lastDocKeyRef.current !== docKey;
+      lastDocKeyRef.current = docKey;
+      if (docKeyChanged) {
+        controllerRef.current.setDocument(value);
+        return;
+      }
       const current = controllerRef.current.getContent();
       if (value !== current) {
         controllerRef.current.setContent(value);
       }
-    }, [value]);
+    }, [value, docKey]);
 
     // ── Expose imperative handle via proxy ─────────────────────────────
     // Proxy through controllerRef so the handle works even before the
@@ -434,14 +459,15 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                 className="ge-toolbar-select"
                 aria-label="Text style"
                 name="ge-text-style"
-                defaultValue="normal"
+                value={currentTextStyle}
                 disabled={!canEditDocument}
-                onMouseDown={(event) => event.preventDefault()}
                 onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  if (value.startsWith('h')) {
-                    runCommand('toggleHeading', Number(value.slice(1)));
-                    event.currentTarget.value = 'normal';
+                  const next = event.currentTarget.value;
+                  if (next.startsWith('h')) {
+                    runCommand('toggleHeading', Number(next.slice(1)));
+                  } else if (currentTextStyle.startsWith('h')) {
+                    // Selecting Normal on a heading line toggles the heading off
+                    runCommand('toggleHeading', Number(currentTextStyle.slice(1)));
                   }
                 }}
               >

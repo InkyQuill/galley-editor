@@ -80,6 +80,7 @@
   /* Code */
   --ge-code-font-size: 0.9em;
   --ge-shadow-editor: 0 12px 30px rgba(15, 23, 42, 0.06);
+  --ge-shadow-popover: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 
 [data-theme="dark"] {
@@ -355,6 +356,89 @@
 
 .ge-link:hover {
   color: var(--ge-color-link-hover);
+}
+
+/* Footnotes */
+
+.ge-footnote-ref {
+  color: var(--ge-color-link);
+  cursor: pointer;
+  font-size: 0.75em;
+  line-height: 1;
+  padding: 0 0.15em;
+  user-select: none;
+}
+
+.ge-footnote-ref::before {
+  content: "[";
+}
+
+.ge-footnote-ref::after {
+  content: "]";
+}
+
+.ge-footnote-ref:hover {
+  color: var(--ge-color-link-hover);
+}
+
+.ge-footnote-def {
+  color: var(--ge-color-text-muted);
+  font-size: 0.9em;
+}
+
+.ge-footnote-popover {
+  background: var(--ge-color-surface-elevated);
+  border: 1px solid var(--ge-color-border);
+  border-radius: 6px;
+  box-shadow: var(--ge-shadow-popover);
+  color: var(--ge-color-text);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  max-width: 20rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.ge-footnote-popover-text {
+  white-space: pre-wrap;
+}
+
+.ge-footnote-popover-missing {
+  color: var(--ge-color-text-muted);
+  font-style: italic;
+}
+
+.ge-footnote-popover button {
+  align-self: flex-end;
+  background: var(--ge-color-surface);
+  border: 1px solid var(--ge-color-border);
+  border-radius: 4px;
+  color: var(--ge-color-text);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  padding: 0.15rem 0.6rem;
+}
+
+.ge-footnote-popover button:hover {
+  background: var(--ge-color-border);
+}
+
+.ge-footnote-popover-input {
+  background: var(--ge-color-bg);
+  border: 1px solid var(--ge-color-border);
+  border-radius: 4px;
+  color: var(--ge-color-text);
+  font: inherit;
+  min-width: 16rem;
+  padding: 0.3rem 0.4rem;
+  resize: vertical;
+}
+
+.ge-footnote-popover-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
 }
 
 /* Code fences */
