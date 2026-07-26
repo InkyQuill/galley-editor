@@ -96,6 +96,7 @@ class FootnoteRefWidget extends WidgetType {
     sup.dataset.geFootnote = this.label;
     sup.textContent = this.label;
     sup.setAttribute('role', 'button');
+    sup.tabIndex = 0;
     sup.title = `Footnote ${this.label}`;
     return sup;
   }
@@ -199,16 +200,32 @@ function footnotePopoverExtensions(canEdit: boolean, refSelectorClass: string) {
     }
   }
 
+  // CodeMirror's tooltip manager keeps a tooltip's DOM alive across updates
+  // only when the returned Tooltip's `create` function is the *same
+  // reference* as before (it does not compare pos/label). Since popoverField
+  // remaps `pos` into a new object on every docChanged, a fresh closure here
+  // would make every unrelated edit look like a new tooltip and tear down the
+  // popover DOM — discarding an in-progress edit draft. Reuse `create` for as
+  // long as the open label doesn't change; docChanged then only remaps `pos`
+  // (handled by CodeMirror's own repositioning), and the DOM is left alone.
+  let stableLabel: string | null = null;
+  let stableCreate: ((view: EditorView) => { dom: HTMLElement }) | null = null;
+
   function footnoteTooltip(value: FootnotePopoverState): Tooltip {
-    return {
-      pos: value.pos,
-      above: true,
-      create(view) {
+    if (stableLabel !== value.label) {
+      stableLabel = value.label;
+      stableCreate = (view) => {
         const dom = document.createElement('div');
         dom.className = 'ge-footnote-popover';
         renderPopoverContent(dom, view, value.label);
         return { dom };
-      },
+      };
+    }
+
+    return {
+      pos: value.pos,
+      above: true,
+      create: stableCreate!,
     };
   }
 
@@ -224,8 +241,32 @@ function footnotePopoverExtensions(canEdit: boolean, refSelectorClass: string) {
       return value;
     },
     provide: (field) =>
-      showTooltip.from(field, (value) => (value ? footnoteTooltip(value) : null)),
+      showTooltip.from(field, (value) => {
+        if (!value) {
+          // Closing (from any path: same-chip click, saveDefinition, a
+          // different chip) always starts the next open fresh.
+          stableLabel = null;
+          stableCreate = null;
+          return null;
+        }
+        return footnoteTooltip(value);
+      }),
   });
+
+  function toggleChip(view: EditorView, chip: HTMLElement): boolean {
+    const label = chip.dataset.geFootnote;
+    if (!label) return false;
+
+    const open = view.state.field(popoverField);
+    if (open && open.label === label) {
+      closePopover(view);
+      return true;
+    }
+
+    const pos = view.posAtDOM(chip);
+    view.dispatch({ effects: setFootnotePopover.of({ pos, label }) });
+    return true;
+  }
 
   const clickExt = EditorView.domEventHandlers({
     click: (event, view) => {
@@ -234,24 +275,23 @@ function footnotePopoverExtensions(canEdit: boolean, refSelectorClass: string) {
       if (target?.closest('.ge-footnote-popover')) return false;
 
       const chip = target?.closest<HTMLElement>(`.${refSelectorClass}`);
-      const open = view.state.field(popoverField);
       if (!chip) {
-        if (open) closePopover(view);
+        if (view.state.field(popoverField)) closePopover(view);
         return false;
       }
 
-      const label = chip.dataset.geFootnote;
-      if (!label) return false;
+      event.preventDefault();
+      return toggleChip(view, chip);
+    },
+    keydown: (event, view) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return false;
+
+      const target = event.target as Element | null;
+      const chip = target?.closest<HTMLElement>(`.${refSelectorClass}`);
+      if (!chip) return false;
 
       event.preventDefault();
-      if (open && open.label === label) {
-        closePopover(view);
-        return true;
-      }
-
-      const pos = view.posAtDOM(chip);
-      view.dispatch({ effects: setFootnotePopover.of({ pos, label }) });
-      return true;
+      return toggleChip(view, chip);
     },
   });
 

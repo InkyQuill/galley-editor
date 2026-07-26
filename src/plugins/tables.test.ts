@@ -44,13 +44,15 @@ function clickCell(view: EditorView, ref: string, init: MouseEventInit = {}): vo
   cell(view, ref).dispatchEvent(new MouseEvent('mousedown', { bubbles: true, ...init }));
 }
 
-function keydown(target: EventTarget, key: string, init: KeyboardEventInit = {}): void {
-  target.dispatchEvent(new KeyboardEvent('keydown', {
+function keydown(target: EventTarget, key: string, init: KeyboardEventInit = {}): KeyboardEvent {
+  const event = new KeyboardEvent('keydown', {
     bubbles: true,
     cancelable: true,
     key,
     ...init,
-  }));
+  });
+  target.dispatchEvent(event);
+  return event;
 }
 
 function setEditorValue(input: HTMLInputElement, value: string): void {
@@ -684,8 +686,9 @@ describe('tablesPlugin cell editor undo handling', () => {
     clickCell(view, '1:1');
     const input = activeInput(view);
     setEditorValue(input, 'twoX');
-    keydown(input, 'z', { ctrlKey: true });
+    const event = keydown(input, 'z', { ctrlKey: true });
 
+    expect(event.defaultPrevented).toBe(false);
     expect(view.state.doc.toString()).toContain('plain tail');
     expect(activeInput(view)).toBe(input);
   });

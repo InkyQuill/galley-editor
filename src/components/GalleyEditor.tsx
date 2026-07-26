@@ -59,12 +59,19 @@ function wordCount(value: string): number {
 
 type TextStyleOption = 'normal' | `h${1 | 2 | 3 | 4 | 5 | 6}`;
 
+// Matches what headingsPlugin renders (ATXHeading1-6) and what toggleHeading
+// recognizes: CommonMark allows up to 3 leading spaces before an ATX marker.
+// Setext headings aren't rendered as headings by headingsPlugin and
+// toggleHeading can't toggle them off, so they're intentionally excluded here
+// to avoid the selector claiming a style the app can't actually remove.
+const ATX_HEADING_RE = /^ {0,3}(#{1,6})\s/;
+
 function headingStyleAt(value: string, pos: number): TextStyleOption {
   const clamped = Math.max(0, Math.min(pos, value.length));
   const lineStart = clamped === 0 ? 0 : value.lastIndexOf('\n', clamped - 1) + 1;
   const newlineIndex = value.indexOf('\n', lineStart);
   const lineEnd = newlineIndex === -1 ? value.length : newlineIndex;
-  const headingMarks = /^(#{1,6})\s/.exec(value.slice(lineStart, lineEnd));
+  const headingMarks = ATX_HEADING_RE.exec(value.slice(lineStart, lineEnd));
   return headingMarks ? (`h${headingMarks[1].length}` as TextStyleOption) : 'normal';
 }
 

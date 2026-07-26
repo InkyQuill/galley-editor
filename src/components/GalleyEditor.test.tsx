@@ -744,6 +744,20 @@ describe('GalleyEditor text style selector', () => {
     expect(select.value).toBe('normal');
   });
 
+  it('reflects the heading level for an indented ATX heading (up to 3 spaces)', async () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(
+      <GalleyEditor ref={ref} value={'   ## Indented title\n\nbody'} theme="light" />,
+    );
+    const select = styleSelect(container);
+
+    act(() => {
+      ref.current?.select(6);
+    });
+    await flushSelectionFrame();
+    expect(select.value).toBe('h2');
+  });
+
   it('choosing Normal removes the heading at the cursor', async () => {
     const ref = { current: null as GalleyHandle | null };
     const { container } = mount(

@@ -61,6 +61,13 @@ describe('footnotesPlugin rendering', () => {
     expect(chip?.textContent).toBe('one');
   });
 
+  it('makes the reference chip keyboard-focusable', () => {
+    const view = footnoteEditor();
+
+    const chip = refChip(view, 'one');
+    expect(chip?.tabIndex).toBe(0);
+  });
+
   it('reveals the raw reference markup when the cursor is inside it', () => {
     const view = footnoteEditor(DOC, 'one]');
 
@@ -122,6 +129,15 @@ describe('footnotesPlugin popover', () => {
     expect(popover(view)).toBeInstanceOf(HTMLElement);
     expect(popover(view)?.querySelector('button.ge-footnote-popover-edit')).toBeNull();
   });
+
+  it.each(['Enter', ' '])('opens the popover on %s keydown for a focused chip', (key) => {
+    const view = footnoteEditor();
+    const chip = refChip(view, 'one');
+
+    chip?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key }));
+
+    expect(popover(view)?.textContent).toContain('The footnote text.');
+  });
 });
 
 describe('footnotesPlugin editing', () => {
@@ -143,6 +159,21 @@ describe('footnotesPlugin editing', () => {
     const textarea = openEditor(view, 'one');
 
     expect(textarea.value).toBe('The footnote text.');
+  });
+
+  it('keeps the edit draft open across an unrelated document edit', () => {
+    const view = footnoteEditor();
+
+    const textarea = openEditor(view, 'one');
+    textarea.value = 'draft in progress';
+
+    // An edit elsewhere in the document (e.g. typed text, or content pushed
+    // in by the host) must not tear down the popover DOM or discard the draft
+    view.dispatch({ changes: { from: view.state.doc.length, insert: ' more text' } });
+
+    const stillOpen = popover(view)?.querySelector<HTMLTextAreaElement>('textarea');
+    expect(stillOpen).toBe(textarea);
+    expect(stillOpen?.value).toBe('draft in progress');
   });
 
   it('saves edited definition text back into the document', () => {
