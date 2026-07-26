@@ -1,3 +1,10 @@
+# [0.13.0](https://github.com/InkyQuill/galley-editor/compare/v0.12.0...v0.13.0) (2026-07-26)
+
+
+### Features
+
+* per-document state switching and footnote support ([#6](https://github.com/InkyQuill/galley-editor/issues/6)) ([e512077](https://github.com/InkyQuill/galley-editor/commit/e512077973425d1948de196ab26c54ed95bb27aa))
+
 # [0.12.0](https://github.com/InkyQuill/galley-editor/compare/v0.11.0...v0.12.0) (2026-07-24)
 
 
