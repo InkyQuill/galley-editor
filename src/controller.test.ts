@@ -1149,3 +1149,66 @@ describe('EditorController runtime state', () => {
     expect(onScroll).not.toHaveBeenCalled();
   });
 });
+
+describe('EditorController document switching', () => {
+  it('setDocument replaces content and resets the selection to the start', () => {
+    const controller = createController('first document');
+    controller.select(5, 8);
+
+    controller.setDocument('second document');
+
+    expect(controller.getContent()).toBe('second document');
+    expect(controller.getSelection()).toEqual({ from: 0, to: 0, anchor: 0, head: 0 });
+  });
+
+  it('setDocument clears undo history so undo cannot restore the previous document', () => {
+    const controller = createController('first document');
+    controller.select(0);
+    controller.insertText('typed ');
+    expect(controller.getContent()).toBe('typed first document');
+
+    controller.setDocument('second document');
+    controller.undo();
+
+    expect(controller.getContent()).toBe('second document');
+  });
+
+  it('setDocument keeps undo working for edits made after the switch', () => {
+    const controller = createController('first document');
+
+    controller.setDocument('second document');
+    controller.select(0);
+    controller.insertText('typed ');
+    expect(controller.getContent()).toBe('typed second document');
+
+    controller.undo();
+
+    expect(controller.getContent()).toBe('second document');
+  });
+
+  it('setContent keeps the change undoable for same-document updates', () => {
+    const controller = createController('alpha');
+
+    controller.setContent('beta');
+    controller.undo();
+
+    expect(controller.getContent()).toBe('alpha');
+  });
+});
+
+describe('EditorController link shortcut', () => {
+  it('inserts a markdown link with plain Mod-k (no Shift)', () => {
+    const controller = createController('');
+
+    const event = dispatchKey(controller.view, {
+      key: 'k',
+      code: 'KeyK',
+      keyCode: 75,
+      which: 75,
+      ctrlKey: true,
+    });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(controller.getContent()).toBe('[]()');
+  });
+});

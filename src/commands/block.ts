@@ -89,16 +89,23 @@ function applyListMarkerToggle(
   };
 }
 
+// CommonMark allows up to 3 leading spaces before an ATX marker; 4+ spaces
+// is an indented code block instead. Matches headingsPlugin/headingStyleAt.
+// Accepts either whitespace or end-of-line after the hash markers to support
+// marker-only headings like "###" with no content.
+const ATX_HEADING_RE = /^( {0,3})(#{1,6})(?:\s|$)/;
+
 function toggleHeadingRange(level: number, lineText: string): string {
   const target = '#'.repeat(level);
-  const headingMatch = /^(#{1,6})\s/.exec(lineText);
+  const headingMatch = ATX_HEADING_RE.exec(lineText);
   if (!headingMatch) {
     return `${target} ${lineText}`;
   }
 
-  const currentLevel = headingMatch[1].length;
+  const [, indent, marker] = headingMatch;
+  const currentLevel = marker.length;
   const rest = lineText.slice(headingMatch[0].length);
-  return currentLevel === level ? rest : `${target} ${rest}`;
+  return currentLevel === level ? `${indent}${rest}` : `${indent}${target} ${rest}`;
 }
 
 export const toggleHeading: CommandFn = (view, levelArg: unknown = 1) => {

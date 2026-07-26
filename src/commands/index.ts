@@ -124,7 +124,7 @@ export const DEFAULT_KEYMAP: GalleyKeyBinding[] = [
   commandBinding('Alt-ArrowDown', 'swapLineDown', 'Swap the current line downward'),
   commandBinding('Mod-Alt-ArrowUp', 'insertLineBefore', 'Insert a blank line before the current line'),
   commandBinding('Mod-Alt-ArrowDown', 'insertLineAfter', 'Insert a blank line after the current line'),
-  commandBinding('Mod-K', 'insertLink', 'Insert a markdown link'),
+  commandBinding('Mod-k', 'insertLink', 'Insert a markdown link'),
   commandBinding('Mod-b', 'toggleBold', 'Toggle bold formatting'),
   commandBinding('Mod-i', 'toggleItalic', 'Toggle italic formatting'),
   commandBinding('Mod-z', 'undo', 'Undo the last change'),

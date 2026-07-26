@@ -120,3 +120,31 @@ describe('linksPlugin', () => {
     expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
   });
 });
+
+describe('linksPlugin footnote exclusion', () => {
+  it('does not decorate footnote references as links', () => {
+    const doc = 'A note[^one] here.\n\n[^one]: The footnote text.\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: linksPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    expect(view.dom.querySelector('.ge-link')).toBeNull();
+    expect(lineElement(view, 1).textContent).toBe('A note[^one] here.');
+  });
+
+  it('does not register footnote definitions as link definitions', () => {
+    const doc = 'A [real][^one] mix.\n\n[^one]: Not a URL.\n\nplain';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.indexOf('plain')),
+      extensions: linksPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    const links = Array.from(view.dom.querySelectorAll('.ge-link'));
+    expect(links.every((link) => link.getAttribute('data-ge-url') !== 'Not')).toBe(true);
+  });
+});

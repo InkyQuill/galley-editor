@@ -20,6 +20,7 @@ import {
   EditorSelection,
   EditorState,
   StateEffect,
+  Transaction,
   type Extension,
 } from '@codemirror/state';
 import { markdown } from '@codemirror/lang-markdown';
@@ -776,6 +777,20 @@ export class EditorController implements GalleyHandle {
       changes: { from: 0, to: state.doc.length, insert: value },
       selection: EditorSelection.create(nextRanges, state.selection.mainIndex),
     });
+  }
+
+  setDocument(value: string): void {
+    const { state } = this.view;
+    this.view.dispatch({
+      changes: { from: 0, to: state.doc.length, insert: value },
+      selection: EditorSelection.cursor(0),
+      annotations: Transaction.addToHistory.of(false),
+      effects: this.historyCompartment.reconfigure([]),
+    });
+    this.view.dispatch({
+      effects: this.historyCompartment.reconfigure(history()),
+    });
+    this.view.scrollDOM.scrollTop = 0;
   }
 
   insertText(text: string): void {

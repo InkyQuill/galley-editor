@@ -4,6 +4,7 @@ import { syntaxTree } from '@codemirror/language';
 import type { EditorState } from '@codemirror/state';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
+import { footnoteReferenceLabel } from './footnotes';
 import type {
   LinkClickHandler,
   GalleyPlugin,
@@ -35,6 +36,8 @@ function collectLinkDefinitions(state: EditorState): Map<string, LinkDefinition>
     const line = state.doc.line(lineNumber);
     const match = /^\s*\[([^\]]+)\]:\s+(\S+)(?:\s+"([^"]+)")?\s*$/.exec(line.text);
     if (!match) continue;
+    // Footnote definitions ([^label]: text) are not link definitions
+    if (match[1].startsWith('^')) continue;
     definitions.set(normalizeLabel(match[1]), {
       url: match[2],
       ...(match[3] ? { title: match[3] } : {}),
@@ -119,6 +122,9 @@ const linksPlugin: GalleyPlugin = {
       createDecoration(node, state) {
         const parent = node.node.parent;
         if (!parent) return null;
+        if (parent.name === 'Link' && footnoteReferenceLabel(state, parent) !== null) {
+          return null;
+        }
 
         if (node.name === 'LinkMark' && parent.name === 'Link') {
           return HIDE_DECORATION;
@@ -152,6 +158,7 @@ const linksPlugin: GalleyPlugin = {
     const classExt = makeInlinePlugin({
       createDecoration(node, state) {
         if (node.name === 'Link') {
+          if (footnoteReferenceLabel(state, node) !== null) return null;
           const url = resolveLinkUrl(state, node.from, node.to);
           return Decoration.mark({
             class: linkClass,

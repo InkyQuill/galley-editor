@@ -1,3 +1,4 @@
+import { redo, undo } from '@codemirror/commands';
 import { syntaxTree } from '@codemirror/language';
 import {
   EditorSelection,
@@ -263,6 +264,9 @@ class TableWidget extends WidgetType {
     const input = document.createElement('input');
     input.className = 'ge-table-cell-editor';
     input.value = this.selected?.draft ?? tableCellInfo.text;
+    // Baseline for undo routing: while the draft differs from it, Mod-z is
+    // the input's local undo; once it matches again, Mod-z reaches the document
+    input.defaultValue = input.value;
     syncCellEditorSize(input);
 
     input.addEventListener('keydown', (event) => {
@@ -378,6 +382,22 @@ class TableWidget extends WidgetType {
     view: EditorView,
   ): void {
     event.stopPropagation();
+
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      event.key.toLowerCase() === 'z'
+    ) {
+      if (input.value !== input.defaultValue) return;
+      event.preventDefault();
+      this.cancelEditing(view);
+      if (event.shiftKey) {
+        redo(view);
+      } else {
+        undo(view);
+      }
+      return;
+    }
 
     if (event.key === 'Escape') {
       event.preventDefault();

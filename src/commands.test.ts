@@ -204,6 +204,42 @@ describe('headings', () => {
     expect(docOf(view)).toBe('# ####### hello');
   });
 
+  it('toggleHeading removes an indented heading (up to 3 leading spaces) when toggled off', () => {
+    const view = tracked(createView('   ## hello', 6));
+    BUILTIN_COMMANDS.toggleHeading(view, 2);
+    expect(docOf(view)).toBe('   hello');
+  });
+
+  it('toggleHeading replaces the level of an indented heading', () => {
+    const view = tracked(createView('  # hello', 5));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('  ### hello');
+  });
+
+  it('toggleHeading treats 4-space indentation as plain content (CommonMark code block)', () => {
+    const view = tracked(createView('    ## hello', 7));
+    BUILTIN_COMMANDS.toggleHeading(view, 1);
+    expect(docOf(view)).toBe('# ' + '    ## hello');
+  });
+
+  it('toggleHeading recognizes marker-only heading with no content', () => {
+    const view = tracked(createView('###', 3));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('');
+  });
+
+  it('toggleHeading adds content to marker-only heading when upgrading level', () => {
+    const view = tracked(createView('##', 2));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('### ');
+  });
+
+  it('toggleHeading recognizes indented marker-only heading', () => {
+    const view = tracked(createView('  ###', 5));
+    BUILTIN_COMMANDS.toggleHeading(view, 3);
+    expect(docOf(view)).toBe('  ');
+  });
+
   it.each(
     Array.from({ length: 6 }, (_, sourceIndex) =>
       Array.from({ length: 6 }, (_, targetIndex) => [
