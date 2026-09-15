@@ -29,12 +29,17 @@ jobs:
       - name: Verify
         run: |
           npm run lint
-          npx tsc -b
+          npx tsc -b packages/galley-editor
+          npm run build:themes
           npm run test:coverage
+          npm test --workspace @inkyquill/galley-themes
           npm run build:lib
+          npm run test:package-consumer
           ./scripts/verify-publish.sh
 
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance
+        run: |
+          npm publish --workspace @inkyquill/galley-editor --access public --provenance
+          npm publish --workspace @inkyquill/galley-themes --access public --provenance

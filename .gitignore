@@ -28,3 +28,7 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Mirrored into both packages by scripts/prepare-workspace-release.mjs at release time.
+packages/galley-editor/CHANGELOG.md
+packages/galley-themes/CHANGELOG.md

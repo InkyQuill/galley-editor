@@ -18,8 +18,8 @@ import { Decoration } from '@codemirror/view';
 import { makeInlinePlugin } from '../rendering';
 import { EditorView } from '@codemirror/view';
 import '../galley-base.css';
-import galleyMark from '../../assets/galley.png';
-import galleyLogo from '../../assets/galley-color.png';
+import galleyMark from '../../../../assets/galley.png';
+import galleyLogo from '../../../../assets/galley-color.png';
 
 const meta = {
   title: 'Components/GalleyEditor',

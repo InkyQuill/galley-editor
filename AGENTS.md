@@ -4,30 +4,48 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Project Overview
 
-Galley Editor (`@inkyquill/galley-editor`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
+Galley is an npm workspace containing two publishable packages:
+
+- `@inkyquill/galley-editor` (`packages/galley-editor/`) — a React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6. When the cursor is not on a node, its formatting marks are hidden and semantic CSS classes are applied; when the cursor enters the node, raw markdown is revealed. Similar to Obsidian's live preview mode. Uses Lezer's markdown parser (no separate markdown-to-HTML step).
+- `@inkyquill/galley-themes` (`packages/galley-themes/`) — a dependency-free catalog of built-in Galley themes: design tokens, light/dark palettes, and the `--app-*` / `--ge-*` CSS variable mapping. No React and no DOM APIs.
+
+The repository root is a private workspace (`packages/*`) whose scripts delegate to the editor package; docs-site, Storybook, release, and git-hook scripts live at the root.
 
 ## Commands
 
-- `npm run dev` — Start Vite dev server (demo app in `src/App.tsx`)
+Root scripts (run from the repository root; they delegate to the workspace):
+
+- `npm run dev` — Start Vite dev server for the demo app (`packages/galley-editor/src/App.tsx`)
 - `npm run build` — TypeScript check + Vite build (demo app)
-- `npm run build:lib` — Build the library for publishing (entry: `src/components/index.ts`, ES module output to `dist/`)
-- `npm run lint` — ESLint (flat config, TS + React hooks + React Refresh)
-- `npm run test` — Run the Vitest suite
+- `npm run build:lib` — Build the editor library for publishing (entry: `packages/galley-editor/src/components/index.ts`, ES module output to `packages/galley-editor/dist/`)
+- `npm run build:themes` — Build `@inkyquill/galley-themes` with `tsc` (NodeNext output in `packages/galley-themes/dist/`)
+- `npm run lint` — ESLint over the whole workspace (flat config, TS + React hooks + React Refresh)
+- `npm run test` — Run the editor Vitest suite
+- `npm test --workspace @inkyquill/galley-themes` — Run the themes Vitest suite
+- `npm run test:package-consumer` — Pack both packages into a temp folder, inspect the tarballs, and install them into an isolated temp consumer (`node --test tests/package-consumer/exports.test.mjs`)
 - `npm run test:commit-msg` — Validate commit-message hook behavior
 - `npm run storybook` — Start Storybook on port 6006
 - `npm install --legacy-peer-deps` — Use this install mode when npm reports peer dependency conflicts
+
+Package scripts can also be invoked directly with `npm run <script> --workspace @inkyquill/galley-editor` (or `@inkyquill/galley-themes`).
+
+## Release
+
+Releases keep a single version across both packages (`v0.13.0` at the time of writing). `semantic-release` (`.releaserc.json`) publishes once per package via two `@semantic-release/npm` entries with different `pkgRoot`s; the private root is never published. `scripts/prepare-workspace-release.mjs <VERSION>` validates a semver argument, sets the same version on both `package.json` files, mirrors the root `CHANGELOG.md` into both packages, refreshes `package-lock.json`, and builds both packages — CI runs it during release prepare, and humans can run it manually. Publication is verified with `scripts/verify-publish.sh` (pack + isolated temp-consumer install) and `npm run test:package-consumer`; both are dry-run only.
 
 ## Architecture
 
 ### Build Modes
 
-Vite has two build modes in `vite.config.ts`:
+Vite has two build modes in `packages/galley-editor/vite.config.ts`:
 - **Default**: Builds the demo app (`index.html` entry)
 - **Library** (`--mode lib`): Builds from `src/components/index.ts`. React, CodeMirror, and Lezer packages are externalized.
 
+`@inkyquill/galley-themes` has no bundler: it is compiled with `tsc` (`module`/`moduleResolution` `NodeNext`), its TS sources use relative `.js` import specifiers so the output runs in Node, and its `exports` point at `dist/index.js` and `dist/index.d.ts`.
+
 ### TypeScript Config
 
-`tsconfig.app.json` enables `erasableSyntaxOnly: true` — **no enums or `private` constructor params**. Use `as const` objects for enum-like patterns and explicit field declarations in classes.
+`packages/galley-editor/tsconfig.app.json` enables `erasableSyntaxOnly: true` — **no enums or `private` constructor params**. Use `as const` objects for enum-like patterns and explicit field declarations in classes.
 
 ### Core Architecture (Compartment-based, no teardown)
 

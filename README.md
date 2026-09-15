@@ -21,6 +21,12 @@ Install from npm:
 npm install @inkyquill/galley-editor
 ```
 
+The built-in Galley theme catalog ships as a separate dependency-free package:
+
+```bash
+npm install @inkyquill/galley-themes
+```
+
 Import in your code (CSS import is optional — see [Styling](docs/styling.md)):
 
 ```tsx
@@ -68,6 +74,8 @@ The docs site includes a complete guide covering custom commands, renderers, too
 
 ## Development
 
+The repository is an npm workspace. The editor lives in [`packages/galley-editor/`](packages/galley-editor/) and the shared theme package in [`packages/galley-themes/`](packages/galley-themes/); root scripts delegate to the editor workspace, and docs-site, Storybook, and release tooling stay at the root.
+
 ```bash
 git clone https://github.com/InkyQuill/galley-editor.git
 cd galley-editor
@@ -75,9 +83,14 @@ npm install --legacy-peer-deps
 npm run dev          # demo app
 npm run storybook    # component playground
 npm run docs:dev     # documentation site
-npm run test         # unit tests
-npm run build:lib    # build the publishable library
+npm run test         # editor unit tests
+npm test --workspace @inkyquill/galley-themes  # themes unit tests
+npm run test:package-consumer      # pack both packages and exercise them in a temp consumer
+npm run build:lib    # build the publishable editor library
+npm run build:themes # build the publishable themes package
 ```
+
+Releases keep one version across both packages; see [`scripts/prepare-workspace-release.mjs`](scripts/prepare-workspace-release.mjs) and [AGENTS.md](./AGENTS.md) for the release flow.
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room rule and PR checklist.
 

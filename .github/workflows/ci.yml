@@ -29,20 +29,29 @@ jobs:
         run: npm run lint
 
       - name: Typecheck
-        run: npx tsc -b
+        run: npx tsc -b packages/galley-editor
 
       - name: Unit tests
         run: npm run test:coverage
 
+      - name: Themes tests
+        run: npm test --workspace @inkyquill/galley-themes
+
       - name: Library build
         run: npm run build:lib
+
+      - name: Themes build
+        run: npm run build:themes
 
       - name: Verify package contents
         run: ./scripts/verify-publish.sh
 
+      - name: Package consumer checks
+        run: npm run test:package-consumer
+
       - name: Forbid external-source markers in dist
         run: |
-          if grep -rIE '(joplin|@joplin)' dist/ ; then
+          if grep -rIE '(joplin|@joplin)' packages/galley-editor/dist/ packages/galley-themes/dist/ ; then
             echo "ERROR: external editor source marker leaked into dist/." >&2
             exit 1
           fi
@@ -65,5 +74,5 @@ jobs:
         if: always()
         with:
           name: coverage
-          path: coverage/
+          path: packages/galley-editor/coverage/
           if-no-files-found: ignore

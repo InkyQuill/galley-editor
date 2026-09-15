@@ -45,6 +45,19 @@ Galley is for React apps that need Markdown editing without a separate Markdown-
   <LinkCard title="Handle uploads" href="guides/uploads/" description="Paste/drop file flows, progress reporting, overlays, and placeholders." />
 </CardGrid>
 
+## Shared Theme Package
+
+The built-in Galley palettes and design tokens are published as a separate dependency-free package, [`@inkyquill/galley-themes`](https://www.npmjs.com/package/@inkyquill/galley-themes). It exports the frozen catalog of built-in themes (`getTheme`, `listThemesByScheme`, `isThemeId`, `BUILT_IN_THEMES`) and maps any theme to the `--app-*` / `--ge-*` CSS variable contract that the editor consumes:
+
+```ts
+import { getTheme, themeToCssVariables } from '@inkyquill/galley-themes';
+
+const variables = themeToCssVariables(getTheme('galley-light')!);
+// { colorScheme: 'light', '--app-bg': '#f6f4ef', '--ge-color-bg': '#fbfaf7', ... }
+```
+
+The result is a plain style object, so it can be spread onto a React `style` prop or assigned to `element.style` — no React or DOM APIs are required from the package itself.
+
 ## Current Scope
 
 Galley is currently `v0.13.0` and still pre-1.0. The documented API is the intended public surface for the current package, but minor releases may still refine behavior before the first stable release.

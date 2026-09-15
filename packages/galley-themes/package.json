@@ -1,0 +1,56 @@
+{
+  "name": "@inkyquill/galley-themes",
+  "version": "0.13.0",
+  "description": "Built-in Galley theme catalog: design tokens, light/dark palettes, and CSS variable mapping shared by Galley apps and the Galley editor.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Pavel Obruchnikov <me@inkyquill.net>",
+  "homepage": "https://github.com/InkyQuill/galley-editor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/InkyQuill/galley-editor.git",
+    "directory": "packages/galley-themes"
+  },
+  "bugs": {
+    "url": "https://github.com/InkyQuill/galley-editor/issues"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "themes",
+    "design-tokens",
+    "css-variables"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~6.0",
+    "vitest": "^4.1.2"
+  }
+}
