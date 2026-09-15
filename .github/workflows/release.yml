@@ -36,9 +36,12 @@ jobs:
       - name: Verify
         run: |
           npm run lint
-          npx tsc -b
+          npx tsc -b packages/galley-editor
+          npm run build:themes
           npm run test:coverage
+          npm test --workspace @inkyquill/galley-themes
           npm run build:lib
+          npm run test:package-consumer
           ./scripts/verify-publish.sh
 
       - name: Release

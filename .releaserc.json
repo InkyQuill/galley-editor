@@ -13,13 +13,21 @@
     [
       "@semantic-release/npm",
       {
-        "npmPublish": true
+        "npmPublish": true,
+        "pkgRoot": "packages/galley-editor"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": true,
+        "pkgRoot": "packages/galley-themes"
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node scripts/sync-release-docs.mjs ${nextRelease.version}"
+        "prepareCmd": "node scripts/sync-release-docs.mjs ${nextRelease.version} && node scripts/prepare-workspace-release.mjs ${nextRelease.version}"
       }
     ],
     "@semantic-release/github",
@@ -30,6 +38,10 @@
           "package.json",
           "package-lock.json",
           "CHANGELOG.md",
+          "packages/galley-editor/package.json",
+          "packages/galley-editor/CHANGELOG.md",
+          "packages/galley-themes/package.json",
+          "packages/galley-themes/CHANGELOG.md",
           "docs-site/src/content/docs/index.mdx",
           "docs-site/src/content/docs/releases/*.md",
           "docs-site/astro.config.mjs",

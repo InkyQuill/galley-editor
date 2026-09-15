@@ -29,12 +29,31 @@ jobs:
       - name: Verify
         run: |
           npm run lint
-          npx tsc -b
+          npx tsc -b packages/galley-editor
+          npm run build:themes
           npm run test:coverage
+          npm test --workspace @inkyquill/galley-themes
           npm run build:lib
+          npm run test:package-consumer
           ./scripts/verify-publish.sh
 
-      - name: Publish
+      # Both packages share one version, so they must become visible together:
+      # publish under a non-latest tag first, then promote only after both
+      # publishes succeeded. A failed promotion leaves the version installed
+      # under the staging tag — re-run the failed step; it is idempotent.
+      - name: Publish under staging tag
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance
+        run: |
+          npm publish --workspace @inkyquill/galley-editor --access public --provenance --tag next
+          npm publish --workspace @inkyquill/galley-themes --access public --provenance --tag next
+
+      - name: Promote editor to latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm dist-tag add "@inkyquill/galley-editor@$(node -p "require('./packages/galley-editor/package.json').version")" latest
+
+      - name: Promote themes to latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm dist-tag add "@inkyquill/galley-themes@$(node -p "require('./packages/galley-themes/package.json').version")" latest

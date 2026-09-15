@@ -7,7 +7,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const packageJsonPath = resolve(root, 'package.json');
 const installationGuidePath = resolve(
   root,
-  'docs-site/src/content/docs/guides/installation.md',
+  '../../docs-site/src/content/docs/guides/installation.md',
 );
 
 describe('package documentation contract', () => {
