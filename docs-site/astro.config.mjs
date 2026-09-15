@@ -42,6 +42,7 @@ export default defineConfig({
             { label: 'Commands', slug: 'guides/commands' },
             { label: 'Plugins and Renderers', slug: 'guides/plugins-renderers' },
             { label: 'File Uploads', slug: 'guides/uploads' },
+            { label: 'Document Transactions', slug: 'guides/document-transactions' },
             { label: 'Storybook', slug: 'guides/storybook' },
           ],
         },
