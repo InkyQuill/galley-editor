@@ -3,8 +3,9 @@
 // Packs both publishable workspaces into a temp folder (dry-run, nothing is
 // published), inspects the real tarball contents, then installs both tarballs
 // with the editor's React/CodeMirror peer dependencies into an isolated temp
-// consumer project and verifies the runtime API, the .d.ts entry points, and
-// the style.css export — without relying on workspace symlinks.
+// consumer project and verifies the runtime API, the style.css subpath via
+// actual exports resolution, and the public type surface of both packages by
+// compiling a TypeScript fixture — without relying on workspace symlinks.
 //
 // Run with: node --test tests/package-consumer/exports.test.mjs
 
@@ -45,6 +46,9 @@ const PEER_INSTALL_SPECS = [
   '@lezer/highlight@^1',
   '@lezer/markdown@^1',
 ];
+// The editor's .d.ts references React's types; a real TypeScript consumer
+// needs them installed for the public type surface to compile.
+const TYPE_INSTALL_SPECS = ['@types/react@^19'];
 
 function run(command, args, options) {
   return execFileSync(command, args, { encoding: 'utf8', ...options });
@@ -101,11 +105,15 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
 
     writeFileSync(
       join(consumerDir, 'package.json'),
-      JSON.stringify({ name: 'galley-consumer-fixture', private: true, version: '0.0.0' }, null, 2),
+      JSON.stringify(
+        { name: 'galley-consumer-fixture', private: true, version: '0.0.0', type: 'module' },
+        null,
+        2,
+      ),
     );
     run(
       'npm',
-      ['install', '--no-audit', '--no-fund', editorTarball, themesTarball, ...PEER_INSTALL_SPECS],
+      ['install', '--no-audit', '--no-fund', editorTarball, themesTarball, ...PEER_INSTALL_SPECS, ...TYPE_INSTALL_SPECS],
       { cwd: consumerDir },
     );
 
@@ -149,20 +157,62 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
         assert.ok(editor[name], \`editor export missing: \${name}\`);
       }
 
+      const styleCssUrl = import.meta.resolve('@inkyquill/galley-editor/style.css');
       assert.ok(
-        existsSync('node_modules/@inkyquill/galley-themes/dist/index.d.ts'),
-        'themes dist/index.d.ts missing',
+        styleCssUrl.endsWith('@inkyquill/galley-editor/dist/style.css'),
+        'style.css subpath resolved to an unexpected target: ' + styleCssUrl,
       );
-      assert.ok(
-        existsSync('node_modules/@inkyquill/galley-editor/dist/index.d.ts'),
-        'editor dist/index.d.ts missing',
-      );
-      assert.ok(
-        existsSync('node_modules/@inkyquill/galley-editor/dist/style.css'),
-        'editor dist/style.css missing',
-      );
+      assert.ok(existsSync(new URL(styleCssUrl)), 'resolved editor style.css missing');
     `;
     run(process.execPath, ['--input-type=module', '-e', checkScript], { cwd: consumerDir });
+
+    // The runtime imports above prove the root entries resolve; compiling a
+    // fixture against the installed packages proves the exports map also
+    // serves the public types (.d.ts) to a real consumer toolchain.
+    writeFileSync(
+      join(consumerDir, 'typecheck.ts'),
+      [
+        "import type { GalleyEditorProps, GalleyHandle } from '@inkyquill/galley-editor';",
+        'import type {',
+        '  ThemeCssVariables,',
+        '  ThemeDefinition,',
+        '  ThemeId,',
+        '  ThemeScheme,',
+        '  ThemeTokens,',
+        "} from '@inkyquill/galley-themes';",
+        '',
+        "const themeId: ThemeId = 'galley-light';",
+        "const scheme: ThemeScheme = 'light';",
+        "const variables: ThemeCssVariables = { colorScheme: scheme, '--app-bg': '#f6f4ef' };",
+        'const definition: ThemeDefinition | undefined = undefined;',
+        'const tokens: ThemeTokens | undefined = undefined;',
+        'const props: GalleyEditorProps = {};',
+        'const handle: GalleyHandle | null = null;',
+        '',
+        'export { definition, handle, props, scheme, themeId, tokens, variables };',
+        '',
+      ].join('\n'),
+    );
+    const tscBin = join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+    assert.ok(existsSync(tscBin), 'typescript is not installed at the repository root');
+    run(
+      process.execPath,
+      [
+        tscBin,
+        '--noEmit',
+        '--strict',
+        '--module',
+        'nodenext',
+        '--moduleResolution',
+        'nodenext',
+        '--target',
+        'es2022',
+        '--lib',
+        'es2022,dom',
+        'typecheck.ts',
+      ],
+      { cwd: consumerDir },
+    );
   } finally {
     rmSync(packDir, { recursive: true, force: true });
     rmSync(consumerDir, { recursive: true, force: true });
