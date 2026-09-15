@@ -28,7 +28,7 @@ const variables = themeToCssVariables(theme!);
 // { colorScheme: 'light', '--app-bg': '#f6f4ef', '--ge-color-bg': '#fbfaf7', ... }
 ```
 
-`ThemeCssVariables` is a plain style object (`{ colorScheme: string } & Record<`--${string}`, string>`), so the result can be spread onto a React `style` prop or assigned to `element.style` directly.
+`ThemeCssVariables` is a plain style object (`` `{ colorScheme: string } & Record<`--${string}`, string>` ``), so the result can be spread onto a React `style` prop or applied to a DOM element with `Object.assign(element.style, variables)`.
 
 ## API
 
