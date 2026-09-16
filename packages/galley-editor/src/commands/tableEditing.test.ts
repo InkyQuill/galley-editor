@@ -1,8 +1,9 @@
 import { markdown } from '@codemirror/lang-markdown';
+import { forceParsing } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { GFM } from '@lezer/markdown';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   BUILTIN_COMMANDS,
   commitTableCell,
@@ -26,7 +27,11 @@ function createView(doc: string, selection: EditorSelection | { anchor: number; 
       markdown({ extensions: [GFM] }),
     ],
   });
-  return new EditorView({ state });
+  const view = new EditorView({ state });
+  // Commands inspect the syntax tree; a fresh view may only be partially parsed
+  // when the synchronous parse budget is exhausted on a busy test runner.
+  expect(forceParsing(view, view.state.doc.length, 1000)).toBe(true);
+  return view;
 }
 
 function docOf(view: EditorView): string {
@@ -48,7 +53,15 @@ afterEach(() => {
 describe('table editing commands', () => {
   it('normalizeTable normalizes a table', () => {
     const doc = 'before\n| A|B |\n|---|:---:|\n| 1 |2|\n\nafter';
-    const view = tracked(createView(doc, { anchor: doc.indexOf('B') }));
+    // Simulate an initial parse exhausting CodeMirror's 20ms synchronous budget.
+    let now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockImplementation(() => (now += 25));
+    let view: EditorView;
+    try {
+      view = tracked(createView(doc, { anchor: doc.indexOf('B') }));
+    } finally {
+      clock.mockRestore();
+    }
 
     expect(normalizeTable(view)).toBe(true);
     expect(docOf(view)).toBe('before\n| A | B |\n| --- | :---: |\n| 1 | 2 |\n\nafter');
