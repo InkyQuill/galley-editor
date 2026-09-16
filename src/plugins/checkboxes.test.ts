@@ -120,3 +120,35 @@ describe('checkboxesPlugin', () => {
     expect((input as HTMLInputElement).title).toBe(' new task');
   });
 });
+
+it('keeps task widgets after edits with all built-in plugins', async () => {
+  const { BUILT_IN_PLUGINS } = await import('./index');
+  const doc = 'intro\n\n- [ ] task\n- [x] done';
+  const view = createEditorView({
+    doc,
+    selection: EditorSelection.cursor(doc.length),
+    extensions: BUILT_IN_PLUGINS.flatMap(plugin => plugin.extensions(resolveClassNames())),
+  });
+  views.push(view);
+  const checkbox = view.dom.querySelector('.ge-checkbox input') as HTMLInputElement;
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+  expect(view.state.doc.toString()).toBe('intro\n\n- [x] task\n- [x] done');
+  expect(view.dom.querySelectorAll('.ge-checkbox input')).toHaveLength(2);
+  expect(view.dom.querySelectorAll('.ge-list-marker')).toHaveLength(0);
+});
+
+it('rejects input events on disabled preview checkboxes', () => {
+  const doc = 'intro\n\n- [x] task';
+  const view = createEditorView({
+    doc,
+    extensions: checkboxesPlugin.extensions(resolveClassNames(), { mode: 'preview', theme: 'light' }),
+  });
+  views.push(view);
+  const input = view.dom.querySelector('.ge-checkbox input') as HTMLInputElement;
+  expect(input.disabled).toBe(true);
+  input.checked = false;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  expect(view.state.doc.toString()).toBe(doc);
+  expect(input.checked).toBe(true);
+});

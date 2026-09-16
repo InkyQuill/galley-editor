@@ -54,3 +54,10 @@ describe('smartBackspace', () => {
     expect(view.state.doc.toString()).toBe('hell');
   });
 });
+
+it.each(['😀', '👩‍💻', 'е\u0301'])('deletes the complete grapheme %s', (grapheme) => {
+  const view = tracked(createView(`test ${grapheme}`));
+  view.dispatch(makeSmartBackspaceTransaction(view.state));
+  expect(view.state.doc.toString()).toBe('test ');
+  expect(view.state.selection.main.from).toBe(5);
+});

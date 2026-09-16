@@ -31,3 +31,5 @@ Storybook stories should mirror documented use cases. When adding a story that d
 | Dark mode, CSS variables, Tailwind token mapping, theme selector, frosted surfaces | [Customization](/galley-editor/guides/customization/) |
 | Event handlers, selection tracking, paste handling, runtime extensions, error boundaries | [API Reference](/galley-editor/reference/api/) |
 | Disabled plugins, custom class names, custom plugins, custom extensions | [Plugins and Renderers](/galley-editor/guides/plugins-renderers/) |
+
+For repeatable mouse/keyboard checks and exact whitespace/event diagnostics, use the [interaction bench](/galley-editor/guides/interaction-testing/).

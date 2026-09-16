@@ -67,7 +67,10 @@ const listsPlugin: GalleyPlugin = {
           const parent = node.node.parent;
           if (
             parent?.name === 'ListItem' &&
-            parent?.parent?.name === 'BulletList'
+            parent?.parent?.name === 'BulletList' &&
+            // A task widget replaces both the list mark and TaskMarker.
+            // Overlapping replacement widgets can displace each other on edit.
+            !parent.getChild('Task')
           ) {
             return new BulletMarkerWidget(
               parentDepths.get('BulletList') ?? 1,

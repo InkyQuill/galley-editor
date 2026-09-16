@@ -65,7 +65,9 @@
     "build-storybook": "storybook build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "peerDependencies": {
     "@codemirror/commands": ">=6.10.0",
@@ -87,6 +89,7 @@
     "@eslint/js": "^9.39.4",
     "@lezer/highlight": "^1.2.0",
     "@lezer/markdown": "^1.6.3",
+    "@playwright/test": "^1.63.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.1.0",
