@@ -1212,3 +1212,16 @@ describe('EditorController link shortcut', () => {
     expect(controller.getContent()).toBe('[]()');
   });
 });
+
+it('uses Galley Enter behavior and callbacks inside lists', async () => {
+  const { runScopeHandlers } = await import('@codemirror/view');
+  const onEnter = vi.fn(() => false);
+  const controller = createController('- one', { onEnter });
+  controller.view.dispatch({ selection: { anchor: 5 } });
+  const enter = () => runScopeHandlers(controller.view, new KeyboardEvent('keydown', { key: 'Enter' }), 'editor');
+  expect(enter()).toBe(true);
+  expect(controller.getContent()).toBe('- one\n- ');
+  expect(enter()).toBe(true);
+  expect(controller.getContent()).toBe('- one\n');
+  expect(onEnter).toHaveBeenCalledTimes(2);
+});

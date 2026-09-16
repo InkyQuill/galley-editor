@@ -27,12 +27,17 @@
     "docs:dev": "npm --prefix docs-site run dev",
     "docs:build": "npm --prefix docs-site run build",
     "docs:preview": "npm --prefix docs-site run preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "semantic-release": "semantic-release",
     "prepare": "node scripts/install-git-hooks.mjs",
     "test:commit-msg": "node --test scripts/validate-commit-msg.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/markdown": "^1.6.3",
+    "@playwright/test": "^1.63.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.1.0",

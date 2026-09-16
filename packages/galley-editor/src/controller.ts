@@ -305,7 +305,8 @@ export class EditorController implements GalleyHandle {
 
   private buildStaticExtensions(): Extension[] {
     return [
-      markdown({ extensions: [GFM] }),
+      // Galley's keymap owns list continuation/deletion and callback hooks.
+      markdown({ extensions: [GFM], addKeymap: false }),
       highlightSpecialChars(),
       drawSelection(),
       dropCursor(),

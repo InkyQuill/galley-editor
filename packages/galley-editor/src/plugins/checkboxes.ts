@@ -8,13 +8,15 @@ export class CheckboxWidget extends WidgetType {
   depth: number;
   label: string;
   checkboxClass: string;
+  disabled: boolean;
 
-  constructor(checked: boolean, depth: number, label: string, checkboxClass: string) {
+  constructor(checked: boolean, depth: number, label: string, checkboxClass: string, disabled = false) {
     super();
     this.checked = checked;
     this.depth = depth;
     this.label = label;
     this.checkboxClass = checkboxClass;
+    this.disabled = disabled;
   }
 
   eq(other: CheckboxWidget) {
@@ -22,7 +24,8 @@ export class CheckboxWidget extends WidgetType {
       other.checked === this.checked &&
       other.depth === this.depth &&
       other.label === this.label &&
-      other.checkboxClass === this.checkboxClass
+      other.checkboxClass === this.checkboxClass &&
+      other.disabled === this.disabled
     );
   }
 
@@ -33,8 +36,12 @@ export class CheckboxWidget extends WidgetType {
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = this.checked;
+    checkbox.disabled = this.disabled;
     checkbox.ariaLabel = this.label;
     checkbox.title = this.label;
+    // Preserve the editor's DOM selection. Native pointer focus inside a
+    // replacement widget otherwise maps that selection back into its marker.
+    checkbox.onmousedown = (event) => event.preventDefault();
     container.appendChild(checkbox);
 
     checkbox.oninput = () => {
@@ -45,10 +52,14 @@ export class CheckboxWidget extends WidgetType {
       const isNowChecked = checkbox.checked;
       const markerMatch = /\[[ xX]\]/.exec(lineText);
       if (!markerMatch) return;
+      if (view.state.readOnly || checkbox.disabled) {
+        checkbox.checked = markerMatch[0].toLowerCase() === '[x]';
+        return;
+      }
       const from = line.from + markerMatch.index;
       const to = from + markerMatch[0].length;
       const insert = isNowChecked ? '[x]' : '[ ]';
-      view.dispatch({ changes: { from, to, insert } });
+      view.dispatch({ changes: { from, to, insert }, userEvent: 'input.task' });
     };
 
     return container;
@@ -59,6 +70,7 @@ export class CheckboxWidget extends WidgetType {
     if (input) {
       dom.className = `${this.checkboxClass} ge-depth-${this.depth}`;
       input.checked = this.checked;
+      input.disabled = this.disabled;
       input.ariaLabel = this.label;
       input.title = this.label;
       return true;
@@ -67,7 +79,9 @@ export class CheckboxWidget extends WidgetType {
   }
 
   ignoreEvent() {
-    return false;
+    // The native input owns focus, clicks and keyboard activation. Letting
+    // CodeMirror handle them moves its selection into the hidden task marker.
+    return true;
   }
 }
 
@@ -80,19 +94,6 @@ const checkboxesPlugin: GalleyPlugin = {
     const preview = context?.mode === 'preview';
 
     return [
-      // Allow clicking checkboxes
-      EditorView.domEventHandlers({
-        mousedown: (event) => {
-          const target = event.target as Element;
-          if (
-            target.nodeName === 'INPUT' &&
-            target.parentElement?.classList?.contains(checkboxClass)
-          ) {
-            return true;
-          }
-          return false;
-        },
-      }),
       makeInlinePlugin({
         createDecoration(node, state, parentDepths) {
           if (node.name === 'TaskMarker') {
@@ -105,6 +106,7 @@ const checkboxesPlugin: GalleyPlugin = {
               parentDepths.get('ListItem') ?? 0,
               label,
               checkboxClass,
+              state.readOnly || preview,
             );
           }
           return null;

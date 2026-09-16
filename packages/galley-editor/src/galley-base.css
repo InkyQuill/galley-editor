@@ -1093,3 +1093,9 @@
     width: 100%;
   }
 }
+
+/* Exact-source and whitespace displays in the interaction bench. */
+.ge-markdown-source,
+.ge-markdown-diagnostics {
+  font-family: var(--ge-font-mono);
+}

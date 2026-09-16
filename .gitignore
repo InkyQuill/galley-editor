@@ -28,7 +28,14 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+playwright-report
+test-results
+.playwright-mcp
 
 # Mirrored into both packages by scripts/prepare-workspace-release.mjs at release time.
 packages/galley-editor/CHANGELOG.md
 packages/galley-themes/CHANGELOG.md
+
+# Optional machine-local agent skills (see .agents/README.md).
+.agents/skills/astro-starlight
+.agents/skills/using-codemirror

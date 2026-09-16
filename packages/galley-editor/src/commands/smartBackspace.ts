@@ -1,4 +1,4 @@
-import { EditorSelection, type ChangeSpec, type EditorState, type SelectionRange, type TransactionSpec } from '@codemirror/state';
+import { EditorSelection, findClusterBreak, type ChangeSpec, type EditorState, type SelectionRange, type TransactionSpec } from '@codemirror/state';
 import { parseListLine } from './list-syntax';
 
 interface RangeUpdate {
@@ -6,7 +6,7 @@ interface RangeUpdate {
   range: SelectionRange;
 }
 
-function defaultBackspaceRange(range: SelectionRange): RangeUpdate {
+function defaultBackspaceRange(state: EditorState, range: SelectionRange): RangeUpdate {
   if (!range.empty) {
     return {
       changes: [{ from: range.from, to: range.to, insert: '' }],
@@ -21,9 +21,13 @@ function defaultBackspaceRange(range: SelectionRange): RangeUpdate {
     };
   }
 
+  const line = state.doc.lineAt(range.from);
+  const from = range.from === line.from
+    ? range.from - 1
+    : line.from + findClusterBreak(line.text, range.from - line.from, false);
   return {
-    changes: [{ from: range.from - 1, to: range.from, insert: '' }],
-    range: EditorSelection.cursor(range.from - 1),
+    changes: [{ from, to: range.from, insert: '' }],
+    range: EditorSelection.cursor(from),
   };
 }
 
@@ -32,20 +36,20 @@ export function makeSmartBackspaceTransaction(
 ): TransactionSpec {
   return state.changeByRange((range) => {
     if (!range.empty) {
-      return defaultBackspaceRange(range);
+      return defaultBackspaceRange(state, range);
     }
 
     const line = state.doc.lineAt(range.from);
     const parsed = parseListLine(line.text);
     if (!parsed) {
-      return defaultBackspaceRange(range);
+      return defaultBackspaceRange(state, range);
     }
 
     const markerStart = line.from + parsed.indent.length;
     const markerEnd = line.from + parsed.markerTo;
     const hasContent = line.text.slice(parsed.markerTo).trim().length > 0;
     if (range.from !== markerEnd || hasContent) {
-      return defaultBackspaceRange(range);
+      return defaultBackspaceRange(state, range);
     }
 
     return {
