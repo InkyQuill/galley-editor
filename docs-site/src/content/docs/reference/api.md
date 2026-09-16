@@ -43,6 +43,7 @@ Core props:
 | `minRows` | `number` | `3` |
 | `maxRows` | `number` | none |
 | `layout` | `'autosize' \| 'fill'` | `'autosize'` |
+| `horizontalScroll` | `boolean` | `false` |
 | `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` |
@@ -107,6 +108,7 @@ const editor = useGalley({ initialValue: '# Draft' });
 | `setContent(value)` | Replace the document. |
 | `insertText(text)` | Insert text at the selection. |
 | `focus()` / `blur()` | Control focus. |
+| `openSearch()` | Open and focus the built-in CodeMirror search panel. Returns `false` before mount. |
 | `select(anchor, head?)` | Set selection. |
 | `getSelection()` | Read selection. |
 | `execCommand(name, ...args)` | Execute built-in or custom commands. |

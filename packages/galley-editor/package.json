@@ -1,0 +1,99 @@
+{
+  "name": "@inkyquill/galley-editor",
+  "version": "0.14.0",
+  "description": "A React component library providing a half-WYSIWYG markdown editor built on CodeMirror 6 with Obsidian-style live preview.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Pavel Obruchnikov <me@inkyquill.net>",
+  "homepage": "https://github.com/InkyQuill/galley-editor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/InkyQuill/galley-editor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/InkyQuill/galley-editor/issues"
+  },
+  "keywords": [
+    "markdown",
+    "editor",
+    "react",
+    "codemirror",
+    "wysiwyg",
+    "live-preview"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "build:lib": "vite build --mode lib",
+    "postbuild:lib": "node -e \"require('node:fs').copyFileSync('src/galley-base.css', 'dist/style.css')\"",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@codemirror/commands": ">=6.10.0",
+    "@codemirror/lang-markdown": ">=6.5.0",
+    "@codemirror/language": ">=6.12.0",
+    "@codemirror/search": ">=6.5.0",
+    "@codemirror/state": ">=6.6.0",
+    "@codemirror/view": ">=6.41.0",
+    "@lezer/highlight": ">=1.2.0",
+    "@lezer/markdown": ">=1.6.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/search": "^6.7.1",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.41.0",
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/markdown": "^1.6.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.12.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-v8": "^4.1.2",
+    "autoprefixer": "^10.4.27",
+    "jsdom": "^29.0.1",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0",
+    "vite": "^8.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.1.2"
+  }
+}

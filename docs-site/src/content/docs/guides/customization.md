@@ -93,7 +93,7 @@ Keep toolbar buttons at least 44 by 44 CSS pixels when replacing chrome in touch
 
 ## Replace Built-In Toolbar Icons
 
-Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, shortcuts, and accessible labels; the icon value only replaces the visible button contents.
+Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, accessible labels, and effective shortcut titles; the icon value only replaces the visible button contents.
 
 ```tsx
 import { Bold, Code2, Eye, Italic, Link } from 'lucide-react';

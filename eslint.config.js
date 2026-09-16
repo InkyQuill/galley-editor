@@ -7,13 +7,13 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores([
-    'dist',
+    '**/dist',
     'docs-site/.astro',
     'docs-site/dist',
-    'storybook-static',
+    '**/storybook-static',
     '.remember',
     '.worktrees',
-    'coverage',
+    '**/coverage',
   ]),
   {
     files: ['**/*.{ts,tsx}'],

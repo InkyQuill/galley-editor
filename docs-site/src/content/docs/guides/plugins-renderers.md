@@ -127,11 +127,37 @@ The image metadata commands work well with those controls:
 
 When controls run editor commands from inside a widget, prevent the button mouse-down from taking focus if the current selection matters.
 
+## Block Width and Horizontal Scrolling
+
+Galley wraps source lines and rendered block content to the editor viewport by
+default. Fenced code and table cells therefore stay inside narrow host
+surfaces, including long unbroken tokens.
+
+Enable one horizontal scrolling surface for the entire editor when unwrapped
+source is more important:
+
+```tsx
+<GalleyEditor
+  value={markdown}
+  onChange={setMarkdown}
+  horizontalScroll
+/>
+```
+
+With `horizontalScroll`, the main editor viewport scrolls horizontally.
+Rendered code and tables do not create nested horizontal scrollbars. Images
+keep their responsive `max-width: 100%` behavior.
+
+See Storybook's **Constrained Block Layout** and **Horizontal Block Layout**
+stories for the two modes.
+
 ## Table Editor Block Controls
 
 Galley renders GitHub-flavored Markdown tables as an editable table block in live mode. Users can edit cells directly, use the block controls for rows, columns, and alignment, or Cmd/Ctrl-click the block to reveal the Markdown source. In read-only or preview-oriented screens, keep `editable={false}` so the table renders without editing affordances.
 
-Rendered table blocks fit the editor content width and wrap long cell content instead of widening the host surface. Use a horizontally constrained host in Storybook's **Constrained Table Editing** story when checking table-heavy layouts.
+Rendered tables follow the editor-wide block width policy described above.
+They wrap within the viewport by default and participate in the main editor
+scrolling surface when `horizontalScroll` is enabled.
 
 Use `tableControlIcons` to replace the visible labels or icons in the rendered table editor controls. The controls keep their built-in accessible `aria-label` and title tooltip values, so the custom icon only changes what is shown inside the button.
 
