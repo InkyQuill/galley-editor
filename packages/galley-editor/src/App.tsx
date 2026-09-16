@@ -61,7 +61,7 @@ function App() {
   const [mode, setMode] = useState<GalleyMode>('live');
   const [editable, setEditable] = useState(true);
   const [customClasses, setCustomClasses] = useState(false);
-  const [traceEvents, setTraceEvents] = useState(true);
+  const [traceEvents, setTraceEvents] = useState(false);
   const editorRef = useRef<GalleyHandle>(null);
   const traceExtensions = useMemo(() => traceEvents ? [EditorView.updateListener.of(logTransaction)] : [], [traceEvents]);
 
@@ -117,7 +117,7 @@ function App() {
         </fieldset>
         <details style={{ marginBottom: 16 }}>
           <summary>Load or edit exact Markdown</summary>
-          <textarea aria-label="Markdown source" value={markdown} onChange={event => setMarkdown(event.target.value)} rows={6} style={{ width: '100%', fontFamily: 'monospace' }} />
+          <textarea aria-label="Markdown source" value={markdown} onChange={event => setMarkdown(event.target.value)} rows={6} className="ge-markdown-source" style={{ width: '100%' }} />
         </details>
         <p>Use the editor below, then inspect exact spaces and selection in the diagnostics. Switch modes to compare rendering with source.</p>
 
@@ -183,8 +183,8 @@ function App() {
 
         <div style={{ padding: '20px', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
           <h2 style={{ marginBottom: '10px' }}>Raw Markdown</h2>
-          <div aria-label="Exact Markdown" style={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }}>{JSON.stringify(markdown)}</div>
-          <div aria-label="Visible whitespace" style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{markdown.replaceAll(' ', '·').replaceAll('\t', '→').replaceAll('\n', '↵\n')}</div>
+          <div aria-label="Exact Markdown" className="ge-markdown-diagnostics" style={{ overflowWrap: 'anywhere' }}>{JSON.stringify(markdown)}</div>
+          <div aria-label="Visible whitespace" className="ge-markdown-diagnostics" style={{ whiteSpace: 'pre-wrap' }}>{markdown.replaceAll(' ', '·').replaceAll('\t', '→').replaceAll('\n', '↵\n')}</div>
           <pre style={{
             padding: '10px',
             backgroundColor: '#f9f9f9',

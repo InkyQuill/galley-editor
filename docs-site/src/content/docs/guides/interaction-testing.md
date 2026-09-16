@@ -13,7 +13,7 @@ Run `npm run dev` in the repository and open the local Vite URL. The demo is an 
 2. Interact with the editor using the mouse and keyboard. The fixture buttons replace the document; they do not clear undo history.
 3. Compare **Raw Markdown**, **Exact Markdown** (JSON), and **Visible whitespace**. Spaces appear as `·`, tabs as `→`, and line breaks as `↵` in the whitespace display only. These displays never modify editor content.
 4. Compare Live, Markdown and Preview modes, Editable on/off, and multiple checkbox classes.
-5. Leave **Console event tracing** enabled to inspect `[Galley DOM]` and `[Galley transaction]` console records. They include timestamps, keyboard/input/composition events, document contents, selection positions, changes and CodeMirror user-event annotations. Tracing belongs to the demo and can be turned off; it is not part of the library.
+5. Enable **Console event tracing** explicitly to inspect `[Galley DOM]` and `[Galley transaction]` console records. They include timestamps, keyboard/input/composition events, document contents, selection positions, changes and CodeMirror user-event annotations. Tracing is off by default. When disabled, neither DOM nor transaction records are logged. Tracing belongs to the demo; it is not part of the library.
 
 For example, enter `тест тест т`, press Backspace once and type `t`. The expected source is `тест тест t`. After Backspace alone, the JSON display must still show the trailing space in `"тест тест "`.
 
@@ -34,6 +34,10 @@ npm run test:e2e -- --project=chromium
 npm run test:e2e:ui
 npm test
 ```
+
+`npm test`, `npm run test:watch`, and `npm run test:coverage` delegate to the editor workspace and its jsdom configuration; they do not collect the separate `e2e/` Playwright suite. Run `npm test --workspace @inkyquill/galley-themes` for the themes tests.
+
+The source textarea (`ge-markdown-source`) and exact-source/whitespace diagnostics (`ge-markdown-diagnostics`) use `--ge-font-mono` from the base stylesheet. Override that token to customize their font.
 
 The browser suite covers task toggling, keyboard activation, read-only and preview behavior, whitespace preservation, Unicode deletion, list continuation/exit/indentation, selection formatting, undo/redo and mode switching. The Vitest suite additionally covers commands, tables, links, images, uploads and React/controller integration. Browser tests complement those tests: dispatching an isolated `input` event does not exercise pointer focus, native selection changes or interactions between all rendering plugins.
 

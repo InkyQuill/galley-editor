@@ -21,181 +21,62 @@
 
 ---
 
+## Working directory and commands
+
+Run all shell commands and `git add` from the repository root. File paths below
+are repository-relative. Focused tests use
+`npm test --workspace @inkyquill/galley-editor -- src/path.test.ts`; test filters
+are relative to that workspace. Root `npm test` delegates to the editor.
+Run lint, docs, Storybook and commit-message checks from the root with
+`npm run lint`, `npm run docs:build`, `npm run build-storybook`, and
+`npm run test:commit-msg`. Documentation and root configuration are outside the
+editor package; stage them using their full repository-relative paths.
+
 ## File Map
 
-- `src/commands/keymapDisplay.ts`, `src/commands/keymapDisplay.test.ts`: resolve command bindings and format display strings.
-- `src/commands/index.ts`: export the pure helpers beside `DEFAULT_KEYMAP`.
-- `src/components/GalleyEditor.tsx`, `src/components/GalleyEditor.test.tsx`: apply effective shortcut titles without changing accessible names.
-- `src/components/index.ts`: export the reusable formatter/lookup helpers.
+- `packages/galley-editor/src/commands/keymapDisplay.ts`, `packages/galley-editor/src/commands/keymapDisplay.test.ts`: resolve command bindings and format display strings.
+- `packages/galley-editor/src/commands/index.ts`: export the pure helpers beside `DEFAULT_KEYMAP`.
+- `packages/galley-editor/src/components/GalleyEditor.tsx`, `packages/galley-editor/src/components/GalleyEditor.test.tsx`: apply effective shortcut titles without changing accessible names.
+- `packages/galley-editor/src/components/index.ts`: export the reusable formatter/lookup helpers.
 - `docs-site/src/content/docs/guides/commands.md`, `docs-site/src/content/docs/guides/customization.md`: document tooltip behavior and custom keymap effects.
 - `CHANGELOG.md`: record the additive toolbar behavior.
 
 ---
 
-### Task 1: Add pure effective-keymap and display helpers
+### Task 1: Verify the existing effective-keymap and display helpers
 
 **Files:**
-- Create: `src/commands/keymapDisplay.ts`
-- Create: `src/commands/keymapDisplay.test.ts`
-- Modify: `src/commands/index.ts`
+- Modify only if needed: `packages/galley-editor/src/commands/keymapDisplay.ts`
+- Extend only for missing cases: `packages/galley-editor/src/commands/keymapDisplay.test.ts`
+- Verify exports: `packages/galley-editor/src/commands/index.ts`
 
-**Interfaces:**
-- Consumes: `BuiltinCommand`, `GalleyKeyBinding`, `DEFAULT_KEYMAP`, and `GalleyEditorProps["keymap"]`.
-- Produces: `resolveDisplayKeymap(defaults, customKeymap): GalleyKeyBinding[]`.
-- Produces: `findCommandKey(bindings, command): string | undefined`.
-- Produces: `formatKeybinding(key, platform): string`.
+The helpers and their tests already exist. Preserve `resolveDisplayKeymap`'s
+array replacement and function transformation behavior, `findCommandKey`'s
+command metadata lookup, and existing platform formatting. Do not replace the
+implementation with a new module or remove existing test cases.
 
-- [ ] **Step 1: Write RED formatter tests**
-
-Create `src/commands/keymapDisplay.test.ts`:
-
-```ts
-import { describe, expect, it } from "vitest";
-import {
-  findCommandKey,
-  formatKeybinding,
-  resolveDisplayKeymap,
-} from "./keymapDisplay";
-import { DEFAULT_KEYMAP } from "./index";
-
-describe("keymap display", () => {
-  it.each([
-    ["Mod-b", "mac", "⌘B"],
-    ["Mod-b", "other", "Ctrl+B"],
-    ["Mod-Shift-z", "mac", "⇧⌘Z"],
-    ["Mod-Shift-z", "other", "Ctrl+Shift+Z"],
-    ["Alt-ArrowUp", "mac", "⌥↑"],
-    ["Alt-ArrowUp", "other", "Alt+↑"],
-  ] as const)("formats %s for %s", (key, platform, expected) => {
-    expect(formatKeybinding(key, platform)).toBe(expected);
-  });
-
-  it("finds the key carrying command metadata", () => {
-    expect(findCommandKey(DEFAULT_KEYMAP, "toggleBold")).toBe("Mod-b");
-    expect(findCommandKey(DEFAULT_KEYMAP, "insertTable")).toBeUndefined();
-  });
-
-  it("honors array-form replacement", () => {
-    expect(resolveDisplayKeymap(DEFAULT_KEYMAP, [])).toEqual([]);
-  });
-
-  it("honors function-form transformation", () => {
-    const resolved = resolveDisplayKeymap(
-      DEFAULT_KEYMAP,
-      (defaults) =>
-        defaults.filter(
-          (binding) =>
-            !("command" in binding) || binding.command !== "toggleBold",
-        ),
-    );
-    expect(findCommandKey(resolved, "toggleBold")).toBeUndefined();
-  });
-});
-```
-
-- [ ] **Step 2: Run the test and verify RED**
+- [ ] Run the existing baseline from the repository root:
 
 ```bash
-npx vitest run src/commands/keymapDisplay.test.ts
+npm test --workspace @inkyquill/galley-editor -- src/commands/keymapDisplay.test.ts
 ```
 
-Expected: FAIL because `keymapDisplay.ts` does not exist.
-
-- [ ] **Step 3: Implement the helpers**
-
-Create:
-
-```ts
-import type { KeyBinding } from "@codemirror/view";
-import type { BuiltinCommand, GalleyEditorProps } from "../types";
-import type { GalleyKeyBinding } from "./index";
-
-export type ShortcutPlatform = "mac" | "other";
-
-export function resolveDisplayKeymap(
-  defaults: readonly GalleyKeyBinding[],
-  customKeymap: GalleyEditorProps["keymap"],
-): GalleyKeyBinding[] {
-  if (typeof customKeymap === "function") {
-    return customKeymap([...defaults]) as GalleyKeyBinding[];
-  }
-  return (customKeymap ?? defaults) as GalleyKeyBinding[];
-}
-
-export function findCommandKey(
-  bindings: readonly KeyBinding[],
-  command: BuiltinCommand,
-): string | undefined {
-  return bindings.find(
-    (binding) =>
-      "command" in binding &&
-      (binding as GalleyKeyBinding).command === command,
-  )?.key;
-}
-
-export function formatKeybinding(
-  key: string,
-  platform: ShortcutPlatform,
-): string {
-  const parts = key.split("-");
-  const keyName = parts.pop() ?? "";
-  const modifiers = parts;
-  const displayKey = keyName
-    .replace(/^ArrowUp$/, "↑")
-    .replace(/^ArrowDown$/, "↓")
-    .replace(/^ArrowLeft$/, "←")
-    .replace(/^ArrowRight$/, "→")
-    .replace(/^([a-z])$/, (_, letter: string) => letter.toUpperCase());
-
-  if (platform === "mac") {
-    const symbols = [
-      modifiers.includes("Shift") ? "⇧" : "",
-      modifiers.includes("Ctrl") ? "⌃" : "",
-      modifiers.includes("Alt") ? "⌥" : "",
-      modifiers.includes("Mod") ? "⌘" : "",
-    ].join("");
-    return `${symbols}${displayKey}`;
-  }
-
-  const labels = [
-    modifiers.includes("Mod") || modifiers.includes("Ctrl") ? "Ctrl" : "",
-    modifiers.includes("Alt") ? "Alt" : "",
-    modifiers.includes("Shift") ? "Shift" : "",
-  ].filter(Boolean);
-  return [...labels, displayKey].join("+");
-}
-```
-
-`keymapDisplay.ts` does not import `DEFAULT_KEYMAP`; callers provide the
-defaults explicitly. This avoids a cycle with `src/commands/index.ts` and
-keeps the binding table single-sourced.
-
-- [ ] **Step 4: Verify GREEN**
-
-```bash
-npx vitest run src/commands/keymapDisplay.test.ts
-```
-
-Expected: all table, lookup, replacement, and transform tests PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/commands/keymapDisplay.ts src/commands/keymapDisplay.test.ts src/commands/index.ts
-git commit -m "feat(commands): format keybindings for display"
-```
+Expected: existing tests PASS. Inspect coverage for modifier ordering, arrows,
+unbound commands, array replacement and function transformation. Add a failing
+regression only if a required case is missing, then make the smallest change
+needed to pass it. No helper implementation work remains if all cases exist.
 
 ---
 
 ### Task 2: Apply shortcuts to built-in toolbar titles
 
 **Files:**
-- Modify: `src/components/GalleyEditor.test.tsx`
-- Modify: `src/components/GalleyEditor.tsx`
+- Modify: `packages/galley-editor/src/components/GalleyEditor.test.tsx`
+- Modify: `packages/galley-editor/src/components/GalleyEditor.tsx`
 
 **Interfaces:**
 - Consumes: `resolveDisplayKeymap`, `findCommandKey`, `formatKeybinding`.
-- Produces: bound title form `"{label} ({shortcut})"` and unchanged `aria-label`.
+- Produces: bound title form `"{ariaLabel} ({shortcut})"` and unchanged `aria-label`.
 
 - [ ] **Step 1: Write RED component tests**
 
@@ -261,7 +142,7 @@ it("uses command metadata returned by a function keymap", () => {
 - [ ] **Step 2: Run the component test and verify RED**
 
 ```bash
-npx vitest run src/components/GalleyEditor.test.tsx
+npm test --workspace @inkyquill/galley-editor -- src/components/GalleyEditor.test.tsx
 ```
 
 Expected: FAIL because toolbar titles are still plain labels.
@@ -296,6 +177,10 @@ const shortcutPlatform =
 The keymap callback is required to be a pure transform, matching its existing controller contract. Memoization prevents repeat evaluation unless its identity changes.
 
 - [ ] **Step 4: Build the title in toolbarButton**
+
+Use `ariaLabel` for both the shortcut title prefix and the unbound title.
+`label` is the icon fallback text. Preserve the existing regression test where
+`label` and `ariaLabel` differ.
 
 Change the command type and title:
 
@@ -333,7 +218,7 @@ Do not change the Text style select or mode toggle.
 - [ ] **Step 5: Verify GREEN and regression suites**
 
 ```bash
-npx vitest run src/commands/keymapDisplay.test.ts src/components/GalleyEditor.test.tsx src/controller.test.ts
+npm test --workspace @inkyquill/galley-editor -- src/commands/keymapDisplay.test.ts src/components/GalleyEditor.test.tsx src/controller.test.ts
 ```
 
 Expected: all focused tests PASS and controller custom-keymap behavior remains unchanged.
@@ -341,7 +226,7 @@ Expected: all focused tests PASS and controller custom-keymap behavior remains u
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/GalleyEditor.tsx src/components/GalleyEditor.test.tsx
+git add packages/galley-editor/src/components/GalleyEditor.tsx packages/galley-editor/src/components/GalleyEditor.test.tsx
 git commit -m "feat(toolbar): show command shortcuts in tooltips"
 ```
 
@@ -350,7 +235,7 @@ git commit -m "feat(toolbar): show command shortcuts in tooltips"
 ### Task 3: Export and document the reusable behavior
 
 **Files:**
-- Modify: `src/components/index.ts`
+- Modify: `packages/galley-editor/src/components/index.ts`
 - Modify: `docs-site/src/content/docs/guides/commands.md`
 - Modify: `docs-site/src/content/docs/guides/customization.md`
 - Modify: `CHANGELOG.md`
@@ -419,7 +304,7 @@ Expected: all commands exit 0; generated declarations export the two helpers; no
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/components/index.ts docs-site/src/content/docs/guides/commands.md docs-site/src/content/docs/guides/customization.md CHANGELOG.md
+git add packages/galley-editor/src/components/index.ts docs-site/src/content/docs/guides/commands.md docs-site/src/content/docs/guides/customization.md CHANGELOG.md
 git commit -m "docs: explain toolbar shortcut tooltips"
 ```
 

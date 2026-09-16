@@ -182,3 +182,26 @@ test('inline source reveal and mode switching retain links and code', async ({ p
   await expect(page.locator('.cm-content')).toContainText('link');
   await expectDocument(page, source);
 });
+
+
+test('console content tracing requires opt-in and stops when disabled', async ({ page }) => {
+  const records: string[] = [];
+  page.on('console', message => {
+    if (message.text().startsWith('[Galley ')) records.push(message.text());
+  });
+  const tracing = page.getByLabel('Console event tracing', { exact: true });
+  await expect(tracing).not.toBeChecked();
+  await replaceDocument(page, 'private default input');
+  await expectDocument(page, 'private default input');
+  expect(records).toEqual([]);
+
+  await tracing.check();
+  await replaceDocument(page, 'explicit diagnostic input');
+  await expect.poll(() => records.some(record => record.includes('explicit diagnostic input'))).toBe(true);
+
+  await tracing.uncheck();
+  records.length = 0;
+  await replaceDocument(page, 'private input after disabling');
+  await expectDocument(page, 'private input after disabling');
+  expect(records).toEqual([]);
+});
