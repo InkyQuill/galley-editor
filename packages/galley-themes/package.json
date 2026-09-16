@@ -1,6 +1,6 @@
 {
   "name": "@inkyquill/galley-themes",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Built-in Galley theme catalog: design tokens, light/dark palettes, and CSS variable mapping shared by Galley apps and the Galley editor.",
   "type": "module",
   "license": "MIT",

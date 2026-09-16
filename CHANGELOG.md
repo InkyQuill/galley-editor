@@ -1,3 +1,16 @@
+# [0.15.0](https://github.com/InkyQuill/galley-editor/compare/v0.14.0...v0.15.0) (2026-09-16)
+
+
+### Bug Fixes
+
+* make checkboxes better ([4cbd349](https://github.com/InkyQuill/galley-editor/commit/4cbd349960c0075bcb8b243b27a96c89e56ce1ea))
+* restore workspace tests and address PR review feedback ([07bfb84](https://github.com/InkyQuill/galley-editor/commit/07bfb842d51d41f556477669b71ce5f31f30b520))
+
+
+### Features
+
+* extract shared galley themes workspace ([054f135](https://github.com/InkyQuill/galley-editor/commit/054f1353324d90e3426ee7f53140b22cd572751e))
+
 # [0.14.0](https://github.com/InkyQuill/galley-editor/compare/v0.13.0...v0.14.0) (2026-09-15)
 
 
