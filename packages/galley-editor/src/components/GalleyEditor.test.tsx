@@ -346,6 +346,12 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
     expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
+    const buttons = container.querySelectorAll('.ge-toolbar-button');
+    expect(buttons).toHaveLength(15);
+    for (const button of buttons) {
+      expect(button.querySelector('svg[aria-hidden="true"]')).toBeInstanceOf(SVGElement);
+    }
+    expect(container.querySelector('[aria-label="Bullet list"]')?.textContent).toBe('');
   });
 
   it('shows bound shortcuts in titles without changing accessible labels', () => {

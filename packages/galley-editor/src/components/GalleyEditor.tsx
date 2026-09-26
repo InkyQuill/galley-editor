@@ -39,6 +39,7 @@ import {
   type ToolbarIconRenderer,
 } from '../types';
 import { GALLEY_VERSION } from '../version';
+import { ToolbarIcon } from './ToolbarIcon';
 
 export type { GalleyEditorProps, GalleyHandle };
 
@@ -284,7 +285,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     };
     const toolbarButton = (
       name: ToolbarIconName,
-      label: string,
       ariaLabel: string,
       command: BuiltinCommand,
       ...args: unknown[]
@@ -304,7 +304,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand(command, ...args)}
         >
-          {renderIcon(name, label, ariaLabel)}
+          {renderIcon(name, <ToolbarIcon name={name} />, ariaLabel)}
         </button>
       );
     };
@@ -489,23 +489,23 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                 <option value="h6">Heading 6</option>
               </select>
               <span className="ge-toolbar-separator" />
-              {toolbarButton('bold', 'B', 'Bold', 'toggleBold')}
-              {toolbarButton('italic', 'I', 'Italic', 'toggleItalic')}
-              {toolbarButton('strikethrough', 'S', 'Strikethrough', 'toggleStrikethrough')}
-              {toolbarButton('inlineCode', '`', 'Inline code', 'toggleCode')}
+              {toolbarButton('bold', 'Bold', 'toggleBold')}
+              {toolbarButton('italic', 'Italic', 'toggleItalic')}
+              {toolbarButton('strikethrough', 'Strikethrough', 'toggleStrikethrough')}
+              {toolbarButton('inlineCode', 'Inline code', 'toggleCode')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('bulletList', 'UL', 'Bullet list', 'toggleBulletList')}
-              {toolbarButton('orderedList', '1.', 'Ordered list', 'toggleOrderedList')}
-              {toolbarButton('taskList', '[ ]', 'Task list', 'toggleCheckList')}
+              {toolbarButton('bulletList', 'Bullet list', 'toggleBulletList')}
+              {toolbarButton('orderedList', 'Ordered list', 'toggleOrderedList')}
+              {toolbarButton('taskList', 'Task list', 'toggleCheckList')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('link', '[]', 'Insert link', 'insertLink')}
-              {toolbarButton('image', 'Img', 'Insert image', 'insertImage')}
-              {toolbarButton('codeBlock', '</>', 'Insert code block', 'insertCodeBlock')}
-              {toolbarButton('table', 'Tbl', 'Insert table', 'insertTable')}
-              {toolbarButton('divider', 'HR', 'Insert divider', 'insertHr')}
+              {toolbarButton('link', 'Insert link', 'insertLink')}
+              {toolbarButton('image', 'Insert image', 'insertImage')}
+              {toolbarButton('codeBlock', 'Insert code block', 'insertCodeBlock')}
+              {toolbarButton('table', 'Insert table', 'insertTable')}
+              {toolbarButton('divider', 'Insert divider', 'insertHr')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('undo', 'Undo', 'Undo', 'undo')}
-              {toolbarButton('redo', 'Redo', 'Redo', 'redo')}
+              {toolbarButton('undo', 'Undo', 'undo')}
+              {toolbarButton('redo', 'Redo', 'redo')}
               {showModeToggle && (
                 <>
                   <span className="ge-toolbar-separator" />
@@ -513,12 +513,12 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                     type="button"
                     className="ge-toolbar-button ge-mode-toggle"
                     aria-label="Switch editor mode"
-                    title="Switch editor mode"
+                    title={`Switch editor mode · ${MODE_LABELS[effectiveMode]}`}
                     disabled={!editable}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={cycleMode}
                   >
-                    {renderIcon('mode', MODE_LABELS[effectiveMode], 'Switch editor mode')}
+                    {renderIcon('mode', <><ToolbarIcon name="mode" /><span className="ge-mode-label">{MODE_LABELS[effectiveMode]}</span></>, 'Switch editor mode')}
                   </button>
                 </>
               )}

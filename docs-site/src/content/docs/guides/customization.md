@@ -89,11 +89,13 @@ Use `className`, `editorClassName`, and `surface` for layout-level styling:
 />
 ```
 
+The base stylesheet gives the editable text a default `24px 28px` padding (`20px` on small screens). Set `surface.contentPadding` when your host surface needs a different measure. The built-in toolbar uses compact icon buttons and keeps its mode control on one line by hiding the visible mode word when the editor container is narrow; its tooltip still names the current mode.
+
 Keep toolbar buttons at least 44 by 44 CSS pixels when replacing chrome in touch-heavy interfaces.
 
 ## Replace Built-In Toolbar Icons
 
-Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, accessible labels, and effective shortcut titles; the icon value only replaces the visible button contents.
+Galley provides SVG icons for the built-in commands. Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, accessible labels, and effective shortcut titles; the icon value only replaces the visible button contents.
 
 ```tsx
 import { Bold, Code2, Eye, Italic, Link } from 'lucide-react';

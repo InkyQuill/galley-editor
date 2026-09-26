@@ -70,8 +70,8 @@
   --ge-spacing-block: 0.5em;
   --ge-spacing-inline-padding: 0.125em 0.25em;
   --ge-blockquote-indent: 1em;
-  --ge-content-padding: 42px 56px;
-  --ge-toolbar-padding: 10px 14px;
+  --ge-content-padding: 24px 28px;
+  --ge-toolbar-padding: 6px 10px;
   --ge-footer-padding: 4px 10px;
   --ge-backdrop-filter: none;
   --ge-scrollbar-size: 10px;
@@ -119,6 +119,7 @@
   box-shadow: var(--ge-shadow-editor);
   backdrop-filter: var(--ge-backdrop-filter);
   color: var(--ge-color-text);
+  container-type: inline-size;
   overflow: hidden;
 }
 
@@ -218,8 +219,8 @@
   border-bottom: 1px solid var(--ge-color-border);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  min-height: 56px;
+  gap: 2px;
+  min-height: 42px;
   padding: var(--ge-toolbar-padding);
 }
 
@@ -242,7 +243,7 @@
   color: var(--ge-color-text);
   font-family: var(--ge-font-body);
   font-size: 0.95rem;
-  height: 34px;
+  height: 30px;
 }
 
 .ge-toolbar-button {
@@ -250,8 +251,22 @@
   cursor: pointer;
   display: inline-flex;
   justify-content: center;
-  min-width: 34px;
-  padding: 0 9px;
+  min-width: 30px;
+  padding: 0 5px;
+}
+
+.ge-toolbar-icon {
+  display: block;
+  flex: none;
+}
+
+.ge-mode-toggle {
+  gap: 5px;
+}
+
+.ge-mode-label {
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .ge-toolbar-button:hover,
@@ -270,15 +285,21 @@
 
 .ge-toolbar-select {
   cursor: pointer;
-  min-width: 132px;
-  padding: 0 8px;
+  min-width: 104px;
+  padding: 0 6px;
 }
 
 .ge-toolbar-separator {
   align-self: stretch;
   background: var(--ge-color-border);
-  margin: 2px 8px;
+  margin: 2px;
   width: 1px;
+}
+
+@container (max-width: 720px) {
+  .ge-mode-label {
+    display: none;
+  }
 }
 
 /* Headings */
@@ -1065,8 +1086,8 @@
   :root,
   [data-theme="light"],
   [data-theme="dark"] {
-    --ge-content-padding: 28px 24px;
-    --ge-toolbar-padding: 8px;
+    --ge-content-padding: 20px;
+    --ge-toolbar-padding: 6px;
     --ge-footer-padding: 8px;
   }
 
