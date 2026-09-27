@@ -337,6 +337,7 @@ describe('GalleyEditor React wrapper', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" footer={false} />);
 
     expect(container.querySelector('.ge-footer')).toBeNull();
+    expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
   });
 
   it('renders custom footer widgets with count context', () => {
@@ -514,6 +515,7 @@ describe('GalleyEditor React wrapper', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={false} />);
 
     expect(container.querySelector('.ge-toolbar')).toBeNull();
+    expect(container.querySelector('.ge-toolbar-toggle')).toBeNull();
   });
 
   it('accepts custom toolbar icons as React nodes', () => {
