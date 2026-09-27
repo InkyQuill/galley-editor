@@ -29,9 +29,10 @@ You can omit the stylesheet, but then your app must provide the CodeMirror and `
 <GalleyEditor theme="auto" />
 <GalleyEditor theme="light" />
 <GalleyEditor theme="dark" />
+<GalleyEditor theme="inherit" />
 ```
 
-`auto` follows the user's color scheme. Override variables on the editor wrapper or a parent container:
+`auto` follows the user's system color scheme. `inherit` leaves the wrapper without a local `data-theme` palette and follows the host's root theme class or `data-theme` attribute (falling back to the system preference). Use it when an app owns the `--ge-*` variables. Override variables on the editor wrapper or a parent container:
 
 ```css
 .article-editor {
@@ -89,11 +90,13 @@ Use `className`, `editorClassName`, and `surface` for layout-level styling:
 />
 ```
 
+Set `surface.contentPadding` when your host surface needs a different measure. The built-in toolbar uses Lucide icons; its accessible labels and effective shortcut tooltips remain available.
+
 Keep toolbar buttons at least 44 by 44 CSS pixels when replacing chrome in touch-heavy interfaces.
 
 ## Replace Built-In Toolbar Icons
 
-Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, accessible labels, and effective shortcut titles; the icon value only replaces the visible button contents.
+Galley provides SVG icons for the built-in commands. Use `toolbar.icons` when you want Galley's built-in toolbar behavior but your product's icon set. The built-in buttons keep their command behavior, disabled states, accessible labels, and effective shortcut titles; the icon value only replaces the visible button contents.
 
 ```tsx
 import { Bold, Code2, Eye, Italic, Link } from 'lucide-react';

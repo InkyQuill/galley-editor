@@ -55,6 +55,12 @@ The toolbar and footer are enabled by default. Disable them when your app provid
 <GalleyEditor toolbar={false} footer={false} />
 ```
 
+The toolbar remains open by default for existing integrations. For a quieter writing surface, start it collapsed and let the writer reveal it with the small footer button:
+
+```tsx
+<GalleyEditor toolbar={{ defaultOpen: false }} />
+```
+
 Or customize slots while keeping Galley's built-in controls:
 
 ```tsx

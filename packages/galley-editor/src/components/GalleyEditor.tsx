@@ -4,6 +4,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -39,6 +40,7 @@ import {
   type ToolbarIconRenderer,
 } from '../types';
 import { GALLEY_VERSION } from '../version';
+import { ToolbarIcon, ToolbarToggleIcon } from './ToolbarIcon';
 
 export type { GalleyEditorProps, GalleyHandle };
 
@@ -201,7 +203,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       useState<ShortcutPlatform>('other');
     const [selectionHead, setSelectionHead] = useState(0);
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
-    const showToolbar = toolbar !== false && toolbarOptions.enabled !== false;
+    const [toolbarOpen, setToolbarOpen] = useState(() => toolbarOptions.defaultOpen !== false);
+    const toolbarId = useId();
+    const toolbarEnabled = toolbar !== false && toolbarOptions.enabled !== false;
+    const showToolbar = toolbarEnabled && toolbarOpen;
     const showModeToggle = toolbarOptions.showModeToggle !== false;
     const footerOptions = typeof footer === 'object'
       ? footer
@@ -284,7 +289,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     };
     const toolbarButton = (
       name: ToolbarIconName,
-      label: string,
       ariaLabel: string,
       command: BuiltinCommand,
       ...args: unknown[]
@@ -304,7 +308,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand(command, ...args)}
         >
-          {renderIcon(name, label, ariaLabel)}
+          {renderIcon(name, <ToolbarIcon name={name} />, ariaLabel)}
         </button>
       );
     };
@@ -459,10 +463,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     );
 
     return (
-      <div className={className} data-theme={resolvedTheme} data-mode={effectiveMode}>
+      <div className={className} data-theme={theme === 'inherit' ? undefined : resolvedTheme} data-mode={effectiveMode}>
         <div className={shellClassName} style={shellStyle}>
           {showToolbar && (
-            <div className="ge-toolbar" aria-label="Editor toolbar">
+            <div id={toolbarId} className="ge-toolbar" aria-label="Editor toolbar">
               {renderToolbarSlot(toolbarOptions.before, 'before')}
               <select
                 className="ge-toolbar-select"
@@ -489,23 +493,23 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                 <option value="h6">Heading 6</option>
               </select>
               <span className="ge-toolbar-separator" />
-              {toolbarButton('bold', 'B', 'Bold', 'toggleBold')}
-              {toolbarButton('italic', 'I', 'Italic', 'toggleItalic')}
-              {toolbarButton('strikethrough', 'S', 'Strikethrough', 'toggleStrikethrough')}
-              {toolbarButton('inlineCode', '`', 'Inline code', 'toggleCode')}
+              {toolbarButton('bold', 'Bold', 'toggleBold')}
+              {toolbarButton('italic', 'Italic', 'toggleItalic')}
+              {toolbarButton('strikethrough', 'Strikethrough', 'toggleStrikethrough')}
+              {toolbarButton('inlineCode', 'Inline code', 'toggleCode')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('bulletList', 'UL', 'Bullet list', 'toggleBulletList')}
-              {toolbarButton('orderedList', '1.', 'Ordered list', 'toggleOrderedList')}
-              {toolbarButton('taskList', '[ ]', 'Task list', 'toggleCheckList')}
+              {toolbarButton('bulletList', 'Bullet list', 'toggleBulletList')}
+              {toolbarButton('orderedList', 'Ordered list', 'toggleOrderedList')}
+              {toolbarButton('taskList', 'Task list', 'toggleCheckList')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('link', '[]', 'Insert link', 'insertLink')}
-              {toolbarButton('image', 'Img', 'Insert image', 'insertImage')}
-              {toolbarButton('codeBlock', '</>', 'Insert code block', 'insertCodeBlock')}
-              {toolbarButton('table', 'Tbl', 'Insert table', 'insertTable')}
-              {toolbarButton('divider', 'HR', 'Insert divider', 'insertHr')}
+              {toolbarButton('link', 'Insert link', 'insertLink')}
+              {toolbarButton('image', 'Insert image', 'insertImage')}
+              {toolbarButton('codeBlock', 'Insert code block', 'insertCodeBlock')}
+              {toolbarButton('table', 'Insert table', 'insertTable')}
+              {toolbarButton('divider', 'Insert divider', 'insertHr')}
               <span className="ge-toolbar-separator" />
-              {toolbarButton('undo', 'Undo', 'Undo', 'undo')}
-              {toolbarButton('redo', 'Redo', 'Redo', 'redo')}
+              {toolbarButton('undo', 'Undo', 'undo')}
+              {toolbarButton('redo', 'Redo', 'redo')}
               {showModeToggle && (
                 <>
                   <span className="ge-toolbar-separator" />
@@ -513,12 +517,12 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                     type="button"
                     className="ge-toolbar-button ge-mode-toggle"
                     aria-label="Switch editor mode"
-                    title="Switch editor mode"
+                    title={`Switch editor mode · ${MODE_LABELS[effectiveMode]}`}
                     disabled={!editable}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={cycleMode}
                   >
-                    {renderIcon('mode', MODE_LABELS[effectiveMode], 'Switch editor mode')}
+                    {renderIcon('mode', <><ToolbarIcon name="mode" /><span className="ge-mode-label">{MODE_LABELS[effectiveMode]}</span></>, 'Switch editor mode')}
                   </button>
                 </>
               )}
@@ -528,6 +532,19 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
           <div ref={containerRef} className="ge-editor-body" />
           {showFooter && (
             <div className="ge-footer">
+              {toolbarEnabled && (
+                <button
+                  type="button"
+                  className="ge-toolbar-toggle"
+                  aria-label={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
+                  aria-expanded={showToolbar}
+                  aria-controls={showToolbar ? toolbarId : undefined}
+                  title={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
+                  onClick={() => setToolbarOpen((open) => !open)}
+                >
+                  <ToolbarToggleIcon />
+                </button>
+              )}
               {renderFooterSlot(footerOptions.before, 'before')}
               <div className="ge-footer-stats">
                 {footerOptions.wordCount !== false && (

@@ -241,6 +241,25 @@ describe('GalleyEditor React wrapper', () => {
     expect(wrapper?.getAttribute('data-theme')).toBe('dark');
   });
 
+  it('inherits the host palette without setting a local data-theme', () => {
+    const { container } = mount(<GalleyEditor value="hello" theme="inherit" />);
+    expect(container.firstElementChild?.hasAttribute('data-theme')).toBe(false);
+  });
+
+  it('updates inherited CodeMirror mode when the host theme changes', async () => {
+    const { container } = mount(<GalleyEditor value="hello" theme="inherit" />);
+    const editor = container.querySelector('.cm-editor');
+    try {
+      await act(async () => {
+        document.documentElement.classList.add('dark');
+        await Promise.resolve();
+      });
+      expect(editor?.classList.contains('cm-dark')).toBe(true);
+    } finally {
+      document.documentElement.classList.remove('dark');
+    }
+  });
+
   it('applies ariaLabel to the editable content element', () => {
     const { container, root } = mount(
       <GalleyEditor value="hello" theme="light" ariaLabel="Release notes body" />,
@@ -318,6 +337,7 @@ describe('GalleyEditor React wrapper', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" footer={false} />);
 
     expect(container.querySelector('.ge-footer')).toBeNull();
+    expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
   });
 
   it('renders custom footer widgets with count context', () => {
@@ -340,17 +360,34 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('[data-testid="footer-after"]')?.textContent).toBe('live:2:11');
   });
 
-  it('renders the default toolbar', () => {
+  it('keeps the existing visible toolbar default', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" />);
+    expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
+  });
 
+  it('reveals a deliberately collapsed toolbar from the footer', () => {
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={{ defaultOpen: false }} />);
+    expect(container.querySelector('.ge-toolbar')).toBeNull();
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Show formatting toolbar"]');
+    expect(toggle?.getAttribute('aria-expanded')).toBe('false');
+    act(() => toggle?.click());
+    expect(toggle?.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
     expect(container.querySelector('[aria-label="Bold"]')).toBeInstanceOf(HTMLButtonElement);
     expect(container.querySelector('[aria-label="Insert link"]')).toBeInstanceOf(HTMLButtonElement);
+    const buttons = container.querySelectorAll('.ge-toolbar-button');
+    expect(buttons).toHaveLength(15);
+    for (const button of buttons) {
+      expect(button.querySelector('svg[aria-hidden="true"]')).toBeInstanceOf(SVGElement);
+    }
+    expect(container.querySelector('[aria-label="Bullet list"]')?.textContent).toBe('');
+    act(() => toggle?.click());
+    expect(container.querySelector('.ge-toolbar')).toBeNull();
   });
 
   it('shows bound shortcuts in titles without changing accessible labels', () => {
     const { container } = mount(
-      <GalleyEditor value="Hello" theme="light" />,
+      <GalleyEditor value="Hello" theme="light" toolbar={{ defaultOpen: true }} />,
     );
     const bold = container.querySelector(
       '[aria-label="Bold"]',
@@ -373,7 +410,7 @@ describe('GalleyEditor React wrapper', () => {
       .mockReturnValue('MacIntel');
 
     const markup = renderToString(
-      <GalleyEditor value="Hello" theme="light" />,
+      <GalleyEditor value="Hello" theme="light" toolbar={{ defaultOpen: true }} />,
     );
 
     expect(markup).toContain('title="Bold (Ctrl+B)"');
@@ -383,7 +420,7 @@ describe('GalleyEditor React wrapper', () => {
 
   it('removes a tooltip shortcut when array keymap replaces defaults', () => {
     const { container } = mount(
-      <GalleyEditor value="Hello" theme="light" keymap={[]} />,
+      <GalleyEditor value="Hello" theme="light" keymap={[]} toolbar={{ defaultOpen: true }} />,
     );
     expect(
       container.querySelector('[aria-label="Bold"]')?.getAttribute('title'),
@@ -398,6 +435,7 @@ describe('GalleyEditor React wrapper', () => {
       <GalleyEditor
         value="Hello"
         theme="light"
+        toolbar={{ defaultOpen: true }}
         keymap={(defaults) => [
           ...defaults.filter(
             (binding) =>
@@ -434,6 +472,7 @@ describe('GalleyEditor React wrapper', () => {
         value="Hello"
         theme="light"
         onChange={onChange}
+        toolbar={{ defaultOpen: true }}
         keymap={(defaults) => {
           const hasSearchBinding = defaults.some(
             (binding) => binding.key === 'Mod-f',
@@ -476,6 +515,7 @@ describe('GalleyEditor React wrapper', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={false} />);
 
     expect(container.querySelector('.ge-toolbar')).toBeNull();
+    expect(container.querySelector('.ge-toolbar-toggle')).toBeNull();
   });
 
   it('accepts custom toolbar icons as React nodes', () => {
@@ -484,6 +524,7 @@ describe('GalleyEditor React wrapper', () => {
         value="Hello world"
         theme="light"
         toolbar={{
+          defaultOpen: true,
           icons: {
             bold: <svg data-testid="custom-bold" viewBox="0 0 16 16" />,
           },
@@ -501,6 +542,7 @@ describe('GalleyEditor React wrapper', () => {
         value="Hello world"
         theme="light"
         toolbar={{
+          defaultOpen: true,
           icons: {
             italic: ({ label }) => <span data-testid="custom-italic">{label}</span>,
           },
@@ -517,6 +559,7 @@ describe('GalleyEditor React wrapper', () => {
         value="Hello world"
         theme="light"
         toolbar={{
+          defaultOpen: true,
           before: <button type="button" data-testid="toolbar-before">Before</button>,
           after: ({ canEdit, mode }) => (
             <button type="button" data-testid="toolbar-after">
@@ -617,6 +660,7 @@ describe('GalleyEditor React wrapper', () => {
       <GalleyEditor
         value="# Title"
         theme="light"
+        toolbar={{ defaultOpen: true }}
         onModeChange={(mode) => changes.push(mode)}
       />,
     );
@@ -705,6 +749,10 @@ describe('GalleyEditor text style selector', () => {
   }
 
   function styleSelect(container: HTMLElement): HTMLSelectElement {
+    if (!container.querySelector('.ge-toolbar-select')) {
+      const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Show formatting toolbar"]');
+      act(() => toggle?.click());
+    }
     const select = container.querySelector<HTMLSelectElement>('.ge-toolbar-select');
     if (!select) throw new Error('style select not rendered');
     return select;

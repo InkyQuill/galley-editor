@@ -44,7 +44,7 @@ Core props:
 | `maxRows` | `number` | none |
 | `layout` | `'autosize' \| 'fill'` | `'autosize'` |
 | `horizontalScroll` | `boolean` | `false` |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` |
+| `theme` | `'light' \| 'dark' \| 'auto' \| 'inherit'` | `'auto'` |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` |
 | `footer` | `boolean \| GalleyFooterOptions` | `true` |

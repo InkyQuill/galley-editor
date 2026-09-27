@@ -198,6 +198,8 @@ export type GalleyToolbarSlot =
 
 export interface GalleyToolbarOptions {
   enabled?: boolean;
+  /** Initial toolbar visibility. Defaults to true; set false for a quiet writing surface. */
+  defaultOpen?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
   before?: GalleyToolbarSlot;
@@ -503,8 +505,8 @@ export interface GalleyEditorProps {
   /** Override semantic CSS class names for rendered elements. */
   classNames?: GalleyClassNames;
 
-  /** Color scheme. Default: 'auto'. */
-  theme?: 'light' | 'dark' | 'auto';
+  /** Color scheme. 'inherit' uses the host app's CSS variables without a local palette. Default: 'auto'. */
+  theme?: 'light' | 'dark' | 'auto' | 'inherit';
   /** Tab inserts/deletes indentation instead of moving focus out. Default: true. */
   tabIndents?: boolean;
   /** Override or extend the default keymap. */
@@ -523,7 +525,7 @@ export interface GalleyEditorProps {
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
   bidi?: boolean;
-  /** Show and customize the built-in command toolbar, including icon overrides and before/after slots. Default: true. */
+  /** Enable the built-in command toolbar; initially visible unless defaultOpen is false. Default: true. */
   toolbar?: boolean | GalleyToolbarOptions;
   /** Show and customize the built-in status footer, including stats/logo visibility and before/after widgets. Default: true. */
   footer?: boolean | GalleyFooterOptions;
