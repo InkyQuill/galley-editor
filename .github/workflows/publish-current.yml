@@ -4,14 +4,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
   publish:
     name: Publish package.json version
     runs-on: ubuntu-latest
-    if: ${{ vars.NPM_PUBLISH_ENABLED == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -52,3 +51,10 @@ jobs:
               npm publish --workspace "$package" --access public
             fi
           done
+
+      - name: Create GitHub release if missing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(node -p "require('./packages/galley-editor/package.json').version")
+          gh release view "v$version" >/dev/null 2>&1 || gh release create "v$version" --title "v$version" --generate-notes
