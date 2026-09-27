@@ -1,3 +1,18 @@
+# [0.16.0](https://github.com/InkyQuill/galley-editor/compare/v0.15.0...v0.16.0) (2026-09-27)
+
+
+### Bug Fixes
+
+* **editor:** preserve toolbar defaults for existing consumers ([cdb54b6](https://github.com/InkyQuill/galley-editor/commit/cdb54b64ff828159450e262b174b1765914a9506))
+* **editor:** retain existing layout dimensions ([52f6cd6](https://github.com/InkyQuill/galley-editor/commit/52f6cd6a55acff3a6fd720dd7ded86c4359fda70))
+* **editor:** tighten content spacing and add toolbar icons ([2e59858](https://github.com/InkyQuill/galley-editor/commit/2e59858cd0b1a9b7333c320d467ec0b55c1352db))
+
+
+### Features
+
+* **editor:** add compact toolbar and inherited theme mode ([e9d52c3](https://github.com/InkyQuill/galley-editor/commit/e9d52c375b3a3e83d37439bb786d8cc716a7e54d))
+* **themes:** add Thoth light and dark palettes ([1656f65](https://github.com/InkyQuill/galley-editor/commit/1656f65de6fca41ef14494c36a3539e58786d06e))
+
 # [0.15.0](https://github.com/InkyQuill/galley-editor/compare/v0.14.0...v0.15.0) (2026-09-16)
 
 
