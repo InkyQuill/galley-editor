@@ -134,7 +134,7 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
       ]) {
         assert.ok(themes[name], \`themes export missing: \${name}\`);
       }
-      assert.equal(themes.BUILT_IN_THEMES.length, 13);
+      assert.equal(themes.BUILT_IN_THEMES.length, 15);
       assert.equal(themes.DEFAULT_LIGHT_THEME_ID, 'galley-light');
       assert.equal(themes.DEFAULT_DARK_THEME_ID, 'galley-dark');
       assert.equal(themes.DEFAULT_CONSTANT_THEME_ID, 'galley-light');

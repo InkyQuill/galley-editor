@@ -30,12 +30,14 @@ const variables = themeToCssVariables(theme!);
 
 `ThemeCssVariables` is a plain style object (`` `{ colorScheme: string } & Record<`--${string}`, string>` ``), so the result can be spread onto a React `style` prop or applied to a DOM element with `Object.assign(element.style, variables)`.
 
+`thoth-light` and `thoth-dark` adapt the approved [Thoth Palette](https://git.inkyquill.net/inky/thoth-palette) for Galley's token contract. The palette repository is the source of color values and also provides web, terminal, Kate, and VS Code exports. These themes are optional catalog entries; existing defaults stay `galley-light` and `galley-dark`.
+
 ## API
 
 | Export | Kind | Description |
 | --- | --- | --- |
 | `ThemeId`, `ThemeScheme`, `ThemeTokens`, `ThemeDefinition`, `ThemeCssVariables` | types | Theme type contract. |
-| `BUILT_IN_THEMES` | value | Frozen catalog of the 13 built-in themes. |
+| `BUILT_IN_THEMES` | value | Frozen catalog of the 15 built-in themes, including Thoth Light and Thoth Dark. |
 | `DEFAULT_LIGHT_THEME_ID`, `DEFAULT_DARK_THEME_ID`, `DEFAULT_CONSTANT_THEME_ID` | values | Default theme id constants (`galley-light` / `galley-dark`). |
 | `getTheme(id)` | function | Look up a built-in theme by id. |
 | `listThemesByScheme(scheme)` | function | All built-in themes for `"light"` or `"dark"`. |
