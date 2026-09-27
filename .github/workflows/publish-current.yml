@@ -19,9 +19,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          package-manager-cache: false
           registry-url: https://registry.npmjs.org
+
+      - name: Use npm with trusted publishing support
+        run: npm install --global 'npm@^11.5.1'
 
       - name: Install
         run: npm ci --legacy-peer-deps --no-audit --no-fund
@@ -37,23 +40,15 @@ jobs:
           npm run test:package-consumer
           ./scripts/verify-publish.sh
 
-      # Both packages share one version, so they must become visible together:
-      # publish under a non-latest tag first, then promote only after both
-      # publishes succeeded. A failed promotion leaves the version installed
-      # under the staging tag — re-run the failed step; it is idempotent.
-      - name: Publish under staging tag
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # OIDC authenticates npm publish, but not npm dist-tag. Check each package
+      # first so a failed second publish can be retried without republishing the first.
+      - name: Publish missing packages
         run: |
-          npm publish --workspace @inkyquill/galley-editor --access public --provenance --tag next
-          npm publish --workspace @inkyquill/galley-themes --access public --provenance --tag next
-
-      - name: Promote editor to latest
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm dist-tag add "@inkyquill/galley-editor@$(node -p "require('./packages/galley-editor/package.json').version")" latest
-
-      - name: Promote themes to latest
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm dist-tag add "@inkyquill/galley-themes@$(node -p "require('./packages/galley-themes/package.json').version")" latest
+          version=$(node -p "require('./packages/galley-editor/package.json').version")
+          for package in @inkyquill/galley-editor @inkyquill/galley-themes; do
+            if npm view "$package@$version" version --json >/dev/null 2>&1; then
+              echo "$package@$version is already published"
+            else
+              npm publish --workspace "$package" --access public
+            fi
+          done

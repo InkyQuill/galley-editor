@@ -40,13 +40,9 @@ These prevent accidental contamination of the published package:
 
 Merges to `main` run `semantic-release` after the test job passes. Release commits are inferred from Conventional Commit messages: `fix:` creates a patch release, `feat:` creates a minor release, and `BREAKING CHANGE:` creates a major release.
 
-The GitHub repository must define an Actions secret named `NPM_TOKEN`. Use an npm automation token, or a granular npm token with publish access to `@inkyquill/galley-editor` and 2FA bypass enabled. The release workflow uses the built-in `GITHUB_TOKEN` for tags and GitHub releases, and `NPM_TOKEN` for publishing to npmjs with provenance.
+Publishing uses npm Trusted Publishing (OIDC), so no npm token or 2FA bypass is needed in GitHub Actions. On npmjs.com, open **Settings → Trusted Publisher** for **each** of `@inkyquill/galley-editor` and `@inkyquill/galley-themes`. Add a GitHub Actions publisher with owner `InkyQuill`, repository `galley-editor`, workflow filename `release.yml`, and **Allow direct publishing with `npm publish`**. Leave the optional environment blank. Add a second publisher for `publish-current.yml` on each package if you want the manual recovery workflow available. The filenames must match `.github/workflows/` exactly. The workflows run on GitHub-hosted runners with `id-token: write` and npm 11.5.1 or newer; npm publishes provenance automatically.
 
-Set the secret after the GitHub repository exists:
-
-```bash
-gh secret set NPM_TOKEN --repo InkyQuill/galley-editor
-```
+The `release.yml` workflow uses GitHub's built-in `GITHUB_TOKEN` for tags and GitHub releases. The old `NPM_TOKEN` Actions secret is unused and can be removed after the trusted publishers are configured. The manual `publish-current.yml` workflow publishes the version already recorded in `package.json`; it checks each package first so a partially completed publish can be retried. It publishes directly to `latest` because npm's `dist-tag` command does not support OIDC authentication.
 
 Then enable the release workflow:
 
