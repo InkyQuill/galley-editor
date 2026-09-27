@@ -109,6 +109,8 @@ describe("theme catalog", () => {
     expect(BUILT_IN_THEMES.map((theme) => theme.id)).toEqual([
       "galley-light",
       "galley-dark",
+      "thoth-light",
+      "thoth-dark",
       "gruvbox-light",
       "gruvbox-dark",
       "catppuccin-latte",
@@ -132,6 +134,7 @@ describe("theme catalog", () => {
   it("filters themes by scheme", () => {
     expect(listThemesByScheme("light").map((theme) => theme.id)).toEqual([
       "galley-light",
+      "thoth-light",
       "gruvbox-light",
       "catppuccin-latte",
       "tokyo-night-day",
@@ -140,6 +143,7 @@ describe("theme catalog", () => {
     ]);
     expect(listThemesByScheme("dark").map((theme) => theme.id)).toEqual([
       "galley-dark",
+      "thoth-dark",
       "gruvbox-dark",
       "catppuccin-mocha",
       "tokyo-night",

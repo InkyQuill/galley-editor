@@ -58,6 +58,8 @@ const variables = themeToCssVariables(getTheme('galley-light')!);
 
 The result is a plain style object, so it can be spread onto a React `style` prop or applied to a DOM element with `Object.assign(element.style, variables)` — no React or DOM APIs are required from the package itself.
 
+The optional `thoth-light` and `thoth-dark` entries adapt the [Thoth Palette](https://git.inkyquill.net/inky/thoth-palette), whose own repository contains the canonical colors and exports for web, terminals, Kate, and VS Code. For example, `themeToCssVariables(getTheme('thoth-dark')!)` produces the editor and app CSS variables for the dark palette. Galley's default themes are unchanged.
+
 ## Current Scope
 
 Galley is currently `v0.15.0` and still pre-1.0. The documented API is the intended public surface for the current package, but minor releases may still refine behavior before the first stable release.
