@@ -10,10 +10,16 @@ import { type Extension } from '@codemirror/state';
 import { syntaxHighlighting } from '@codemirror/language';
 import { classHighlighter } from '@lezer/highlight';
 
-export type ColorScheme = 'light' | 'dark' | 'auto';
+export type ColorScheme = 'light' | 'dark' | 'auto' | 'inherit';
 
 export function resolveColorScheme(scheme: ColorScheme): 'light' | 'dark' {
-  if (scheme === 'auto') {
+  if (scheme === 'inherit' && typeof document !== 'undefined') {
+    const root = document.documentElement;
+    if (root.classList.contains('dark') || root.dataset.theme === 'dark') return 'dark';
+    if (root.classList.contains('light') || root.dataset.theme === 'light') return 'light';
+    if (window.getComputedStyle(root).colorScheme.includes('dark')) return 'dark';
+  }
+  if (scheme === 'auto' || scheme === 'inherit') {
     return typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -27,6 +33,17 @@ export function watchColorScheme(
   scheme: ColorScheme,
   onChange: (resolved: 'light' | 'dark') => void,
 ): () => void {
+  if (scheme === 'inherit' && typeof document !== 'undefined') {
+    const observer = new MutationObserver(() => onChange(resolveColorScheme('inherit')));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] });
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)');
+    const onSystemChange = () => onChange(resolveColorScheme('inherit'));
+    media?.addEventListener?.('change', onSystemChange);
+    return () => {
+      observer.disconnect();
+      media?.removeEventListener?.('change', onSystemChange);
+    };
+  }
   if (
     scheme !== 'auto' ||
     typeof window === 'undefined' ||

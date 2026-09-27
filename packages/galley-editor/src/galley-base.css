@@ -1026,6 +1026,31 @@
   margin-left: auto;
 }
 
+.ge-toolbar-toggle {
+  align-items: center;
+  background: var(--ge-color-transparent);
+  border: 0;
+  border-radius: 4px;
+  color: var(--ge-color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.ge-toolbar-toggle:hover,
+.ge-toolbar-toggle[aria-expanded="true"] {
+  background: var(--ge-color-surface-elevated);
+  color: var(--ge-color-text);
+}
+
+.ge-toolbar-toggle:focus-visible {
+  outline: 2px solid var(--ge-color-focus-ring);
+  outline-offset: 2px;
+}
+
 .ge-footer-slot {
   align-items: center;
   display: inline-flex;

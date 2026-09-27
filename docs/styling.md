@@ -264,6 +264,7 @@ You then own those class rules:
 | `theme="light"` | `data-theme="light"` | Forces light variables and CodeMirror light mode. |
 | `theme="dark"` | `data-theme="dark"` | Forces dark overrides and CodeMirror dark mode. |
 | `theme="auto"` | `data-theme="light"` or `data-theme="dark"` | Resolves from `prefers-color-scheme` and updates when the OS preference changes. |
+| `theme="inherit"` | none | Inherits host CSS variables and follows the root theme class or `data-theme`, falling back to the OS preference. |
 
 If your host app also uses a `.dark` class, keep app layout rules on `.dark` and keep Galley variables on the editor wrapper:
 

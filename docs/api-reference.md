@@ -33,7 +33,7 @@ import { GalleyEditor } from '@inkyquill/galley-editor';
 | `className` | `string` | `''` | CSS class for the outer wrapper `<div>` |
 | `editorClassName` | `string` | `''` | CSS class applied to the CodeMirror `.cm-editor` element |
 | `classNames` | `GalleyClassNames` | `DEFAULT_CLASS_NAMES` | Override semantic CSS class names |
-| `theme` | `'light' \| 'dark' \| 'auto'` | `'auto'` | Color scheme |
+| `theme` | `'light' \| 'dark' \| 'auto' \| 'inherit'` | `'auto'` | Color scheme; `inherit` follows host variables and theme state |
 | `tabIndents` | `boolean` | `true` | When `true`, Tab indents in the editor; when `false`, Tab can move focus out unless a list item is being indented |
 | `keymap` | `KeyBinding[] \| ((defaults: KeyBinding[]) => KeyBinding[])` | `undefined` | Array form replaces the keymap; function form receives defaults and returns the full keymap |
 | `codeHighlighter` | `CodeHighlighter` | `undefined` | Optional custom highlighter for inactive fenced code block rendering |
@@ -42,7 +42,7 @@ import { GalleyEditor } from '@inkyquill/galley-editor';
 | `imageControlsRenderer` | `ImageControlsRenderer` | `undefined` | Optional renderer for selected image controls. Returning `null` uses the built-in resize handles |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
-| `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Show and customize the built-in command toolbar |
+| `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Enable the built-in command toolbar. It starts collapsed and can be opened from the footer; `defaultOpen: true` opens it initially |
 | `footer` | `boolean \| GalleyFooterOptions` | `true` | Show and customize the built-in status footer with word count, character count, logo, and consumer widgets |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
 | `onModeChange` | `(mode: GalleyMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |
@@ -415,6 +415,7 @@ type ToolbarIconRenderer = (input: {
 
 interface GalleyToolbarOptions {
   enabled?: boolean;
+  defaultOpen?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
   before?: GalleyToolbarSlot;
@@ -422,7 +423,7 @@ interface GalleyToolbarOptions {
 }
 ```
 
-Use `icons` to pass inline SVG elements, Lucide React components, or render functions. Use `before` and `after` to add consumer-owned controls into the built-in toolbar.
+Built-in commands use Lucide icons. Use `icons` to replace individual icons with inline SVG elements, React components, or render functions. Use `before` and `after` to add consumer-owned controls into the built-in toolbar. A small footer button toggles the toolbar when both the toolbar and footer are enabled.
 
 Supported `ToolbarIconName` keys are `bold`, `italic`, `strikethrough`, `inlineCode`, `bulletList`, `orderedList`, `taskList`, `link`, `image`, `codeBlock`, `table`, `divider`, `undo`, `redo`, and `mode`.
 
