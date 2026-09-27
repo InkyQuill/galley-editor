@@ -90,7 +90,7 @@ Use `className`, `editorClassName`, and `surface` for layout-level styling:
 />
 ```
 
-The base stylesheet gives the editable text a default `24px 28px` padding (`20px` on small screens). Set `surface.contentPadding` when your host surface needs a different measure. The built-in toolbar uses compact icon buttons and keeps its mode control on one line by hiding the visible mode word when the editor container is narrow; its tooltip still names the current mode.
+Set `surface.contentPadding` when your host surface needs a different measure. The built-in toolbar uses Lucide icons; its accessible labels and effective shortcut tooltips remain available.
 
 Keep toolbar buttons at least 44 by 44 CSS pixels when replacing chrome in touch-heavy interfaces.
 
