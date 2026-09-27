@@ -42,7 +42,7 @@ import { GalleyEditor } from '@inkyquill/galley-editor';
 | `imageControlsRenderer` | `ImageControlsRenderer` | `undefined` | Optional renderer for selected image controls. Returning `null` uses the built-in resize handles |
 | `onLinkClick` | `LinkClickHandler` | `undefined` | Intercept Cmd/Ctrl-click link activation. Return `true` to suppress default `window.open` |
 | `bidi` | `boolean` | `false` | Adds `dir="auto"` to editor lines for browser bidi handling |
-| `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Enable the built-in command toolbar. It starts collapsed and can be opened from the footer; `defaultOpen: true` opens it initially |
+| `toolbar` | `boolean \| GalleyToolbarOptions` | `true` | Enable the built-in command toolbar. It remains visible by default; `defaultOpen: false` starts it collapsed with a footer toggle |
 | `footer` | `boolean \| GalleyFooterOptions` | `true` | Show and customize the built-in status footer with word count, character count, logo, and consumer widgets |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` | Rendering mode. `editable={false}` forces preview mode |
 | `onModeChange` | `(mode: GalleyMode) => void` | `undefined` | Called when the built-in mode toggle requests a mode change |

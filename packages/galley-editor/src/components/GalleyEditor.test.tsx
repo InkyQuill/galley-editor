@@ -246,6 +246,20 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.firstElementChild?.hasAttribute('data-theme')).toBe(false);
   });
 
+  it('updates inherited CodeMirror mode when the host theme changes', async () => {
+    const { container } = mount(<GalleyEditor value="hello" theme="inherit" />);
+    const editor = container.querySelector('.cm-editor');
+    try {
+      await act(async () => {
+        document.documentElement.classList.add('dark');
+        await Promise.resolve();
+      });
+      expect(editor?.classList.contains('cm-dark')).toBe(true);
+    } finally {
+      document.documentElement.classList.remove('dark');
+    }
+  });
+
   it('applies ariaLabel to the editable content element', () => {
     const { container, root } = mount(
       <GalleyEditor value="hello" theme="light" ariaLabel="Release notes body" />,
@@ -345,8 +359,13 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('[data-testid="footer-after"]')?.textContent).toBe('live:2:11');
   });
 
-  it('reveals the default toolbar from the footer', () => {
+  it('keeps the existing visible toolbar default', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" />);
+    expect(container.querySelector('.ge-toolbar')).toBeInstanceOf(HTMLElement);
+  });
+
+  it('reveals a deliberately collapsed toolbar from the footer', () => {
+    const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={{ defaultOpen: false }} />);
     expect(container.querySelector('.ge-toolbar')).toBeNull();
     const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Show formatting toolbar"]');
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');

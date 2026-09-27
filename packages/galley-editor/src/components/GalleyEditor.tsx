@@ -203,7 +203,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       useState<ShortcutPlatform>('other');
     const [selectionHead, setSelectionHead] = useState(0);
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
-    const [toolbarOpen, setToolbarOpen] = useState(() => toolbarOptions.defaultOpen === true);
+    const [toolbarOpen, setToolbarOpen] = useState(() => toolbarOptions.defaultOpen !== false);
     const toolbarId = useId();
     const toolbarEnabled = toolbar !== false && toolbarOptions.enabled !== false;
     const showToolbar = toolbarEnabled && toolbarOpen;
@@ -538,7 +538,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                   className="ge-toolbar-toggle"
                   aria-label={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
                   aria-expanded={showToolbar}
-                  aria-controls={toolbarId}
+                  aria-controls={showToolbar ? toolbarId : undefined}
                   title={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
                   onClick={() => setToolbarOpen((open) => !open)}
                 >

@@ -29,9 +29,10 @@ You can omit the stylesheet, but then your app must provide the CodeMirror and `
 <GalleyEditor theme="auto" />
 <GalleyEditor theme="light" />
 <GalleyEditor theme="dark" />
+<GalleyEditor theme="inherit" />
 ```
 
-`auto` follows the user's color scheme. Override variables on the editor wrapper or a parent container:
+`auto` follows the user's system color scheme. `inherit` leaves the wrapper without a local `data-theme` palette and follows the host's root theme class or `data-theme` attribute (falling back to the system preference). Use it when an app owns the `--ge-*` variables. Override variables on the editor wrapper or a parent container:
 
 ```css
 .article-editor {

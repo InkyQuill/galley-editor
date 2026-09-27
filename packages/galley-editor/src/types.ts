@@ -198,7 +198,7 @@ export type GalleyToolbarSlot =
 
 export interface GalleyToolbarOptions {
   enabled?: boolean;
-  /** Initial toolbar visibility. Defaults to false; the footer toggle remains available. */
+  /** Initial toolbar visibility. Defaults to true; set false for a quiet writing surface. */
   defaultOpen?: boolean;
   showModeToggle?: boolean;
   icons?: Partial<Record<ToolbarIconName, ReactNode | ToolbarIconRenderer>>;
@@ -525,7 +525,7 @@ export interface GalleyEditorProps {
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
   bidi?: boolean;
-  /** Enable the built-in command toolbar; initially collapsed unless defaultOpen is set. Default: true. */
+  /** Enable the built-in command toolbar; initially visible unless defaultOpen is false. Default: true. */
   toolbar?: boolean | GalleyToolbarOptions;
   /** Show and customize the built-in status footer, including stats/logo visibility and before/after widgets. Default: true. */
   footer?: boolean | GalleyFooterOptions;
