@@ -1,0 +1,10 @@
+version: 1
+skills:
+    - name: astro-starlight
+      source:
+        type: archive
+      fingerprint: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    - name: using-codemirror
+      source:
+        type: archive
+      fingerprint: 3bde2646c2c7959c0d0eadf4181f6602a3a900f3ad6ca4b4519e481fdd20ce09

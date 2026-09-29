@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "astro-starlight": {
+      "source": "fusengine/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/astro-expert/skills/astro-starlight/SKILL.md",
+      "computedHash": "9b906706a61b0560c7955142759c8d0e36dfa1b8c24d8f53db255d3efa5b6674"
+    }
+  }
+}
