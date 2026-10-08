@@ -121,8 +121,17 @@ describe('parseMarkdownTable', () => {
     });
   });
 
-  it('rejects unsupported escaped pipe tables', () => {
-    expect(parseMarkdownTable('| A \\| B |\n| --- |\n| C |')).toBeNull();
+  it('preserves escaped pipes as cell content through parse and serialization', () => {
+    const source = '| A \\| B | D |\n| --- | --- |\n| C | E |';
+    const table = parseMarkdownTable(source)!;
+    expect(table.columnCount).toBe(2);
+    expect(table.rows[0][0].text).toBe('A \\| B');
+    const updated = updateTableCell(table, { row: 1, column: 0 }, '😀 left | right');
+    const reparsed = parseMarkdownTable(serializeMarkdownTable(updated))!;
+    expect(reparsed.rows[1]).toHaveLength(2);
+    expect(reparsed.rows[1][0].text).toBe('😀 left \\| right');
+    expect(reparsed.rows[1][1].text).toBe('E');
+    expect(serializeMarkdownTable(reparsed)).toBe(serializeMarkdownTable(updated));
   });
 });
 

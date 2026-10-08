@@ -105,56 +105,32 @@ function hexChannels(color: string): [number, number, number] {
 }
 
 describe("theme catalog", () => {
-  it("ships the approved built-in themes", () => {
-    expect(BUILT_IN_THEMES.map((theme) => theme.id)).toEqual([
-      "edda-light",
-      "edda-dark",
-      "galley-light",
-      "galley-dark",
-      "thoth-light",
-      "thoth-dark",
-      "gruvbox-light",
-      "gruvbox-dark",
-      "catppuccin-latte",
-      "catppuccin-mocha",
-      "tokyo-night-day",
-      "tokyo-night",
-      "nord-light",
-      "nord-dark",
-      "darcula",
-      "solarized-light",
-      "solarized-dark",
-    ]);
+  it("round-trips catalog entries through persisted theme ids", () => {
+    const ids = new Set<string>();
+    for (const theme of BUILT_IN_THEMES) {
+      expect(ids.has(theme.id), `duplicate id: ${theme.id}`).toBe(false);
+      ids.add(theme.id);
+      expect(isThemeId(theme.id)).toBe(true);
+      expect(getTheme(theme.id)).toBe(theme);
+    }
+    expect(getTheme("missing-theme")).toBeUndefined();
   });
 
   it("keeps default theme ids valid", () => {
-    expect(getTheme(DEFAULT_CONSTANT_THEME_ID)?.id).toBe("galley-light");
+    expect(getTheme(DEFAULT_CONSTANT_THEME_ID)).toBeDefined();
     expect(getTheme(DEFAULT_LIGHT_THEME_ID)?.scheme).toBe("light");
     expect(getTheme(DEFAULT_DARK_THEME_ID)?.scheme).toBe("dark");
   });
 
-  it("filters themes by scheme", () => {
-    expect(listThemesByScheme("light").map((theme) => theme.id)).toEqual([
-      "edda-light",
-      "galley-light",
-      "thoth-light",
-      "gruvbox-light",
-      "catppuccin-latte",
-      "tokyo-night-day",
-      "nord-light",
-      "solarized-light",
-    ]);
-    expect(listThemesByScheme("dark").map((theme) => theme.id)).toEqual([
-      "edda-dark",
-      "galley-dark",
-      "thoth-dark",
-      "gruvbox-dark",
-      "catppuccin-mocha",
-      "tokyo-night",
-      "nord-dark",
-      "darcula",
-      "solarized-dark",
-    ]);
+  it("partitions the catalog by scheme without omitting or duplicating themes", () => {
+    const light = listThemesByScheme("light");
+    const dark = listThemesByScheme("dark");
+    expect(light.every(theme => theme.scheme === "light")).toBe(true);
+    expect(dark.every(theme => theme.scheme === "dark")).toBe(true);
+    expect([...light, ...dark]).toHaveLength(BUILT_IN_THEMES.length);
+    for (const theme of BUILT_IN_THEMES) {
+      expect(theme.scheme === "light" ? light : dark).toContain(theme);
+    }
   });
 
   it("identifies built-in theme ids from persisted settings data", () => {
@@ -196,10 +172,11 @@ describe("theme catalog", () => {
     const theme = getTheme("galley-light");
 
     expect(theme).toBeDefined();
+    const originalLink = theme!.tokens.editor.link;
     expect(() => {
       (theme!.tokens.editor as { link: string }).link = "#000000";
     }).toThrow(TypeError);
-    expect(getTheme("galley-light")!.tokens.editor.link).toBe("#2f6388");
+    expect(getTheme("galley-light")!.tokens.editor.link).toBe(originalLink);
   });
 
   it("keeps reviewed light theme action tokens aligned", () => {

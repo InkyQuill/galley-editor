@@ -1,3 +1,4 @@
+import { isolateHistory } from '@codemirror/commands';
 import { EditorSelection, type ChangeSpec, type SelectionRange } from '@codemirror/state';
 import type { CommandFn } from '../types';
 
@@ -136,6 +137,7 @@ export const toggleHeading: CommandFn = (view, levelArg: unknown = 1) => {
         range: EditorSelection.range(sel.from + charsAddedBefore, sel.to + charsAdded),
       };
     }),
+    { annotations: isolateHistory.of('full') },
   );
   return true;
 };
@@ -145,6 +147,7 @@ export const toggleBulletList: CommandFn = (view) => {
     view.state.changeByRange((sel) =>
       applyListMarkerToggle(view.state, sel, /^\s*[-*+]\s(?!\[)/, () => '- '),
     ),
+    { annotations: isolateHistory.of('full') },
   );
   return true;
 };
@@ -154,6 +157,7 @@ export const toggleOrderedList: CommandFn = (view) => {
     view.state.changeByRange((sel) =>
       applyListMarkerToggle(view.state, sel, /^\s*\d+\.\s*/, (_line, index) => `${index}. `),
     ),
+    { annotations: isolateHistory.of('full') },
   );
   return true;
 };
@@ -163,6 +167,7 @@ export const toggleCheckList: CommandFn = (view) => {
     view.state.changeByRange((sel) =>
       applyListMarkerToggle(view.state, sel, /^\s*[-*+]\s\[[ xX]\]\s*/, () => '- [ ] '),
     ),
+    { annotations: isolateHistory.of('full') },
   );
   return true;
 };

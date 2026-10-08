@@ -205,3 +205,76 @@ test('console content tracing requires opt-in and stops when disabled', async ({
   await expectDocument(page, 'private input after disabling');
   expect(records).toEqual([]);
 });
+
+// These scenarios check author actions and retained Markdown, not UI copy snapshots.
+test('heading selection can return a paragraph to normal and undo both changes', async ({ page }) => {
+  await replaceDocument(page, 'Chapter');
+  await page.getByLabel('Text style', { exact: true }).selectOption('h2');
+  await expectDocument(page, '## Chapter');
+  await page.getByLabel('Text style', { exact: true }).selectOption('normal');
+  await expectDocument(page, 'Chapter');
+  await page.locator('.ge-toolbar').getByRole('button', { name: 'Undo', exact: true }).click();
+  await expectDocument(page, '## Chapter');
+});
+
+test('keyboard activation hides and restores the toolbar without changing the draft', async ({ page }) => {
+  await replaceDocument(page, 'Draft with **formatting**');
+  const toggle = page.getByRole('button', { name: 'Hide formatting toolbar', exact: true });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.ge-toolbar')).toHaveCount(0);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.ge-toolbar')).toBeVisible();
+  await expectDocument(page, 'Draft with **formatting**');
+});
+
+test('preview disables editing controls and returning to live restores editing', async ({ page }) => {
+  await replaceDocument(page, 'Keep me');
+  await page.getByLabel('Mode', { exact: true }).selectOption('preview');
+  const bold = page.locator('.ge-toolbar').getByRole('button', { name: 'Bold', exact: true });
+  await expect(bold).toBeDisabled();
+  await page.getByLabel('Mode', { exact: true }).selectOption('live');
+  await expect(bold).toBeEnabled();
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await bold.click();
+  await expectDocument(page, '**Keep me**');
+});
+
+test('table cell pipes remain one cell after commit and mode round trip', async ({ page }) => {
+  await page.getByText('Load or edit exact Markdown', { exact: true }).click();
+  await page.getByLabel('Markdown source', { exact: true }).fill('intro\n\n| A | B |\n| --- | --- |\n| one | two |');
+  const cell = page.getByRole('cell', { name: 'one', exact: true });
+  await cell.click();
+  await cell.click();
+  await page.locator('.ge-table-cell-editor').fill('left | right');
+  await page.locator('.ge-table-cell-editor').press('Enter');
+  await expect(page.getByRole('cell', { name: 'left | right', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'two', exact: true })).toBeVisible();
+  await page.getByLabel('Mode', { exact: true }).selectOption('markdown');
+  await expect(page.getByLabel('Markdown source', { exact: true })).toHaveValue(/left \\\| right/);
+  await page.getByLabel('Mode', { exact: true }).selectOption('preview');
+  await expect(page.getByRole('cell', { name: 'left | right', exact: true })).toBeVisible();
+});
+
+for (const width of [390, 1280]) {
+  test(`editor remains usable at ${width}px with long content and theme changes`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await replaceDocument(page, 'Long ' + 'word'.repeat(120) + '\n\n- [ ] task');
+    await page.getByRole('button', { name: 'Theme: auto', exact: true }).click();
+    await page.getByRole('button', { name: 'Theme: light', exact: true }).click();
+    const shell = page.locator('.ge-editor-shell');
+    await expect(shell).toBeVisible();
+    const bounds = await shell.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'task', exact: true }).click();
+    await expectDocument(page, 'Long ' + 'word'.repeat(120) + '\n\n- [x] task');
+    expect(errors).toEqual([]);
+    await shell.screenshot({ path: testInfo.outputPath(`editor-${width}.png`) });
+  });
+}
