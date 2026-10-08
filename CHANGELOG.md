@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.17.0](https://github.com/InkyQuill/galley-editor/compare/v0.16.0...v0.17.0) (2026-10-08)
+
+
+### Features
+
+* add Edda themes and harden editor interactions and releases ([6b1500d](https://github.com/InkyQuill/galley-editor/commit/6b1500df7548bf7d4fd33e38d951628a52fe6f8a))
+* **themes:** add shared Edda palettes ([f424d51](https://github.com/InkyQuill/galley-editor/commit/f424d51e1490898e64e2db5bd23386098b98f464))
+
+
+### Bug Fixes
+
+* **ci:** pin npm with trusted publishing support ([fd13cfd](https://github.com/InkyQuill/galley-editor/commit/fd13cfd8e27d70036c5c28f54b7da6c64c6145c7))
+* **ci:** publish npm packages with trusted OIDC ([54808ab](https://github.com/InkyQuill/galley-editor/commit/54808abce1898f5ad74c204f8c3ed84750382116))
+* **ci:** publish npm packages with trusted OIDC ([0f9cf16](https://github.com/InkyQuill/galley-editor/commit/0f9cf16f27f7ca58e0f170b6eb39d65115f19095))
+* **ci:** recover tagged npm releases after partial publish ([4f4adc0](https://github.com/InkyQuill/galley-editor/commit/4f4adc0da5f8f4112c37d96d69cd396ea65d9e39))
+* **editor:** preserve formatting undo and literal table pipes ([28b3670](https://github.com/InkyQuill/galley-editor/commit/28b367096536bbc8b03376fc208bb58e69f9ff24))
+* **editor:** theme search controls and enable safe read-only search ([137dd6f](https://github.com/InkyQuill/galley-editor/commit/137dd6f6748199fe44fc9af611de5452fc1c2279))
+* **theme:** keep native controls readable in dark editors ([904993f](https://github.com/InkyQuill/galley-editor/commit/904993f6efd4bdc0f4474fc7391dea0496b11a59))
+
 ## [0.16.0](https://github.com/InkyQuill/galley-editor/compare/v0.15.0...v0.16.0) (2026-09-27)
 
 
