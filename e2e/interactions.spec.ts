@@ -125,9 +125,10 @@ for (const mode of ['live', 'preview']) {
   test(`read-only keyboard cannot mutate ${mode} content`, async ({ page }) => {
     await replaceDocument(page, 'keep this');
     await page.getByLabel('Mode', { exact: true }).selectOption(mode);
-    await page.getByLabel('Editable', { exact: true }).uncheck();
+    if (mode === 'live') await page.getByLabel('Editable', { exact: true }).uncheck();
     await page.locator('.cm-content').focus();
-    for (const key of ['Backspace', 'Enter', 'Shift+Enter', 'Tab']) {
+    await expect(page.locator('.cm-content')).toBeFocused();
+    for (const key of ['Backspace', 'Enter', 'Shift+Enter', 'ControlOrMeta+b', 'ControlOrMeta+d', 'ControlOrMeta+z', 'Tab']) {
       await page.keyboard.press(key);
       await expectDocument(page, 'keep this');
     }
@@ -282,3 +283,57 @@ for (const width of [390, 1280]) {
     await shell.screenshot({ path: testInfo.outputPath(`editor-${width}.png`) });
   });
 }
+
+for (const scheme of ['light', 'dark'] as const) {
+  for (const width of [390, 1280]) {
+    test(`search and replace follows ${scheme} tokens at ${width}px and supports undo`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await replaceDocument(page, 'alpha beta alpha');
+      await page.getByRole('button', { name: 'Theme: auto', exact: true }).click();
+      if (scheme === 'dark') await page.getByRole('button', { name: 'Theme: light', exact: true }).click();
+      await page.locator('.cm-content').focus();
+      await page.keyboard.press('ControlOrMeta+f');
+      const panel = page.locator('.cm-search');
+      const find = panel.getByRole('textbox', { name: 'Find', exact: true });
+      const replace = panel.getByRole('textbox', { name: 'Replace', exact: true });
+      await expect(find).toBeFocused();
+      await find.pressSequentially('alpha');
+      await replace.pressSequentially('gamma');
+      await expect(page.locator('.cm-searchMatch')).toHaveCount(2);
+      // Compare rendered controls with the editor's resolved palette, not CSS source strings.
+      const colors = await page.locator('.ge-editor-shell').evaluate(element => {
+        const style = getComputedStyle(element);
+        return { background: style.backgroundColor, text: style.color };
+      });
+      await expect(find).toHaveCSS('background-color', colors.background);
+      await expect(find).toHaveCSS('color', colors.text);
+      await expect(replace).toHaveCSS('outline-style', 'solid');
+      const panelBounds = await panel.boundingBox();
+      for (const control of await panel.locator('input, button').all()) {
+        const bounds = await control.boundingBox();
+        expect(bounds!.x).toBeGreaterThanOrEqual(panelBounds!.x);
+        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(panelBounds!.x + panelBounds!.width + 1);
+      }
+      await page.locator('.ge-editor-shell').screenshot({ path: testInfo.outputPath(`search-${scheme}-${width}.png`) });
+      await panel.getByRole('button', { name: 'replace all', exact: true }).click();
+      await expectDocument(page, 'gamma beta gamma');
+      await find.press('Escape');
+      await expect(panel).toHaveCount(0);
+      await page.keyboard.press('ControlOrMeta+z');
+      await expectDocument(page, 'alpha beta alpha');
+    });
+  }
+}
+
+test('read-only search finds content without exposing replacement controls', async ({ page }) => {
+  await replaceDocument(page, 'alpha beta alpha');
+  await page.getByLabel('Editable', { exact: true }).uncheck();
+  await page.locator('.cm-content').focus();
+  await page.keyboard.press('ControlOrMeta+f');
+  const panel = page.locator('.cm-search');
+  await panel.getByRole('textbox', { name: 'Find', exact: true }).pressSequentially('alpha');
+  await expect(page.locator('.cm-searchMatch')).toHaveCount(2);
+  await expect(panel.getByRole('textbox', { name: 'Replace', exact: true })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'next', exact: true }).click();
+  await expectDocument(page, 'alpha beta alpha');
+});
