@@ -187,7 +187,7 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
         '',
         "const themeId: ThemeId = 'galley-light';",
         "const scheme: ThemeScheme = 'light';",
-        "const variables: ThemeCssVariables = { colorScheme: scheme, '--app-bg': galleyLight.tokens.app.bg };",
+        "const variables: ThemeCssVariables = { colorScheme: scheme, '--app-bg': '#ffffff' };",
         'const definition: ThemeDefinition | undefined = undefined;',
         'const tokens: ThemeTokens | undefined = undefined;',
         'const props: GalleyEditorProps = {};',
