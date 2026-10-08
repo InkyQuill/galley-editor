@@ -110,6 +110,16 @@
   --ge-color-scrollbar-thumb-hover: rgba(203, 213, 225, 0.62);
 }
 
+/* Scope native controls and scrollbars to this editor, including on hosts whose
+ * system preference differs from the explicitly selected editor theme. */
+[data-theme="light"] > .ge-editor-shell {
+  color-scheme: light;
+}
+
+[data-theme="dark"] > .ge-editor-shell {
+  color-scheme: dark;
+}
+
 /* Editor shell */
 
 .ge-editor-shell {
@@ -283,6 +293,7 @@
 }
 
 .ge-toolbar-select {
+  background-color: var(--ge-color-surface-elevated);
   cursor: pointer;
   min-width: 132px;
   padding: 0 8px;

@@ -231,3 +231,9 @@ const theme = getTheme(dark ? 'edda-dark' : 'edda-light')!;
 
 Hosts choose font, text width and surrounding padding. The Edda palette does not
 change the default Galley theme IDs or require installation of Open Edda.
+
+
+The base stylesheet also sets the native `color-scheme` inside editors with an
+explicit light/dark theme (including the resolved `auto` theme), so selects and
+scrollbars match the editor even when the host uses the opposite theme. With
+`theme="inherit"`, set `color-scheme` on the host alongside your CSS tokens.

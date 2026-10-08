@@ -267,6 +267,10 @@ for (const width of [390, 1280]) {
     await page.getByRole('button', { name: 'Theme: light', exact: true }).click();
     const shell = page.locator('.ge-editor-shell');
     await expect(shell).toBeVisible();
+    const styleSelector = page.getByLabel('Text style', { exact: true });
+    await expect(styleSelector).toHaveCSS('color-scheme', 'dark');
+    const toolbarBackground = await page.locator('.ge-toolbar').evaluate(element => getComputedStyle(element).backgroundColor);
+    await expect(styleSelector).toHaveCSS('background-color', toolbarBackground);
     const bounds = await shell.boundingBox();
     expect(bounds).not.toBeNull();
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
