@@ -1,3 +1,4 @@
+import { extractReleaseNotes } from './release-notes.mjs';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const version = process.argv[2];
@@ -18,34 +19,13 @@ function write(path, content) {
   writeFileSync(path, content);
 }
 
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function extractChangelogSection() {
-  const changelog = read('CHANGELOG.md');
-  const escaped = escapeRegex(version);
-  const patterns = [
-    new RegExp(`^# \\[${escaped}\\][^\\n]*\\n+([\\s\\S]*?)(?=\\n# \\[|\\n# Changelog|\\n## \\[Unreleased\\]|$)`, 'm'),
-    new RegExp(`^## \\[${escaped}\\][^\\n]*\\n+([\\s\\S]*?)(?=\\n## \\[|\\n# \\[|$)`, 'm'),
-  ];
-
-  for (const pattern of patterns) {
-    const match = changelog.match(pattern);
-    if (match) {
-      return match[1].trim();
-    }
-  }
-
-  return '- Release notes are available in `CHANGELOG.md`.';
-}
-
 function syncReleasePage() {
   if (existsSync(releasePath)) {
     return;
   }
 
-  const body = extractChangelogSection();
+  const body = extractReleaseNotes(read('CHANGELOG.md'), version)
+    ?? '- Release notes are available in `CHANGELOG.md`.';
   const content = `---\ntitle: ${releaseTitle}\ndescription: Release notes for Galley Editor ${releaseTitle}.\n---\n\n${releaseTitle} release notes.\n\n${body}\n`;
   write(releasePath, content);
 }

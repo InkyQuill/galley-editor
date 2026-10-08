@@ -44,6 +44,7 @@ export default defineConfig({
             { label: 'File Uploads', slug: 'guides/uploads' },
             { label: 'Document Transactions', slug: 'guides/document-transactions' },
             { label: 'Storybook', slug: 'guides/storybook' },
+            { label: 'Interaction Testing', slug: 'guides/interaction-testing' },
           ],
         },
         {
@@ -56,6 +57,7 @@ export default defineConfig({
         {
           label: 'Project',
           items: [
+            { label: 'Releases and CI', slug: 'guides/releases' },
             { label: 'Roadmap', slug: 'releases/roadmap' },
             { label: 'v0.16.0', slug: 'releases/v0-16-0' },
             { label: 'v0.15.0', slug: 'releases/v0-15-0' },

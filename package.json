@@ -1,6 +1,6 @@
 {
   "name": "@inkyquill/galley-workspace",
-  "version": "0.13.0",
+  "version": "0.16.0",
   "private": true,
   "description": "Galley Editor monorepo: publishable editor package and shared theme token package.",
   "type": "module",
@@ -12,11 +12,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "npm run dev --workspace @inkyquill/galley-editor",
+    "dev": "npm run dev --workspace @inkyquill/galley-editor --",
     "build": "npm run build --workspace @inkyquill/galley-editor",
     "build:lib": "npm run build:lib --workspace @inkyquill/galley-editor",
     "build:themes": "npm run build --workspace @inkyquill/galley-themes",
-    "preview": "npm run preview --workspace @inkyquill/galley-editor",
+    "preview": "npm run preview --workspace @inkyquill/galley-editor --",
     "test": "npm run test --workspace @inkyquill/galley-editor",
     "test:watch": "npm run test:watch --workspace @inkyquill/galley-editor",
     "test:coverage": "npm run test:coverage --workspace @inkyquill/galley-editor",
@@ -29,22 +29,15 @@
     "docs:preview": "npm --prefix docs-site run preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "semantic-release": "semantic-release",
     "prepare": "node scripts/install-git-hooks.mjs",
-    "test:commit-msg": "node --test scripts/validate-commit-msg.test.mjs"
+    "test:commit-msg": "node --test scripts/validate-commit-msg.test.mjs",
+    "test:release": "node --test scripts/release.test.mjs scripts/release-notes.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@lezer/highlight": "^1.2.0",
     "@lezer/markdown": "^1.6.3",
     "@playwright/test": "^1.63.0",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/commit-analyzer": "^13.0.1",
-    "@semantic-release/exec": "^7.1.0",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^12.0.8",
-    "@semantic-release/npm": "^13.1.5",
-    "@semantic-release/release-notes-generator": "^14.1.1",
     "@storybook/addon-docs": "^10.3.4",
     "@storybook/addon-links": "^10.3.4",
     "@storybook/react": "^10.3.4",
@@ -53,7 +46,6 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
-    "semantic-release": "^25.0.5",
     "storybook": "^10.3.4",
     "typescript": "~6.0",
     "typescript-eslint": "^8.58.0"

@@ -1,0 +1,83 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Detect a merged version PR
+        id: version
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          changed=false
+          if [ "$GITHUB_EVENT_NAME" = push ] && previous=$(git show "$BEFORE:version.txt" 2>/dev/null); then
+            if [ "$(cat version.txt)" != "$previous" ]; then changed=true; fi
+          fi
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+      - uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4
+        id: release
+        if: steps.version.outputs.changed != 'true'
+        with:
+          skip-github-release: true
+          target-branch: main
+      - name: Synchronize release PR and explicitly run its checks
+        if: steps.release.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+        run: |
+          number=$(node -e 'const n=JSON.parse(process.env.RELEASE_PR).number; if(!Number.isSafeInteger(n)||n<1)throw Error("Invalid PR"); console.log(n)')
+          head=$(gh pr view "$number" --json headRefName --jq .headRefName)
+          case "$head" in release-please--branches--main*) ;; *) exit 1;; esac
+          gh auth setup-git
+          git fetch origin "$head"
+          git switch -c "$head" "origin/$head"
+          node scripts/prepare-workspace-release.mjs "$(cat version.txt)" --sync-only
+          node scripts/sync-release-docs.mjs "$(cat version.txt)"
+          git add package.json packages/*/package.json package-lock.json docs-site/src/content/docs docs-site/astro.config.mjs docs/specs/ROADMAP.md
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore(release): synchronize workspace and release docs'
+            git push origin "$head"
+          fi
+          gh workflow run ci.yml --ref "$head"
+      - name: Dispatch publication of the exact merged version
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(cat version.txt)
+          node scripts/release.mjs check "$version"
+          tag="v$version"
+          if git rev-parse "$tag^{commit}" >/dev/null 2>&1; then
+            test "$(git rev-parse "$tag^{commit}")" = "$GITHUB_SHA"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA"
+          fi
+          gh workflow run release.yml --ref "$tag" -f version="$version"

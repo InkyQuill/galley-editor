@@ -4,14 +4,21 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -37,14 +44,20 @@ jobs:
       - name: Themes tests
         run: npm test --workspace @inkyquill/galley-themes
 
+      - name: Prepare package release notes
+        run: node scripts/release.mjs prepare
+
       - name: Library build
         run: npm run build:lib
 
       - name: Themes build
         run: npm run build:themes
 
-      - name: Verify package contents
-        run: ./scripts/verify-publish.sh
+      - name: Release and commit hook tests
+        run: |
+          npm run test:release
+          npm run test:commit-msg
+          node scripts/release.mjs check "$(cat version.txt)"
 
       - name: Package consumer checks
         run: npm run test:package-consumer
@@ -57,6 +70,28 @@ jobs:
           fi
           echo "dist/ is clean."
 
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: packages/galley-editor/coverage/
+          if-no-files-found: ignore
+
+  docs:
+    name: Docs and Storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs-site/package-lock.json
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
       - name: Storybook build
         run: npm run build-storybook
 
@@ -69,10 +104,27 @@ jobs:
           GALLEY_DOCS_BASE: /galley-editor
         run: npm run docs:build
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v7
-        if: always()
+
+  interactions:
+    name: Interactions (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
-          name: coverage
-          path: packages/galley-editor/coverage/
-          if-no-files-found: ignore
+          node-version: 22
+          cache: npm
+      - run: npm ci --legacy-peer-deps --no-audit --no-fund
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:e2e -- --project=${{ matrix.browser }} --workers=2
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7

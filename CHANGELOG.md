@@ -1,4 +1,6 @@
-# [0.16.0](https://github.com/InkyQuill/galley-editor/compare/v0.15.0...v0.16.0) (2026-09-27)
+# Changelog
+
+## [0.16.0](https://github.com/InkyQuill/galley-editor/compare/v0.15.0...v0.16.0) (2026-09-27)
 
 
 ### Bug Fixes
@@ -13,7 +15,7 @@
 * **editor:** add compact toolbar and inherited theme mode ([e9d52c3](https://github.com/InkyQuill/galley-editor/commit/e9d52c375b3a3e83d37439bb786d8cc716a7e54d))
 * **themes:** add Thoth light and dark palettes ([1656f65](https://github.com/InkyQuill/galley-editor/commit/1656f65de6fca41ef14494c36a3539e58786d06e))
 
-# [0.15.0](https://github.com/InkyQuill/galley-editor/compare/v0.14.0...v0.15.0) (2026-09-16)
+## [0.15.0](https://github.com/InkyQuill/galley-editor/compare/v0.14.0...v0.15.0) (2026-09-16)
 
 
 ### Bug Fixes
@@ -26,28 +28,28 @@
 
 * extract shared galley themes workspace ([054f135](https://github.com/InkyQuill/galley-editor/commit/054f1353324d90e3426ee7f53140b22cd572751e))
 
-# [0.14.0](https://github.com/InkyQuill/galley-editor/compare/v0.13.0...v0.14.0) (2026-09-15)
+## [0.14.0](https://github.com/InkyQuill/galley-editor/compare/v0.13.0...v0.14.0) (2026-09-15)
 
 
 ### Features
 
 * extract shared galley themes workspace ([#7](https://github.com/InkyQuill/galley-editor/issues/7)) ([3af452a](https://github.com/InkyQuill/galley-editor/commit/3af452ac71a25257354569cd3b8c1e576118b5bd))
 
-# [0.13.0](https://github.com/InkyQuill/galley-editor/compare/v0.12.0...v0.13.0) (2026-07-26)
+## [0.13.0](https://github.com/InkyQuill/galley-editor/compare/v0.12.0...v0.13.0) (2026-07-26)
 
 
 ### Features
 
 * per-document state switching and footnote support ([#6](https://github.com/InkyQuill/galley-editor/issues/6)) ([e512077](https://github.com/InkyQuill/galley-editor/commit/e512077973425d1948de196ab26c54ed95bb27aa))
 
-# [0.12.0](https://github.com/InkyQuill/galley-editor/compare/v0.11.0...v0.12.0) (2026-07-24)
+## [0.12.0](https://github.com/InkyQuill/galley-editor/compare/v0.11.0...v0.12.0) (2026-07-24)
 
 
 ### Features
 
 * **toolbar:** show command shortcuts in tooltips ([5806415](https://github.com/InkyQuill/galley-editor/commit/580641520b5cdf031c1c5624959823211bd9e320))
 
-# [0.11.0](https://github.com/InkyQuill/galley-editor/compare/v0.10.2...v0.11.0) (2026-07-23)
+## [0.11.0](https://github.com/InkyQuill/galley-editor/compare/v0.10.2...v0.11.0) (2026-07-23)
 
 
 ### Bug Fixes
@@ -91,7 +93,7 @@
 * enforce conventional commit messages ([3ba402d](https://github.com/InkyQuill/galley-editor/commit/3ba402d9f8a7a8920d9e9bf0a9f9109f243c6861))
 * sync release docs with starlight layout ([acec931](https://github.com/InkyQuill/galley-editor/commit/acec931ab0dd7ac65125b1fd1876afe2888803e8))
 
-# [0.10.0](https://github.com/InkyQuill/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
+## [0.10.0](https://github.com/InkyQuill/galley-editor/compare/v0.9.1...v0.10.0) (2026-06-27)
 
 
 ### Bug Fixes

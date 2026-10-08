@@ -32,7 +32,7 @@ if (conventionalSubject.test(subject)) {
 
 console.error(`Invalid commit message: "${subject}"`);
 console.error('');
-console.error('Use Conventional Commits so semantic-release can publish versions.');
+console.error('Use Conventional Commits so release-please can publish versions.');
 console.error('Expected: <type>[optional scope]: <description>');
 console.error('Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test');
 console.error('Examples:');
