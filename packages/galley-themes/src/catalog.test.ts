@@ -107,6 +107,8 @@ function hexChannels(color: string): [number, number, number] {
 describe("theme catalog", () => {
   it("ships the approved built-in themes", () => {
     expect(BUILT_IN_THEMES.map((theme) => theme.id)).toEqual([
+      "edda-light",
+      "edda-dark",
       "galley-light",
       "galley-dark",
       "thoth-light",
@@ -133,6 +135,7 @@ describe("theme catalog", () => {
 
   it("filters themes by scheme", () => {
     expect(listThemesByScheme("light").map((theme) => theme.id)).toEqual([
+      "edda-light",
       "galley-light",
       "thoth-light",
       "gruvbox-light",
@@ -142,6 +145,7 @@ describe("theme catalog", () => {
       "solarized-light",
     ]);
     expect(listThemesByScheme("dark").map((theme) => theme.id)).toEqual([
+      "edda-dark",
       "galley-dark",
       "thoth-dark",
       "gruvbox-dark",

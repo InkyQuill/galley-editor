@@ -212,3 +212,22 @@ Use real buttons with visible focus states and accessible names. Do not make ico
 | Build a full command toolbar | [Commands](/galley-editor/guides/commands/) |
 | Track selection for contextual controls | [API Reference](/galley-editor/reference/api/#callbacks) |
 | Theme the shell and toolbar | [Surface Hooks](#surface-hooks) |
+
+## Edda shared theme
+
+The shared catalog includes `edda-light` and `edda-dark` in the `Edda` family.
+Use the same tokens on the application and editor to keep dialogs, selection,
+focus and the manuscript consistent:
+
+```tsx
+import { getTheme, themeToCssVariables } from '@inkyquill/galley-themes';
+
+const theme = getTheme(dark ? 'edda-dark' : 'edda-light')!;
+<GalleyEditor
+  theme={theme.scheme}
+  surface={{ style: themeToCssVariables(theme), contentPadding: '0' }}
+/>
+```
+
+Hosts choose font, text width and surrounding padding. The Edda palette does not
+change the default Galley theme IDs or require installation of Open Edda.
