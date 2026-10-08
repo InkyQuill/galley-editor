@@ -47,3 +47,13 @@ const variables = themeToCssVariables(theme!);
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+## Edda workshop
+
+The `edda-light` and `edda-dark` catalog entries share the `Edda` family. They
+match Open Edda's quiet writing workspace and can be selected with
+`getTheme('edda-light')` / `getTheme('edda-dark')`, then passed to
+`themeToCssVariables`. Hosts retain control of manuscript font, width and
+padding; the catalog supplies semantic colors for the shell, editor, menus,
+selection, focus and Markdown. Select the variant matching the author's color
+scheme; Galley's default theme IDs remain unchanged.

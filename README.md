@@ -90,7 +90,7 @@ npm run build:lib    # build the publishable editor library
 npm run build:themes # build the publishable themes package
 ```
 
-Releases keep one version across both packages; see [`scripts/prepare-workspace-release.mjs`](scripts/prepare-workspace-release.mjs) and [AGENTS.md](./AGENTS.md) for the release flow.
+Releases keep one version across both packages through reviewed release-please PRs. See the [release guide](docs-site/src/content/docs/guides/releases.md) for CI, npm trusted publishing, and retrying a partial release.
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the clean-room rule and PR checklist.
 

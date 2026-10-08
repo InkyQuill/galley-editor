@@ -625,12 +625,14 @@ describe('tablesPlugin', () => {
     expect(cells.item(2).classList.contains('ge-align-right')).toBe(true);
   });
 
-  it('does not render unsupported escaped-pipe tables as widgets', () => {
+  it('renders escaped pipes inside their original cell', () => {
     const doc = '| A | B |\n| - | - |\n| one \\| two | three |\n\nplain';
     const view = tableEditor(doc);
 
-    expect(view.dom.querySelector('.ge-table-widget')).toBeNull();
-    expect(lineElement(view, 1).textContent).toContain('| A | B |');
+    const cells = view.dom.querySelectorAll('.ge-table-widget tbody td');
+    expect(cells).toHaveLength(2);
+    expect(cells[0].textContent).toBe('one | two');
+    expect(cells[1].textContent).toBe('three');
   });
 });
 

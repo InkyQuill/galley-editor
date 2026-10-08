@@ -51,3 +51,20 @@ Failed browser tests save traces under `test-results/`. Open a trace with `npx p
 - Enter continues a list; Enter on an empty item exits it. Galley's own keymap implements this behavior and invokes configured Enter callbacks.
 
 This bench does not prove every operating-system input method or desktop integration works. Keep native-only regressions reproducible with their application and engine versions.
+
+
+## CI and responsive checks
+
+Every pull request runs the interaction suite in Chromium, Firefox and WebKit.
+Release-please branches receive an explicit CI dispatch, because a PR created with
+`GITHUB_TOKEN` does not trigger ordinary pull-request workflows. Release publication
+reuses the same complete CI against the tagged commit.
+
+The browser suite also checks heading undo boundaries, keyboard toolbar visibility,
+preview-to-edit transitions, table pipes, and long documents at 390 px and 1280 px.
+`PLAYWRIGHT_OUTPUT_DIR=/tmp/galley-results npm run test:e2e` keeps traces and responsive
+screenshots outside the checkout. To use a different demo port, run
+`npm run dev -- --port 5180 --strictPort`.
+
+These automated checks cover browser engines and emulated viewport sizes; they do
+not substitute for a physical touch device, screen reader, or native IME session.

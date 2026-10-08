@@ -5,7 +5,8 @@
 // Validates the VERSION argument as semver, sets the same version on both
 // publishable packages, mirrors the root CHANGELOG.md into each package (so
 // it ships in the npm tarballs), refreshes package-lock.json, and builds both
-// packages. The root package.json stays private and is never published.
+// packages. The root package.json is synchronized too, stays private, and is never published.
+// --sync-only skips builds when synchronizing the release PR.
 
 import { execSync } from 'node:child_process';
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -22,7 +23,7 @@ if (!version || !SEMVER_PATTERN.test(version)) {
   process.exit(1);
 }
 
-for (const dir of PACKAGE_DIRS) {
+for (const dir of ['.', ...PACKAGE_DIRS]) {
   const manifestPath = `${dir}/package.json`;
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   manifest.version = version;
@@ -37,8 +38,10 @@ if (existsSync('CHANGELOG.md')) {
   console.log('Mirrored CHANGELOG.md into both packages.');
 }
 
-execSync('npm install --package-lock-only --no-audit --no-fund', { stdio: 'inherit' });
-execSync('npm run build:lib', { stdio: 'inherit' });
-execSync('npm run build:themes', { stdio: 'inherit' });
+execSync('npm install --package-lock-only --legacy-peer-deps --ignore-scripts --no-audit --no-fund', { stdio: 'inherit' });
+if (!process.argv.includes('--sync-only')) {
+  execSync('npm run build:lib', { stdio: 'inherit' });
+  execSync('npm run build:themes', { stdio: 'inherit' });
+}
 
 console.log(`Workspace prepared for release v${version}.`);

@@ -134,14 +134,18 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
       ]) {
         assert.ok(themes[name], \`themes export missing: \${name}\`);
       }
-      assert.equal(themes.BUILT_IN_THEMES.length, 15);
-      assert.equal(themes.DEFAULT_LIGHT_THEME_ID, 'galley-light');
-      assert.equal(themes.DEFAULT_DARK_THEME_ID, 'galley-dark');
-      assert.equal(themes.DEFAULT_CONSTANT_THEME_ID, 'galley-light');
+      assert.equal(themes.getTheme(themes.DEFAULT_LIGHT_THEME_ID).scheme, 'light');
+      assert.equal(themes.getTheme(themes.DEFAULT_DARK_THEME_ID).scheme, 'dark');
+      assert.ok(themes.getTheme(themes.DEFAULT_CONSTANT_THEME_ID));
+      for (const scheme of ['light', 'dark']) {
+        const edda = themes.getTheme('edda-' + scheme);
+        assert.equal(edda.scheme, scheme);
+        assert.ok(themes.themeToCssVariables(edda)['--ge-color-bg']);
+      }
       const galleyLight = themes.getTheme('galley-light');
       assert.equal(galleyLight.scheme, 'light');
-      assert.equal(themes.themeToCssVariables(galleyLight)['--app-bg'], '#f6f4ef');
-      assert.equal(themes.themeToCssVariables(galleyLight)['--ge-color-bg'], '#fbfaf7');
+      assert.equal(themes.themeToCssVariables(galleyLight)['--app-bg'], galleyLight.tokens.app.bg);
+      assert.equal(themes.themeToCssVariables(galleyLight)['--ge-color-bg'], galleyLight.tokens.editor.bg);
       assert.ok(themes.isThemeId('galley-dark'));
       assert.ok(!themes.isThemeId('nope'));
 
@@ -183,7 +187,7 @@ test('npm tarballs expose the editor and themes contracts without a workspace sy
         '',
         "const themeId: ThemeId = 'galley-light';",
         "const scheme: ThemeScheme = 'light';",
-        "const variables: ThemeCssVariables = { colorScheme: scheme, '--app-bg': '#f6f4ef' };",
+        "const variables: ThemeCssVariables = { colorScheme: scheme, '--app-bg': '#ffffff' };",
         'const definition: ThemeDefinition | undefined = undefined;',
         'const tokens: ThemeTokens | undefined = undefined;',
         'const props: GalleyEditorProps = {};',

@@ -31,7 +31,20 @@ Package scripts can also be invoked directly with `npm run <script> --workspace 
 
 ## Release
 
-Releases keep a single version across both packages (`v0.13.0` at the time of writing). `semantic-release` (`.releaserc.json`) publishes once per package via two `@semantic-release/npm` entries with different `pkgRoot`s; the private root is never published. `scripts/prepare-workspace-release.mjs <VERSION>` validates a semver argument, sets the same version on both `package.json` files, mirrors the root `CHANGELOG.md` into both packages, refreshes `package-lock.json`, and builds both packages — CI runs it during release prepare, and humans can run it manually. Publication is verified with `scripts/verify-publish.sh` (pack + isolated temp-consumer install) and `npm run test:package-consumer`; both are dry-run only.
+Releases keep one version across both packages. `version.txt` is the canonical
+version; release-please updates the root and workspace manifests in a reviewed
+release PR. Its workflow synchronizes the lockfile and release docs, then explicitly
+dispatches CI for the bot branch. Merging the release PR creates an immutable tag
+at that merge commit and dispatches `release.yml` against the tag. Publication runs
+only after the complete reusable CI passes and `NPM_PUBLISH_ENABLED` is `true`.
+The private root is never published. See the release guide under
+`docs-site/src/content/docs/guides/releases.md` for setup and partial-release retries.
+
+`node scripts/release.mjs check <VERSION>` checks every version source.
+`node scripts/release.mjs prepare` mirrors the changelog without changing versions.
+`npm run test:package-consumer` verifies real tarballs and an isolated consumer;
+`scripts/verify-publish.sh` is a standalone build-and-verify convenience command.
+Neither verification command publishes anything.
 
 ## Architecture
 
@@ -94,7 +107,7 @@ Lezer token classes (`tok-strong`, `tok-emphasis`, etc.) are applied via `classH
 
 ## Commit and Release Discipline
 
-All non-merge commits must use Conventional Commits so `semantic-release` can infer and publish versions. Examples:
+All non-merge commits must use Conventional Commits so `release-please` can propose the appropriate version. Examples:
 
 - `fix: handle empty table control icons`
 - `feat(editor): add table toolbar customization`

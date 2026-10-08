@@ -77,6 +77,18 @@ function createEmptyCell(
   };
 }
 
+function escapedAt(text: string, index: number): boolean {
+  let slashes = 0;
+  for (let before = index - 1; before >= 0 && text[before] === '\\'; before -= 1) slashes += 1;
+  return slashes % 2 === 1;
+}
+
+// Cell text remains inline Markdown. Preserve existing escapes while preventing
+// literal pipes entered in a cell from turning into structural separators.
+function escapeCellPipes(text: string): string {
+  return text.replace(/\|/g, (_pipe, index: number) => escapedAt(text, index) ? '|' : '\\|');
+}
+
 function splitRow(
   line: SourceLine,
   row: number,
@@ -85,11 +97,12 @@ function splitRow(
 ): GalleyTableCell[] {
   const cells: GalleyTableCell[] = [];
   let from = line.text.startsWith('|') ? 1 : 0;
-  const to = line.text.endsWith('|') ? line.text.length - 1 : line.text.length;
+  const to = line.text.endsWith('|') && !escapedAt(line.text, line.text.length - 1)
+    ? line.text.length - 1 : line.text.length;
   let column = 0;
 
   for (let index = from; index <= to; index += 1) {
-    if (index !== to && line.text[index] !== '|') continue;
+    if (index !== to && (line.text[index] !== '|' || escapedAt(line.text, index))) continue;
 
     const range = trimmedRange(line.text, from, index);
     cells.push({
@@ -157,8 +170,6 @@ function parseTableRange(state: EditorState, from: number, to: number): GalleyTa
 }
 
 export function parseMarkdownTable(source: string, from = 0): GalleyTable | null {
-  if (source.includes('\\|')) return null;
-
   const lines = sourceLines(source, from);
   if (lines.length < 2) return null;
 
@@ -270,7 +281,7 @@ export function updateTableCell(table: GalleyTable, ref: TableCellRef, text: str
     rows: table.rows.map((row, rowIndex) =>
       row.map((cell, columnIndex) =>
         rowIndex === ref.row && columnIndex === ref.column
-          ? { ...cell, text }
+          ? { ...cell, text: escapeCellPipes(text) }
           : { ...cell })),
   };
 }

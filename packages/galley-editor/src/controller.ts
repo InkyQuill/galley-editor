@@ -604,20 +604,21 @@ export class EditorController implements GalleyHandle {
       const { command, args = [] } = binding;
       return {
         ...binding,
-        run: () => this.execCommand(command, ...args) !== false,
+        run: () => (command === 'selectAll' || this.canEditDocument())
+          && this.execCommand(command, ...args) !== false,
       } satisfies GalleyKeyBinding;
     });
   }
 
   private buildKeymap(settings: ControllerSettings): Extension {
     const controllerDefaults: KeyBinding[] = [
-      { key: 'Enter', run: (cm) => this.handleEnter(cm, false, false) },
-      { key: 'Shift-Enter', run: (cm) => this.handleDefaultEnter(cm) },
-      { key: 'Mod-Enter', run: (cm) => this.handleEnter(cm, true, false) },
+      { key: 'Enter', run: (cm) => this.canEditDocument() && this.handleEnter(cm, false, false) },
+      { key: 'Shift-Enter', run: (cm) => this.canEditDocument() && this.handleDefaultEnter(cm) },
+      { key: 'Mod-Enter', run: (cm) => this.canEditDocument() && this.handleEnter(cm, true, false) },
       { key: 'Mod-Shift-Enter', run: () => false },
-      { key: 'Tab', run: (cm) => this.handleTab(cm, false) },
-      { key: 'Shift-Tab', run: (cm) => this.handleTab(cm, true) },
-      { key: 'Backspace', run: (cm) => this.handleBackspace(cm) },
+      { key: 'Tab', run: (cm) => this.canEditDocument() && this.handleTab(cm, false) },
+      { key: 'Shift-Tab', run: (cm) => this.canEditDocument() && this.handleTab(cm, true) },
+      { key: 'Backspace', run: (cm) => this.canEditDocument() && this.handleBackspace(cm) },
       {
         key: 'Escape',
         run: () => {
@@ -678,9 +679,11 @@ export class EditorController implements GalleyHandle {
       // Editability
       EditorView.editable.of(canEditDocument),
       EditorState.readOnly.of(!canEditDocument),
-      EditorView.contentAttributes.of(
-        settings.ariaLabel ? { 'aria-label': settings.ariaLabel } : {},
-      ),
+      EditorView.contentAttributes.of({
+        ...(settings.ariaLabel ? { 'aria-label': settings.ariaLabel } : {}),
+        // Non-editable content still needs keyboard focus for search and copy.
+        ...(!canEditDocument ? { tabindex: '0' } : {}),
+      }),
       // Placeholder
       ...(settings.placeholder ? [cmPlaceholder(settings.placeholder)] : []),
       ...uploadUiExtension({

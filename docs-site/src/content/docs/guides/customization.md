@@ -16,7 +16,7 @@ import '@inkyquill/galley-editor/style.css';
 The stylesheet covers:
 
 - CodeMirror layout inside the Galley shell.
-- Toolbar and footer structure.
+- Toolbar, footer, and search/replace panel structure.
 - Light and dark CSS variables.
 - Markdown semantic classes such as `ge-h1`, `ge-bold`, `ge-code-fence`, and `ge-table`.
 - Lezer token classes such as `tok-keyword`, `tok-string`, and `tok-comment`.
@@ -212,3 +212,58 @@ Use real buttons with visible focus states and accessible names. Do not make ico
 | Build a full command toolbar | [Commands](/galley-editor/guides/commands/) |
 | Track selection for contextual controls | [API Reference](/galley-editor/reference/api/#callbacks) |
 | Theme the shell and toolbar | [Surface Hooks](#surface-hooks) |
+
+## Edda shared theme
+
+The shared catalog includes `edda-light` and `edda-dark` in the `Edda` family.
+Use the same tokens on the application and editor to keep dialogs, selection,
+focus and the manuscript consistent:
+
+```tsx
+import { getTheme, themeToCssVariables } from '@inkyquill/galley-themes';
+
+const theme = getTheme(dark ? 'edda-dark' : 'edda-light')!;
+<GalleyEditor
+  theme={theme.scheme}
+  surface={{ style: themeToCssVariables(theme), contentPadding: '0' }}
+/>
+```
+
+Hosts choose font, text width and surrounding padding. The Edda palette does not
+change the default Galley theme IDs or require installation of Open Edda.
+
+
+The base stylesheet also sets the native `color-scheme` inside editors with an
+explicit light/dark theme (including the resolved `auto` theme), so selects and
+scrollbars match the editor even when the host uses the opposite theme. With
+`theme="inherit"`, set `color-scheme` on the host alongside your CSS tokens.
+
+
+## Search and replace
+
+Open search with `Mod-F` or `editor.current?.openSearch()`. Read-only and Preview
+editors remain keyboard-focusable for search and copying, while editing shortcuts
+are inactive and the search panel omits replacement controls. The base stylesheet
+uses the same `--ge-color-*` tokens as the editor: `surface-elevated` for the panel,
+`bg` for fields, `surface` for buttons, `text`/`text-muted` for labels, and
+`focus-ring` for keyboard focus. Matches use `selection`; the current match also
+has a focus-colored outline. Fields and controls wrap within narrow editors.
+
+For example, an application's custom palette applies to search without a separate
+search theme:
+
+```css
+.manuscript-editor {
+  --ge-color-surface-elevated: #fcfcf8;
+  --ge-color-bg: #fffefa;
+  --ge-color-surface: #f1f2ee;
+  --ge-color-text: #293831;
+  --ge-color-text-muted: #667169;
+  --ge-color-border: #dce1d9;
+  --ge-color-focus-ring: #376452;
+  --ge-color-selection: #cfdfd2;
+}
+```
+
+Scope these overrides to `className="manuscript-editor"` or use the theme variables
+from `@inkyquill/galley-themes` on `surface.style`.

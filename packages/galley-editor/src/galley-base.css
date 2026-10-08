@@ -110,6 +110,16 @@
   --ge-color-scrollbar-thumb-hover: rgba(203, 213, 225, 0.62);
 }
 
+/* Scope native controls and scrollbars to this editor, including on hosts whose
+ * system preference differs from the explicitly selected editor theme. */
+[data-theme="light"] > .ge-editor-shell {
+  color-scheme: light;
+}
+
+[data-theme="dark"] > .ge-editor-shell {
+  color-scheme: dark;
+}
+
 /* Editor shell */
 
 .ge-editor-shell {
@@ -120,6 +130,105 @@
   backdrop-filter: var(--ge-backdrop-filter);
   color: var(--ge-color-text);
   overflow: hidden;
+}
+
+/* Search and replace share the host's Galley palette, including custom tokens. */
+.ge-editor-shell .cm-editor .cm-panels {
+  background: var(--ge-color-surface-elevated);
+  border-color: var(--ge-color-border);
+  color: var(--ge-color-text);
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--ge-font-body);
+  font-size: 0.875rem;
+  gap: 8px;
+  padding: 12px 48px 12px 14px;
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search :is(input, button, label) {
+  margin: 0;
+}
+
+.ge-editor-shell .cm-editor .cm-search br {
+  flex-basis: 100%;
+}
+
+.ge-editor-shell .cm-editor .cm-search .cm-textfield {
+  background: var(--ge-color-bg);
+  border: 1px solid var(--ge-color-border);
+  border-radius: var(--ge-radius-block);
+  box-sizing: border-box;
+  caret-color: var(--ge-color-caret);
+  color: var(--ge-color-text);
+  flex: 1 1 12rem;
+  font: inherit;
+  min-height: 34px;
+  min-width: 0;
+  padding: 6px 8px;
+  width: 12rem;
+}
+
+.ge-editor-shell .cm-editor .cm-search .cm-textfield::placeholder {
+  color: var(--ge-color-text-muted);
+  opacity: 1;
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search button {
+  background: var(--ge-color-surface);
+  border: 1px solid var(--ge-color-border);
+  border-radius: var(--ge-radius-block);
+  color: var(--ge-color-text);
+  cursor: pointer;
+  font: inherit;
+  min-height: 34px;
+  padding: 6px 10px;
+  text-transform: none;
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search button:hover {
+  background: var(--ge-color-selection);
+}
+
+.ge-editor-shell .cm-editor .cm-search :is(input, button):focus-visible {
+  outline: 2px solid var(--ge-color-focus-ring);
+  outline-offset: 2px;
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search label {
+  align-items: center;
+  color: var(--ge-color-text-muted);
+  display: inline-flex;
+  font: inherit;
+  gap: 5px;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search input[type="checkbox"] {
+  accent-color: var(--ge-color-checkbox-accent);
+}
+
+.ge-editor-shell .cm-editor .cm-panel.cm-search button[name="close"] {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0;
+  right: 8px;
+  top: 12px;
+  width: 32px;
+}
+
+.ge-editor-shell .cm-editor .cm-searchMatch {
+  background: var(--ge-color-selection);
+}
+
+.ge-editor-shell .cm-editor .cm-searchMatch-selected {
+  outline: 1px solid var(--ge-color-focus-ring);
+  outline-offset: -1px;
 }
 
 .ge-editor-body {
@@ -283,6 +392,7 @@
 }
 
 .ge-toolbar-select {
+  background-color: var(--ge-color-surface-elevated);
   cursor: pointer;
   min-width: 132px;
   padding: 0 8px;

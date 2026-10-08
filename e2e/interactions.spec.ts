@@ -125,9 +125,10 @@ for (const mode of ['live', 'preview']) {
   test(`read-only keyboard cannot mutate ${mode} content`, async ({ page }) => {
     await replaceDocument(page, 'keep this');
     await page.getByLabel('Mode', { exact: true }).selectOption(mode);
-    await page.getByLabel('Editable', { exact: true }).uncheck();
+    if (mode === 'live') await page.getByLabel('Editable', { exact: true }).uncheck();
     await page.locator('.cm-content').focus();
-    for (const key of ['Backspace', 'Enter', 'Shift+Enter', 'Tab']) {
+    await expect(page.locator('.cm-content')).toBeFocused();
+    for (const key of ['Backspace', 'Enter', 'Shift+Enter', 'ControlOrMeta+b', 'ControlOrMeta+d', 'ControlOrMeta+z', 'Tab']) {
       await page.keyboard.press(key);
       await expectDocument(page, 'keep this');
     }
@@ -204,4 +205,135 @@ test('console content tracing requires opt-in and stops when disabled', async ({
   await replaceDocument(page, 'private input after disabling');
   await expectDocument(page, 'private input after disabling');
   expect(records).toEqual([]);
+});
+
+// These scenarios check author actions and retained Markdown, not UI copy snapshots.
+test('heading selection can return a paragraph to normal and undo both changes', async ({ page }) => {
+  await replaceDocument(page, 'Chapter');
+  await page.getByLabel('Text style', { exact: true }).selectOption('h2');
+  await expectDocument(page, '## Chapter');
+  await page.getByLabel('Text style', { exact: true }).selectOption('normal');
+  await expectDocument(page, 'Chapter');
+  await page.locator('.ge-toolbar').getByRole('button', { name: 'Undo', exact: true }).click();
+  await expectDocument(page, '## Chapter');
+});
+
+test('keyboard activation hides and restores the toolbar without changing the draft', async ({ page }) => {
+  await replaceDocument(page, 'Draft with **formatting**');
+  const toggle = page.getByRole('button', { name: 'Hide formatting toolbar', exact: true });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.ge-toolbar')).toHaveCount(0);
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.ge-toolbar')).toBeVisible();
+  await expectDocument(page, 'Draft with **formatting**');
+});
+
+test('preview disables editing controls and returning to live restores editing', async ({ page }) => {
+  await replaceDocument(page, 'Keep me');
+  await page.getByLabel('Mode', { exact: true }).selectOption('preview');
+  const bold = page.locator('.ge-toolbar').getByRole('button', { name: 'Bold', exact: true });
+  await expect(bold).toBeDisabled();
+  await page.getByLabel('Mode', { exact: true }).selectOption('live');
+  await expect(bold).toBeEnabled();
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await bold.click();
+  await expectDocument(page, '**Keep me**');
+});
+
+test('table cell pipes remain one cell after commit and mode round trip', async ({ page }) => {
+  await page.getByText('Load or edit exact Markdown', { exact: true }).click();
+  await page.getByLabel('Markdown source', { exact: true }).fill('intro\n\n| A | B |\n| --- | --- |\n| one | two |');
+  const cell = page.getByRole('cell', { name: 'one', exact: true });
+  await cell.click();
+  await cell.click();
+  await page.locator('.ge-table-cell-editor').fill('left | right');
+  await page.locator('.ge-table-cell-editor').press('Enter');
+  await expect(page.getByRole('cell', { name: 'left | right', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'two', exact: true })).toBeVisible();
+  await page.getByLabel('Mode', { exact: true }).selectOption('markdown');
+  await expect(page.getByLabel('Markdown source', { exact: true })).toHaveValue(/left \\\| right/);
+  await page.getByLabel('Mode', { exact: true }).selectOption('preview');
+  await expect(page.getByRole('cell', { name: 'left | right', exact: true })).toBeVisible();
+});
+
+for (const width of [390, 1280]) {
+  test(`editor remains usable at ${width}px with long content and theme changes`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await replaceDocument(page, 'Long ' + 'word'.repeat(120) + '\n\n- [ ] task');
+    await page.getByRole('button', { name: 'Theme: auto', exact: true }).click();
+    await page.getByRole('button', { name: 'Theme: light', exact: true }).click();
+    const shell = page.locator('.ge-editor-shell');
+    await expect(shell).toBeVisible();
+    const styleSelector = page.getByLabel('Text style', { exact: true });
+    await expect(styleSelector).toHaveCSS('color-scheme', 'dark');
+    const toolbarBackground = await page.locator('.ge-toolbar').evaluate(element => getComputedStyle(element).backgroundColor);
+    await expect(styleSelector).toHaveCSS('background-color', toolbarBackground);
+    const bounds = await shell.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+    await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'task', exact: true }).click();
+    await expectDocument(page, 'Long ' + 'word'.repeat(120) + '\n\n- [x] task');
+    expect(errors).toEqual([]);
+    await shell.screenshot({ path: testInfo.outputPath(`editor-${width}.png`) });
+  });
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  for (const width of [390, 1280]) {
+    test(`search and replace follows ${scheme} tokens at ${width}px and supports undo`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width, height: 844 });
+      await replaceDocument(page, 'alpha beta alpha');
+      await page.getByRole('button', { name: 'Theme: auto', exact: true }).click();
+      if (scheme === 'dark') await page.getByRole('button', { name: 'Theme: light', exact: true }).click();
+      await page.locator('.cm-content').focus();
+      await page.keyboard.press('ControlOrMeta+f');
+      const panel = page.locator('.cm-search');
+      const find = panel.getByRole('textbox', { name: 'Find', exact: true });
+      const replace = panel.getByRole('textbox', { name: 'Replace', exact: true });
+      await expect(find).toBeFocused();
+      await find.pressSequentially('alpha');
+      await replace.pressSequentially('gamma');
+      await expect(page.locator('.cm-searchMatch')).toHaveCount(2);
+      // Compare rendered controls with the editor's resolved palette, not CSS source strings.
+      const colors = await page.locator('.ge-editor-shell').evaluate(element => {
+        const style = getComputedStyle(element);
+        return { background: style.backgroundColor, text: style.color };
+      });
+      await expect(find).toHaveCSS('background-color', colors.background);
+      await expect(find).toHaveCSS('color', colors.text);
+      await expect(replace).toHaveCSS('outline-style', 'solid');
+      const panelBounds = await panel.boundingBox();
+      for (const control of await panel.locator('input, button').all()) {
+        const bounds = await control.boundingBox();
+        expect(bounds!.x).toBeGreaterThanOrEqual(panelBounds!.x);
+        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(panelBounds!.x + panelBounds!.width + 1);
+      }
+      await page.locator('.ge-editor-shell').screenshot({ path: testInfo.outputPath(`search-${scheme}-${width}.png`) });
+      await panel.getByRole('button', { name: 'replace all', exact: true }).click();
+      await expectDocument(page, 'gamma beta gamma');
+      await find.press('Escape');
+      await expect(panel).toHaveCount(0);
+      await page.keyboard.press('ControlOrMeta+z');
+      await expectDocument(page, 'alpha beta alpha');
+    });
+  }
+}
+
+test('read-only search finds content without exposing replacement controls', async ({ page }) => {
+  await replaceDocument(page, 'alpha beta alpha');
+  await page.getByLabel('Editable', { exact: true }).uncheck();
+  await page.locator('.cm-content').focus();
+  await page.keyboard.press('ControlOrMeta+f');
+  const panel = page.locator('.cm-search');
+  await panel.getByRole('textbox', { name: 'Find', exact: true }).pressSequentially('alpha');
+  await expect(page.locator('.cm-searchMatch')).toHaveCount(2);
+  await expect(panel.getByRole('textbox', { name: 'Replace', exact: true })).toHaveCount(0);
+  await panel.getByRole('button', { name: 'next', exact: true }).click();
+  await expectDocument(page, 'alpha beta alpha');
 });

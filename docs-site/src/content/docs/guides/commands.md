@@ -159,6 +159,21 @@ Tables:
 | `setTableColumnAlignment(alignment)` | Update column alignment. |
 | `revealTableSource` | Put focus back into the table source. |
 
+### Editing table cells safely
+
+Cell contents use inline Markdown. Entering `left | right` into a visual cell
+stores `left \| right` in the document, so it remains one cell when you switch
+between Live, Markdown and Preview. Existing escaped pipes remain escaped during
+normalization and row/column operations.
+
+```tsx
+editor.current?.execCommand('commitTableCell', { row: 1, column: 0 }, 'left | right');
+```
+
+Heading and list-formatting commands each create a separate undo step. For example,
+changing a paragraph to Heading 2 and back to Normal can be undone one action at a
+time without removing the text you typed before formatting.
+
 ## Default Keymap
 
 `DEFAULT_KEYMAP` is exported for reuse. Galley installs it by default.

@@ -646,6 +646,7 @@ interface InlineToken {
 }
 
 function renderCellInlineMarkdown(cell: HTMLTableCellElement, text: string): void {
+  text = text.replace(/\\\|/g, '|');
   const fragment = document.createDocumentFragment();
   let position = 0;
 

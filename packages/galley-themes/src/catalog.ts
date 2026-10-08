@@ -1,3 +1,4 @@
+import { eddaLightTokens, eddaDarkTokens } from "./edda.js";
 import type { ThemeDefinition, ThemeId, ThemeScheme, ThemeTokens } from "./tokens.js";
 
 type DeepReadonly<T> = T extends (...args: unknown[]) => unknown
@@ -877,6 +878,8 @@ function deepFreeze<T extends object>(value: T): DeepReadonly<T> {
 }
 
 const builtInThemes = deepFreeze([
+  theme("edda-light", "Edda Light", "Edda", "light", eddaLightTokens),
+  theme("edda-dark", "Edda Dark", "Edda", "dark", eddaDarkTokens),
   theme("galley-light", "Galley Light", "Galley", "light", galleyLightTokens),
   theme("galley-dark", "Galley Dark", "Galley", "dark", galleyDarkTokens),
   theme("thoth-light", "Thoth Light", "Thoth", "light", thothLightTokens),

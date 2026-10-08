@@ -1,1 +1,3 @@
-export const GALLEY_VERSION = '0.9.1';
+import { version } from '../package.json';
+
+export const GALLEY_VERSION = version;
