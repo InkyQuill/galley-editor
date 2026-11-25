@@ -223,7 +223,8 @@ test('keyboard activation hides and restores the toolbar without changing the dr
   const toggle = page.getByRole('button', { name: 'Hide formatting toolbar', exact: true });
   await toggle.focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.ge-toolbar')).toHaveCount(0);
+  await expect(page.locator('.ge-toolbar')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Show formatting toolbar', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('.ge-toolbar')).toBeVisible();
   await expectDocument(page, 'Draft with **formatting**');
