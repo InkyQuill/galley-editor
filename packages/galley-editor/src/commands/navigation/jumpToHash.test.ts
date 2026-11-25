@@ -54,3 +54,10 @@ describe('jumpToHash', () => {
     expect(view.state.doc.lineAt(view.state.selection.main.head).text).toBe('## Repeat');
   });
 });
+
+it('skips fenced headings and jumps to indented Unicode headings', () => {
+  const view = viewOf('```md\n## Раздел\n```\n\n   ## **Раздел**');
+  expect(jumpToHash(view, '#%D1%80%D0%B0%D0%B7%D0%B4%D0%B5%D0%BB')).toBe(true);
+  expect(view.state.doc.lineAt(view.state.selection.main.head).number).toBe(5);
+  expect(jumpToHash(view, '#%incorrect')).toBe(false);
+});

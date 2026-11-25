@@ -13,9 +13,9 @@ Galley is built around one principle: the Markdown text document is the source o
 
 The view is created once on mount and destroyed only on unmount. Prop changes are applied through CodeMirror `Compartment` reconfiguration:
 
-- Dynamic editor settings.
-- Autosize and fill layout behavior.
-- History configuration.
+- Dynamic editor settings, theme, and plugins.
+- Horizontal wrapping, autosize, and editor classes.
+- Keymap, history, and runtime extensions.
 
 This avoids remounting CodeMirror when React props change.
 
@@ -23,7 +23,7 @@ This avoids remounting CodeMirror when React props change.
 
 `GalleyEditor` is a thin `forwardRef` wrapper. It creates the controller once, forwards props into `updateSettings()`, and exposes a stable `GalleyHandle` proxy through `useImperativeHandle`.
 
-Callback props are kept in stable refs and updated with layout effects, so changing callbacks does not rebuild the editor.
+Callback props are kept in stable refs and updated with layout effects, so changing callbacks does not rebuild the editor. The formatting controls subscribe directly to the active syntax at the cursor. Moving the cursor keeps the shell and consumer slots out of the React render path.
 
 ## Rendering Plugins
 

@@ -332,6 +332,10 @@
   padding: var(--ge-toolbar-padding);
 }
 
+.ge-toolbar[hidden] {
+  display: none;
+}
+
 .ge-toolbar-slot {
   align-items: center;
   display: inline-flex;
@@ -377,6 +381,7 @@
   font-weight: 600;
 }
 
+.ge-toolbar-button[aria-pressed="true"],
 .ge-toolbar-button:hover,
 .ge-toolbar-button:focus-visible,
 .ge-toolbar-select:hover,

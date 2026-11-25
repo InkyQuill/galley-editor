@@ -664,7 +664,16 @@ const imagesPlugin: GalleyPlugin = {
     const imageClass = classNames.image ?? 'ge-image-frame';
     const preview = context?.mode === 'preview';
     const canEdit = context?.canEdit ?? !preview;
-    const renderer = context?.imageRenderer ?? defaultImageRenderer;
+    const resolver = context?.resolveImageSource;
+    const renderer = context?.imageRenderer ?? (resolver
+      ? (image: GalleyImageInfo) => {
+        const source = resolver(image);
+        if (source === undefined) return defaultImageRenderer(image);
+        if (source !== null) return defaultImageRenderer({ ...image, url: source });
+        const missing = { ...image, reason: 'unresolved-url' as const };
+        return context?.missingImageRenderer?.(missing) ?? defaultMissingImageRenderer(missing);
+      }
+      : defaultImageRenderer);
     const missingRenderer = context?.missingImageRenderer;
     const controlsRenderer = context?.imageControlsRenderer;
 

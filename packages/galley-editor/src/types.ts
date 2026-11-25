@@ -3,6 +3,8 @@ import type { EditorSelection, EditorState, Extension, Transaction } from '@code
 import type { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import type { SyntaxNodeRef } from '@lezer/common';
 
+import type { GalleyHeading, GalleyViewport, RevealPositionOptions } from './commands/navigation/headings';
+
 export type GalleyMode = 'live' | 'markdown' | 'preview';
 
 export type CodeHighlighter = (input: {
@@ -17,6 +19,7 @@ export interface GalleyRenderContext {
   canEdit?: boolean;
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
+  resolveImageSource?: ImageSourceResolver;
   missingImageRenderer?: MissingImageRenderer;
   imageControlsRenderer?: ImageControlsRenderer;
   tableControlIcons?: GalleyTableControlIcons;
@@ -102,7 +105,7 @@ export interface GalleyImageInfo {
 }
 
 export interface GalleyMissingImageInfo extends GalleyImageInfo {
-  reason: 'error' | 'empty-url';
+  reason: 'error' | 'empty-url' | 'unresolved-url';
 }
 
 export interface GalleyImageMetadataInput {
@@ -112,6 +115,9 @@ export interface GalleyImageMetadataInput {
   width?: number | null;
   height?: number | null;
 }
+
+/** Return a browser-readable URL, undefined to use the original URL, or null if unavailable. */
+export type ImageSourceResolver = (image: GalleyImageInfo) => string | null | undefined;
 
 export type ImageRenderer = (image: GalleyImageInfo) => HTMLElement | null;
 
@@ -196,7 +202,27 @@ export type GalleyToolbarSlot =
   | ReactNode
   | ((context: GalleyToolbarContext) => ReactNode);
 
+export interface GalleyLabels {
+  toolbar: string;
+  textStyle: string;
+  normal: string;
+  heading: (level: number) => string;
+  command: Partial<Record<ToolbarIconName, string>>;
+  mode: Partial<Record<GalleyMode, string>>;
+  switchMode: (current: string) => string;
+  showToolbar: string;
+  hideToolbar: string;
+  wordCount: (count: number) => string;
+  characterCount: (count: number) => string;
+  logo: string;
+  credits: (version: string) => string;
+}
+
 export interface GalleyToolbarOptions {
+  /** Ordered command list, with optional separators. Omit for the default layout. */
+  commands?: readonly (BuiltinCommand | 'separator')[];
+  /** Show the heading style selector. Defaults to true. */
+  textStyle?: boolean;
   enabled?: boolean;
   /** Initial toolbar visibility. Defaults to true; set false for a quiet writing surface. */
   defaultOpen?: boolean;
@@ -404,6 +430,12 @@ export interface FindResult {
 export interface GalleyHandle {
   /** Get the current document content. */
   getContent(): string;
+  /** Read headings from the live Markdown syntax tree. */
+  getHeadings(): readonly GalleyHeading[];
+  /** Read the currently visible document range. */
+  getViewport(): GalleyViewport;
+  /** Scroll a document position into view. */
+  revealPosition(position: number, options?: RevealPositionOptions): void;
   /** Replace the entire document content, preserving selection and undo history. */
   setContent(value: string): void;
   /**
@@ -472,7 +504,9 @@ export interface UseGalleyResult {
 export interface GalleyEditorProps {
   /** The markdown content (controlled). */
   value?: string;
-  /** Called when the document changes. */
+  /** Initial markdown when value is omitted. */
+  defaultValue?: string;
+  /** Called when editor edits or imperative commands change the document. */
   onChange?: (value: string) => void;
   /**
    * Identity of the current document (e.g. a file path or tab id). When it
@@ -488,6 +522,8 @@ export interface GalleyEditorProps {
   placeholder?: string;
   /** Accessible name for the underlying CodeMirror content element. */
   ariaLabel?: string;
+  /** Opt into the host webview’s native spellcheck. */
+  spellcheck?: boolean;
 
   /** Minimum visible rows. Default: 3. */
   minRows?: number;
@@ -498,6 +534,9 @@ export interface GalleyEditorProps {
   /** Disable line wrapping and scroll the main editor viewport horizontally. Default: false. */
   horizontalScroll?: boolean;
 
+  id?: string;
+  style?: CSSProperties;
+  [attribute: `data-${string}`]: string | number | boolean | undefined;
   /** CSS class for the outer wrapper div. */
   className?: string;
   /** CSS class applied to the CodeMirror .cm-editor element. */
@@ -515,6 +554,8 @@ export interface GalleyEditorProps {
   codeHighlighter?: CodeHighlighter;
   /** Optional renderer for markdown images. Defaults to built-in image widgets. */
   imageRenderer?: ImageRenderer;
+  /** Resolve stored Markdown URLs for the built-in image renderer. */
+  resolveImageSource?: ImageSourceResolver;
   /** Optional renderer for unavailable markdown images. */
   missingImageRenderer?: MissingImageRenderer;
   /** Optional renderer for selected markdown image controls. */
@@ -525,6 +566,8 @@ export interface GalleyEditorProps {
   onLinkClick?: LinkClickHandler;
   /** Add dir="auto" to editor lines for browser bidi handling. Default: false. */
   bidi?: boolean;
+  /** Localized strings for the editor shell. */
+  labels?: Partial<GalleyLabels>;
   /** Enable the built-in command toolbar; initially visible unless defaultOpen is false. Default: true. */
   toolbar?: boolean | GalleyToolbarOptions;
   /** Show and customize the built-in status footer, including stats/logo visibility and before/after widgets. Default: true. */
@@ -544,10 +587,13 @@ export interface GalleyEditorProps {
   extensions?: Extension[];
 
   // ── Events ────────────────────────────────────────────────────────────────
+  /** Called after the CodeMirror view is mounted and the editor ref is assigned. */
+  onReady?: (view: EditorView) => void;
   onFocus?: () => void;
   onBlur?: () => void;
   onSelectionChange?: (selection: { from: number; to: number; anchor: number; head: number }) => void;
   onScroll?: (fraction: number) => void;
+  onViewportChange?: (viewport: GalleyViewport) => void;
   /** Handle Enter key. Return true to suppress default behavior. */
   onEnter?: (mod: boolean, shift: boolean) => boolean;
   /** Handle Escape key. Return true to consume the key. */

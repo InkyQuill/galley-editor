@@ -1,10 +1,7 @@
 /**
  * EditorController: owns the CodeMirror EditorView and provides the imperative API.
  *
- * Uses three Compartments for hot-reloading:
- * - dynamicCompartment: settings, plugins, theme
- * - autosizeCompartment: minRows/maxRows
- * - historyCompartment: undo/redo history
+ * Uses Compartments to update extensions and reset history without recreating the view.
  */
 
 import {
@@ -16,6 +13,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view';
 import {
+  Annotation,
   Compartment,
   EditorSelection,
   EditorState,
@@ -34,7 +32,7 @@ import { indentOnInput, bracketMatching } from '@codemirror/language';
 import { drawSelection, dropCursor, highlightSpecialChars } from '@codemirror/view';
 import { openSearchPanel, search, searchKeymap } from '@codemirror/search';
 
-import { buildCmTheme, type ColorScheme } from './theme';
+import { buildCmTheme, resolveColorScheme, type ColorScheme } from './theme';
 import { autosizeExtension } from './autosize';
 import { BUILT_IN_PLUGINS } from './plugins';
 import { biDirectionalTextExtension } from './plugins/bidi';
@@ -55,6 +53,7 @@ import {
   makeSmartTabTransaction,
   type GalleyKeyBinding,
 } from './commands';
+import { getHeadings, getViewport, revealPosition, type GalleyViewport, type RevealPositionOptions } from './commands/navigation/headings';
 import { parseListLine } from './commands/list-syntax';
 import {
   resolveClassNames,
@@ -69,6 +68,7 @@ import {
   type GalleyUploadInteraction,
   type GalleyUploadInfo,
   type ImageRenderer,
+  type ImageSourceResolver,
   type ImageControlsRenderer,
   type LinkClickHandler,
   type MissingImageRenderer,
@@ -85,7 +85,10 @@ import {
 
 // ── Callback refs (stable references that the static extensions call into) ──
 
+const externalValue = Annotation.define<boolean>();
+
 export interface EditorCallbacks {
+  onUpdate?: (update: ViewUpdate, value?: string) => void;
   onChange?: (value: string) => void;
   onSelectionChange?: (sel: {
     from: number;
@@ -96,6 +99,7 @@ export interface EditorCallbacks {
   onFocus?: () => void;
   onBlur?: () => void;
   onScroll?: (fraction: number) => void;
+  onViewportChange?: (viewport: GalleyViewport) => void;
   onPaste?: (event: ClipboardEvent, view: EditorView) => void;
   onFiles?: GalleyFileHandler;
   onFileError?: (error: unknown, input: GalleyFileInput) => void;
@@ -111,9 +115,10 @@ export interface ControllerSettings {
   editable: boolean;
   placeholder: string;
   ariaLabel?: string;
+  spellcheck?: boolean;
   theme: ColorScheme;
   editorClassName: string;
-  classNames: GalleyClassNames;
+  classNames?: GalleyClassNames;
   minRows: number;
   maxRows?: number;
   layout: GalleyLayoutMode;
@@ -122,6 +127,7 @@ export interface ControllerSettings {
   keymap?: KeyBinding[] | ((defaults: KeyBinding[]) => KeyBinding[]);
   codeHighlighter?: CodeHighlighter;
   imageRenderer?: ImageRenderer;
+  resolveImageSource?: ImageSourceResolver;
   missingImageRenderer?: MissingImageRenderer;
   imageControlsRenderer?: ImageControlsRenderer;
   tableControlIcons?: GalleyTableControlIcons;
@@ -230,6 +236,7 @@ export class EditorController implements GalleyHandle {
   private fileOperationSeq = 0;
   private readonly customCommands = new Map<string, CommandFn>();
   private settings: ControllerSettings;
+  private resolvedTheme: ReturnType<typeof resolveColorScheme>;
   private callbacks: EditorCallbacks;
   private readonly dispatchSelectionChange: CoalescedCallback<[{
     from: number;
@@ -237,6 +244,8 @@ export class EditorController implements GalleyHandle {
     anchor: number;
     head: number;
   }]>;
+  private lastViewport: GalleyViewport | undefined;
+  private readonly dispatchViewportChange: CoalescedCallback<[]>;
   private readonly dispatchScroll: CoalescedCallback<[number]>;
 
   constructor(
@@ -246,9 +255,16 @@ export class EditorController implements GalleyHandle {
     callbacks: EditorCallbacks,
   ) {
     this.settings = settings;
+    this.resolvedTheme = resolveColorScheme(settings.theme);
     this.callbacks = callbacks;
     this.dispatchSelectionChange = rafCoalesce((sel) => {
       this.callbacks.onSelectionChange?.(sel);
+    });
+    this.dispatchViewportChange = rafCoalesce(() => {
+      const viewport = this.getViewport();
+      if (viewport.from === this.lastViewport?.from && viewport.to === this.lastViewport.to) return;
+      this.lastViewport = viewport;
+      this.callbacks.onViewportChange?.(viewport);
     });
     this.dispatchScroll = rafCoalesce((fraction) => {
       this.callbacks.onScroll?.(fraction);
@@ -318,9 +334,17 @@ export class EditorController implements GalleyHandle {
 
       // Event listeners (use callback refs so they never go stale)
       EditorView.updateListener.of((update) => {
+        let value: string | undefined;
         if (update.docChanged) {
           this.mapPendingFileRanges(update);
-          this.callbacks.onChange?.(update.state.doc.toString());
+          value = update.state.doc.toString();
+          if (update.transactions.some((tr) => tr.docChanged && !tr.annotation(externalValue))) {
+            this.callbacks.onChange?.(value);
+          }
+        }
+        this.callbacks.onUpdate?.(update, value);
+        if (update.viewportChanged || update.geometryChanged || update.docChanged) {
+          this.dispatchViewportChange();
         }
         if (update.selectionSet) {
           const sel = update.state.selection.main;
@@ -343,6 +367,7 @@ export class EditorController implements GalleyHandle {
       EditorView.domEventHandlers({
         scroll: (_e, view) => {
           this.dispatchScroll(getScrollFraction(view));
+          this.dispatchViewportChange();
         },
         paste: (e, view) => {
           const files = this.filesFromDataTransfer(e.clipboardData);
@@ -411,13 +436,12 @@ export class EditorController implements GalleyHandle {
   }
 
   private dropPositionForEvent(event: DragEvent): number {
-    let pos: number | null = null;
+    const fallback = this.view.state.selection.main.from;
     try {
-      pos = this.view.posAtCoords({ x: event.clientX, y: event.clientY });
+      return this.view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? fallback;
     } catch {
-      pos = null;
+      return fallback;
     }
-    return pos ?? this.view.state.selection.main.from;
   }
 
   private setDropIndicatorForEvent(event: DragEvent): void {
@@ -657,11 +681,12 @@ export class EditorController implements GalleyHandle {
 
     const allPlugins = [...BUILT_IN_PLUGINS, ...settings.plugins];
     const renderContext = {
-      theme: settings.theme === 'dark' ? 'dark' as const : 'light' as const,
+      theme: this.resolvedTheme,
       mode: settings.mode,
       canEdit: canEditDocument,
       codeHighlighter: settings.codeHighlighter,
       imageRenderer: settings.imageRenderer,
+      resolveImageSource: settings.resolveImageSource,
       missingImageRenderer: settings.missingImageRenderer,
       imageControlsRenderer: settings.imageControlsRenderer,
       tableControlIcons: settings.tableControlIcons,
@@ -675,12 +700,13 @@ export class EditorController implements GalleyHandle {
 
     return [
       // Theme
-      ...buildCmTheme(settings.theme),
+      ...buildCmTheme(this.resolvedTheme),
       // Editability
       EditorView.editable.of(canEditDocument),
       EditorState.readOnly.of(!canEditDocument),
       EditorView.contentAttributes.of({
         ...(settings.ariaLabel ? { 'aria-label': settings.ariaLabel } : {}),
+        ...(settings.spellcheck !== undefined ? { spellcheck: String(settings.spellcheck) } : {}),
         // Non-editable content still needs keyboard focus for search and copy.
         ...(!canEditDocument ? { tabindex: '0' } : {}),
       }),
@@ -703,6 +729,31 @@ export class EditorController implements GalleyHandle {
   // ── Public: update settings without destroying the view ───────────────
 
   updateSettings(newSettings: ControllerSettings) {
+    const resolvedTheme = resolveColorScheme(newSettings.theme);
+    const previous = this.settings;
+    const dynamicChanged =
+      resolvedTheme !== this.resolvedTheme ||
+      newSettings.editable !== previous.editable ||
+      newSettings.mode !== previous.mode ||
+      newSettings.ariaLabel !== previous.ariaLabel ||
+      newSettings.spellcheck !== previous.spellcheck ||
+      newSettings.placeholder !== previous.placeholder ||
+      newSettings.classNames !== previous.classNames ||
+      newSettings.plugins !== previous.plugins ||
+      newSettings.disabledPlugins !== previous.disabledPlugins ||
+      newSettings.extraExtensions !== previous.extraExtensions ||
+      newSettings.bidi !== previous.bidi ||
+      newSettings.codeHighlighter !== previous.codeHighlighter ||
+      newSettings.imageRenderer !== previous.imageRenderer ||
+      newSettings.resolveImageSource !== previous.resolveImageSource ||
+      newSettings.missingImageRenderer !== previous.missingImageRenderer ||
+      newSettings.imageControlsRenderer !== previous.imageControlsRenderer ||
+      newSettings.tableControlIcons !== previous.tableControlIcons ||
+      newSettings.onLinkClick !== previous.onLinkClick ||
+      newSettings.uploadInteraction !== previous.uploadInteraction ||
+      newSettings.uploadPlaceholderRenderer !== previous.uploadPlaceholderRenderer ||
+      newSettings.dropIndicatorRenderer !== previous.dropIndicatorRenderer ||
+      newSettings.uploadOverlayRenderer !== previous.uploadOverlayRenderer;
     const effects: StateEffect<unknown>[] = [];
 
     const keymapChanged =
@@ -748,10 +799,10 @@ export class EditorController implements GalleyHandle {
 
     this.settings = newSettings;
 
-    // Always reconfigure dynamic compartment (cheap if nothing changed)
-    effects.push(
-      this.dynamicCompartment.reconfigure(this.buildDynamicExtensions()),
-    );
+    this.resolvedTheme = resolvedTheme;
+    if (dynamicChanged) {
+      effects.push(this.dynamicCompartment.reconfigure(this.buildDynamicExtensions()));
+    }
 
     if (effects.length > 0) {
       this.view.dispatch({ effects });
@@ -768,27 +819,67 @@ export class EditorController implements GalleyHandle {
     return this.view.state.doc.toString();
   }
 
-  setContent(value: string): void {
-    const current = this.view.state.doc.toString();
-    if (value === current) return;
+  getHeadings() {
+    return getHeadings(this.view.state);
+  }
 
+  getViewport(): GalleyViewport {
+    return getViewport(this.view);
+  }
+
+  revealPosition(position: number, options?: RevealPositionOptions): void {
+    revealPosition(this.view, position, options);
+  }
+
+  setContent(value: string): void {
+    this.replaceContent(value, false);
+  }
+
+  syncValue(value: string, documentChanged: boolean): void {
+    if (documentChanged) this.replaceDocument(value, true);
+    else this.replaceContent(value, true);
+  }
+
+  private replaceContent(value: string, external: boolean): void {
     const { state } = this.view;
-    const clamp = (pos: number) => Math.max(0, Math.min(pos, value.length));
+    const current = state.doc.toString();
+    const next = state.toText(value);
+    if (next.eq(state.doc)) return;
+
+    let from = 0;
+    let to = current.length;
+    let nextTo = next.length;
+    if (external) {
+      // Keep changes outside the replaced range available in the undo history.
+      const normalized = next.toString();
+      const limit = Math.min(to, nextTo);
+      while (from < limit && current[from] === normalized[from]) from++;
+      while (to > from && nextTo > from && current[to - 1] === normalized[nextTo - 1]) {
+        to--;
+        nextTo--;
+      }
+    }
+    const clamp = (pos: number) => Math.min(pos, next.length);
     const nextRanges = state.selection.ranges.map((range) =>
       EditorSelection.range(clamp(range.anchor), clamp(range.head)),
     );
     this.view.dispatch({
-      changes: { from: 0, to: state.doc.length, insert: value },
+      changes: { from, to, insert: next.slice(from, nextTo) },
+      annotations: external ? [externalValue.of(true), Transaction.addToHistory.of(false)] : undefined,
       selection: EditorSelection.create(nextRanges, state.selection.mainIndex),
     });
   }
 
   setDocument(value: string): void {
+    this.replaceDocument(value, false);
+  }
+
+  private replaceDocument(value: string, external: boolean): void {
     const { state } = this.view;
     this.view.dispatch({
       changes: { from: 0, to: state.doc.length, insert: value },
       selection: EditorSelection.cursor(0),
-      annotations: Transaction.addToHistory.of(false),
+      annotations: [Transaction.addToHistory.of(false), externalValue.of(external)],
       effects: this.historyCompartment.reconfigure([]),
     });
     this.view.dispatch({
@@ -885,6 +976,7 @@ export class EditorController implements GalleyHandle {
   destroy(): void {
     this.dispatchSelectionChange.cancel();
     this.dispatchScroll.cancel();
+    this.dispatchViewportChange.cancel();
     this.view.destroy();
   }
 }

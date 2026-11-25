@@ -34,23 +34,24 @@
     "test:release": "node --test scripts/release.test.mjs scripts/release-notes.test.mjs"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@lezer/highlight": "^1.2.0",
-    "@lezer/markdown": "^1.6.3",
-    "@playwright/test": "^1.63.0",
-    "@storybook/addon-docs": "^10.3.4",
-    "@storybook/addon-links": "^10.3.4",
+    "@eslint/js": "^10.0.1",
+    "@lezer/highlight": "^1.2.5",
+    "@lezer/markdown": "^1.8.2",
+    "@playwright/test": "^1.65.1",
+    "@storybook/addon-docs": "^10.6.9",
+    "@storybook/addon-links": "^10.6.9",
     "@storybook/react": "^10.3.4",
-    "@storybook/react-vite": "^10.3.4",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.26",
+    "@storybook/react-vite": "^10.6.9",
+    "ajv": "^8.20.0",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.8",
     "globals": "^16.5.0",
-    "storybook": "^10.3.4",
+    "storybook": "^10.6.9",
     "typescript": "~6.0",
-    "typescript-eslint": "^8.58.0"
+    "typescript-eslint": "^8.74.0"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.2"
   }
 }
