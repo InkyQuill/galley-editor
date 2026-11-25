@@ -4,7 +4,7 @@ import { createEditorView } from '../../test-utils/editor';
 import { getHeadings, getViewport, revealPosition } from './headings';
 
 describe('getHeadings', () => {
-  it.each(['page title: Draft', 'page title : Draft'])('excludes front matter with the key %s', (mapping) => {
+  it.each(['page title: Draft', 'page title : Draft', "'author''s name': Ada", 'tags:\n- draft\n- outline'])('excludes front matter with the key %s', (mapping) => {
     const state = EditorState.create({ doc: `---\n${mapping}\n# Metadata\n---\n\n# Chapter` });
     expect(getHeadings(state).map((heading) => heading.slug)).toEqual(['chapter']);
   });
@@ -52,6 +52,13 @@ describe('getHeadings', () => {
   it('keeps headings between horizontal rules at the start of a document', () => {
     const state = EditorState.create({ doc: '---\n\n# First heading\n\n---\n\n## Second heading' });
     expect(getHeadings(state).map(({ text }) => text)).toEqual(['First heading', 'Second heading']);
+  });
+
+  it('keeps headings when a Markdown list follows a mapping-like paragraph', () => {
+    const state = EditorState.create({
+      doc: '---\n\n# First\n\nReading note: text\n\n- item\n\n---\n\n## Second',
+    });
+    expect(getHeadings(state).map(({ text }) => text)).toEqual(['First', 'Second']);
   });
 
   it('keeps headings after a leading rule without closing front matter', () => {

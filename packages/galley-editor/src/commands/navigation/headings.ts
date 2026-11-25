@@ -39,18 +39,27 @@ export function slugifyHeading(value: string): string {
     .replace(/^-|-$/g, '');
 }
 
+const frontMatterKey = /^( *)(?:[\p{L}\p{M}\p{N}_.-]+(?:[ \t]+[\p{L}\p{M}\p{N}_.-]+)*|'(?:[^']|'')*'|"(?:[^"\\]|\\.)*")[ \t]*:(?:[ \t]|$)/u;
+
 function frontMatterEnd(doc: Text): number {
   if (!/^\uFEFF?---[ \t]*$/.test(doc.line(1).text)) return 0;
 
-  let hasMapping = false;
+  let mappingIndent: number | undefined;
+  let acceptsIndentlessSequence = false;
   for (let number = 2; number <= doc.lines; number += 1) {
     const line = doc.line(number);
     if (/^(---|\.\.\.)[ \t]*$/.test(line.text)) {
-      return hasMapping ? Math.min(line.to + 1, doc.length) : 0;
+      return mappingIndent !== undefined ? Math.min(line.to + 1, doc.length) : 0;
     }
-    if (hasMapping || /^[ \t]*(?:#.*)?$/.test(line.text)) continue;
-    if (!/^ *(?:[\p{L}\p{M}\p{N}_.-]+(?:[ \t]+[\p{L}\p{M}\p{N}_.-]+)*|'[^']+'|"[^"]+")[ \t]*:(?:[ \t]|$)/u.test(line.text)) return 0;
-    hasMapping = true;
+    if (/^[ \t]*(?:#.*)?$/.test(line.text)) continue;
+    const mapping = frontMatterKey.exec(line.text);
+    if (mapping && (mappingIndent === undefined || mapping[1].length === mappingIndent)) {
+      mappingIndent = mapping[1].length;
+      // A YAML mapping can contain a sequence aligned with its key.
+      acceptsIndentlessSequence = /^(?:#.*)?$/.test(line.text.slice(mapping[0].length).trimStart());
+    } else if (mappingIndent === undefined || (!acceptsIndentlessSequence && /^-(?:[ \t]|$)/.test(line.text))) {
+      return 0;
+    }
   }
 
   return 0;
