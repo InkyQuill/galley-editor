@@ -5,6 +5,7 @@ import type { EditorState } from '@codemirror/state';
 import type { SyntaxNodeRef } from '@lezer/common';
 import { HIDE_DECORATION, makeInlinePlugin } from '../rendering';
 import { footnoteReferenceLabel } from './footnotes';
+import { jumpToHash } from '../commands/navigation/jumpToHash';
 import type {
   LinkClickHandler,
   GalleyPlugin,
@@ -100,9 +101,14 @@ export function openResolvedLink(
   url: string,
   event: MouseEvent,
   onLinkClick?: LinkClickHandler,
+  view?: EditorView,
 ): void {
   const handled = onLinkClick?.(url, event);
   if (handled === true) return;
+  if (view && url.startsWith('#')) {
+    jumpToHash(view, url);
+    return;
+  }
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
@@ -184,7 +190,7 @@ const linksPlugin: GalleyPlugin = {
     });
 
     const clickExt = EditorView.domEventHandlers({
-      click: (event) => {
+      click: (event, view) => {
         if (!shouldActivateLink(event)) return false;
         const target = event.target as Element | null;
         const link = target?.closest(`.${linkSelectorClass}`);
@@ -193,7 +199,7 @@ const linksPlugin: GalleyPlugin = {
         if (!url) return false;
 
         event.preventDefault();
-        openResolvedLink(url, event, context?.onLinkClick);
+        openResolvedLink(url, event, context?.onLinkClick, view);
         return true;
       },
     });

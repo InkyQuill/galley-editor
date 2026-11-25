@@ -13,6 +13,7 @@ export type {
   GalleyPluginSpec,
   GalleyClassNames,
   GalleyMode,
+  GalleyLabels,
   GalleyToolbarOptions,
   GalleyToolbarContext,
   GalleyToolbarSlot,
@@ -122,3 +123,9 @@ export type {
   GalleyKeyBinding,
   SortSelectedLinesOptions,
 } from '../commands';
+
+export type {
+  GalleyHeading,
+  GalleyViewport,
+  RevealPositionOptions,
+} from '../commands/navigation/headings';

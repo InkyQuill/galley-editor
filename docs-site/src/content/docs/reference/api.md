@@ -116,8 +116,38 @@ const editor = useGalley({ initialValue: '# Draft' });
 | `undo()` / `redo()` | History actions. |
 | `scrollTo(fraction)` | Scroll by document fraction. |
 | `scrollSelectionIntoView()` | Reveal current selection. |
+| `getHeadings()` | Return the document outline in order. Each entry contains `from`, `to`, `level`, `text`, and `slug`. |
+| `getViewport()` | Return the source range of the currently visible lines. |
+| `revealPosition(position, options?)` | Scroll to a source offset. Pass `align: 'start'` to put the target at the top, `select: true` to move the caret, or `focus: true` to focus the editor. |
 | `addExtension(ext)` | Add a CodeMirror extension at runtime. |
 | `view` | The underlying CodeMirror `EditorView`, or `null` before mount. |
+
+### Document outlines
+
+Read the outline after the editor mounts and when its Markdown changes. Entries
+include ATX headings (with one to six `#` markers), including headings in lists
+and blockquotes. Fenced and indented code, leading YAML front matter, and Setext
+headings are omitted. The entry text omits formatting markers and link
+destinations. Use an offset to navigate even if an entry has no slug.
+
+```tsx
+const headings = editor.current?.getHeadings() ?? [];
+
+headings.map((heading) => (
+  <button
+    key={heading.from}
+    onClick={() => editor.current?.revealPosition(heading.from, { align: 'start', focus: true })}
+  >
+    {heading.text || 'Untitled heading'}
+  </button>
+));
+```
+
+`jumpToHash` uses the same outline. For repeated slugs, it adds a numeric
+suffix starting with `-1` and skips already assigned slugs. The hash can include
+a leading `#` and percent-encoded characters. Cmd/Ctrl-click uses the same
+navigation for local Markdown links such as `[Read more](#details)`. Hosts can
+intercept the link through `onLinkClick`.
 
 ## Constants
 

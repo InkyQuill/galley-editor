@@ -81,6 +81,24 @@ describe('linksPlugin', () => {
     expect(open).toHaveBeenCalledWith('https://example.com', '_blank', 'noopener,noreferrer');
   });
 
+  it('navigates fragments within the editor without opening a window', () => {
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    const doc = '[Read](#heading) [Missing](#unknown)\n\n## Heading';
+    const view = createEditorView({
+      doc,
+      selection: EditorSelection.cursor(doc.length),
+      extensions: linksPlugin.extensions(resolveClassNames()),
+    });
+    views.push(view);
+
+    const links = lineElement(view, 1).querySelectorAll('.ge-link');
+    links[0].dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+    expect(view.state.selection.main.head).toBe(doc.indexOf('## Heading'));
+    links[1].dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true }));
+    expect(open).not.toHaveBeenCalled();
+  });
+
   it('lets onLinkClick intercept link activation', () => {
     const open = vi.fn();
     const onLinkClick = vi.fn(() => true);

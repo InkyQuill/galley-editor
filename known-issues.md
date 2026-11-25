@@ -17,3 +17,11 @@
 - Empty-list Enter: the Markdown language's higher-priority default bindings bypassed Galley's list behavior and callbacks. The controller now disables that redundant keymap.
 
 See `docs-site/src/content/docs/guides/interaction-testing.md` and `e2e/interactions.spec.ts` for the reproducible bench and browser checks. Native IME, mobile/touch, and operating-system file/clipboard integrations are not exhaustively audited by this suite.
+
+## Desktop outline navigation (fixed upstream)
+
+- Observed: `jumpToHash` treated headings inside fences as targets and missed indented ATX headings. Integrations also had to reach into CodeMirror to align a destination and read visible source positions.
+- Expected: navigation follows the Markdown outline and integrations can reveal an offset without manipulating the underlying view.
+- Reproduction: place `## Details` inside a Markdown fence followed by an indented `## Details` outside it, then activate `[Details](#details)`.
+- Galley Pad impact: links could jump to examples or fail to navigate. A table of contents needed a separate parser and access to editor internals.
+- Next action: adopt `getHeadings`, `getViewport`, and `revealPosition` in Galley Pad and verify panel navigation in the desktop webview.
