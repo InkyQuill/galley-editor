@@ -391,6 +391,12 @@
   outline: none;
 }
 
+.ge-toolbar-button:focus-visible,
+.ge-toolbar-select:focus-visible {
+  outline: 2px solid var(--ge-color-focus-ring);
+  outline-offset: 2px;
+}
+
 .ge-toolbar-button:disabled,
 .ge-toolbar-select:disabled {
   cursor: not-allowed;

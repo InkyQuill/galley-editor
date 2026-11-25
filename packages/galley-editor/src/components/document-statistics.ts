@@ -42,6 +42,10 @@ export function createDocumentStatistics(initialValue: string) {
       listeners.add(notify);
       return () => { listeners.delete(notify); };
     },
+    reset(doc: Text) {
+      snapshot = createSnapshot(doc, wordStarts(doc.toString()));
+      listeners.forEach((notify) => notify());
+    },
     update(update: ViewUpdate) {
       if (!update.docChanged) return;
       const before = update.startState.doc;

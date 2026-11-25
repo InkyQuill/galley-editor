@@ -485,6 +485,31 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('.ge-toolbar')?.hasAttribute('hidden')).toBe(true);
   });
 
+  it('displays only shortcuts bound to the configured heading level', () => {
+    const { container } = mount(<GalleyEditor
+      keymap={() => [
+        { key: 'Mod-1', command: 'toggleHeading', args: [1] },
+        { key: 'Mod-3', command: 'toggleHeading', args: [3] },
+      ]}
+      toolbar={{ commands: [
+        { command: 'toggleHeading', args: [3] },
+        { command: 'toggleHeading', args: [2] },
+      ] }}
+    />);
+    expect(container.querySelector('[aria-label="Heading 3"]')?.getAttribute('title')).toMatch(/3\)$/);
+    expect(container.querySelector('[aria-label="Heading 2"]')?.getAttribute('title')).toBe('Heading 2');
+  });
+
+  it('counts the recreated view after an onReady edit in StrictMode', () => {
+    const { container } = mount(<StrictMode>
+      <GalleyEditor defaultValue="one" onReady={(view) => {
+        view.dispatch({ changes: { from: view.state.doc.length, insert: ' two' } });
+      }} />
+    </StrictMode>);
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toContain('2 words');
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toContain('7 characters');
+  });
+
   it('shows bound shortcuts in titles without changing accessible labels', () => {
     const { container } = mount(
       <GalleyEditor value="Hello" theme="light" toolbar={{ defaultOpen: true }} />,

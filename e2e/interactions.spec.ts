@@ -345,7 +345,8 @@ test('toolbar commands have a visible keyboard focus ring', async ({ page }) => 
   await page.keyboard.press('Tab');
   const command = page.locator('.ge-toolbar-button:focus-visible');
   await expect(command).toBeFocused();
-  expect(await command.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+  await expect(command).toHaveCSS('outline-style', 'solid');
+  await expect(command).toHaveCSS('outline-width', '2px');
 });
 
 test('footer credits stay readable inside a narrow editor', async ({ page }) => {

@@ -49,7 +49,7 @@ function frontMatterEnd(doc: Text): number {
       return hasMapping ? Math.min(line.to + 1, doc.length) : 0;
     }
     if (hasMapping || /^[ \t]*(?:#.*)?$/.test(line.text)) continue;
-    if (!/^ *(?:[\p{L}\p{M}\p{N}_.-]+|'[^']+'|"[^"]+"):(?:[ \t]|$)/u.test(line.text)) return 0;
+    if (!/^ *(?:[\p{L}\p{M}\p{N}_.-]+(?:[ \t]+[\p{L}\p{M}\p{N}_.-]+)*|'[^']+'|"[^"]+")[ \t]*:(?:[ \t]|$)/u.test(line.text)) return 0;
     hasMapping = true;
   }
 

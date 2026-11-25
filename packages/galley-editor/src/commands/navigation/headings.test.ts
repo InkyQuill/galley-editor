@@ -4,6 +4,11 @@ import { createEditorView } from '../../test-utils/editor';
 import { getHeadings, getViewport, revealPosition } from './headings';
 
 describe('getHeadings', () => {
+  it.each(['page title: Draft', 'page title : Draft'])('excludes front matter with the key %s', (mapping) => {
+    const state = EditorState.create({ doc: `---\n${mapping}\n# Metadata\n---\n\n# Chapter` });
+    expect(getHeadings(state).map((heading) => heading.slug)).toEqual(['chapter']);
+  });
+
   it('returns source spans and display text from rendered ATX headings', () => {
     const source = [
       '---', 'title: Draft', '# Metadata', '---', '',

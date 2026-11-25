@@ -447,7 +447,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       const headingLevel = command === 'toggleHeading' ? normalizeHeadingLevel(args[0]) : undefined;
       const fallbackLabel = headingLevel !== undefined && args.length > 0 ? labels.heading(headingLevel) : label;
       const ariaLabel = labels.command[command] ?? legacyLabel ?? fallbackLabel;
-      const key = findCommandKey(displayKeymap, command, shortcutPlatform);
+      const key = findCommandKey(displayKeymap, command, shortcutPlatform, args);
       const title = key
         ? `${ariaLabel} (${formatKeybinding(key, shortcutPlatform)})`
         : ariaLabel;
@@ -577,6 +577,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         callbackProxy,
       );
 
+      statistics.reset(controller.view.state.doc);
       controllerAccess.set(controller);
       appliedSettingsRef.current = { settings: initialSettings, theme: resolveColorScheme(initialSettings.theme) };
       setDisplayKeymap(controller.getResolvedKeymap());
