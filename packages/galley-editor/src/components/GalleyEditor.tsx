@@ -3,6 +3,7 @@
 import {
   Fragment,
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useId,
@@ -157,6 +158,41 @@ function plural(value: number, singular: string, pluralValue: string): string {
   return `${value} ${value === 1 ? singular : pluralValue}`;
 }
 
+function getShortcutPlatform(): ShortcutPlatform {
+  const platformInfo = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const platform = platformInfo.userAgentData?.platform ?? platformInfo.platform;
+  if (/Mac|iPhone|iPad|iPod/.test(platform)) return 'mac';
+  if (/Win/.test(platform)) return 'win';
+  if (/Linux|X11/.test(platform)) return 'linux';
+  return 'other';
+}
+
+const noSubscription = () => () => {};
+const serverShortcutPlatform = (): ShortcutPlatform => 'other';
+
+function createControllerAccess() {
+  let current: EditorController | null = null;
+  const pendingExtensions = new Set<{ extension: Extension; remove?: () => void }>();
+
+  return {
+    get: () => current,
+    set(controller: EditorController | null) {
+      current = controller;
+      if (!controller) return;
+      for (const pending of pendingExtensions) {
+        pending.remove = controller.addExtension(pending.extension).remove;
+      }
+      pendingExtensions.clear();
+    },
+    addExtension(extension: Extension) {
+      if (current) return current.addExtension(extension);
+      const pending: { extension: Extension; remove?: () => void } = { extension };
+      pendingExtensions.add(pending);
+      return { remove: () => { pendingExtensions.delete(pending); pending.remove?.(); } };
+    },
+  };
+}
+
 function GalleyLogo() {
   return (
     <svg
@@ -252,42 +288,43 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const labels = { ...DEFAULT_LABELS, ...labelOverrides };
     const rootData = Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
     const [value, setValue] = useState(controlledValue ?? defaultValue);
-    const format = useMemo(createToolbarFormat, []);
+    const [format] = useState(createToolbarFormat);
     const containerRef = useRef<HTMLDivElement>(null);
-    const controllerRef = useRef<EditorController | null>(null);
-    const pendingExtensions = useRef(new Set<{ extension: Extension; remove?: () => void }>());
+    const [controllerAccess] = useState(createControllerAccess);
     const handleProxy = useMemo<GalleyHandle>(
       () => ({
-        get view() { return controllerRef.current?.view ?? null; },
-        getContent: () => controllerRef.current?.getContent() ?? '',
-        getHeadings: () => controllerRef.current?.getHeadings() ?? [],
-        getViewport: () => controllerRef.current?.getViewport() ?? { from: 0, to: 0 },
-        revealPosition: (position, options) => controllerRef.current?.revealPosition(position, options),
-        setContent: (v: string) => controllerRef.current?.setContent(v),
-        setDocument: (v: string) => controllerRef.current?.setDocument(v),
-        insertText: (t: string) => controllerRef.current?.insertText(t),
-        focus: () => controllerRef.current?.focus(),
-        blur: () => controllerRef.current?.blur(),
-        openSearch: () => controllerRef.current?.openSearch() ?? false,
-        select: (a: number, h?: number) => controllerRef.current?.select(a, h),
-        getSelection: () => controllerRef.current?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
-        execCommand: (name: string, ...args: unknown[]) => controllerRef.current?.execCommand(name, ...args),
-        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerRef.current?.registerCommand(name, fn),
-        undo: () => controllerRef.current?.undo(),
-        redo: () => controllerRef.current?.redo(),
-        scrollTo: (f: number) => controllerRef.current?.scrollTo(f),
-        scrollSelectionIntoView: () => controllerRef.current?.scrollSelectionIntoView(),
-        addExtension: (extension) => {
-          if (controllerRef.current) return controllerRef.current.addExtension(extension);
-          const pending: { extension: Extension; remove?: () => void } = { extension };
-          const queue = pendingExtensions.current;
-          queue.add(pending);
-          return { remove: () => { queue.delete(pending); pending.remove?.(); } };
-        },
+        get view() { return controllerAccess.get()?.view ?? null; },
+        getContent: () => controllerAccess.get()?.getContent() ?? '',
+        getHeadings: () => controllerAccess.get()?.getHeadings() ?? [],
+        getViewport: () => controllerAccess.get()?.getViewport() ?? { from: 0, to: 0 },
+        revealPosition: (position, options) => controllerAccess.get()?.revealPosition(position, options),
+        setContent: (v: string) => controllerAccess.get()?.setContent(v),
+        setDocument: (v: string) => controllerAccess.get()?.setDocument(v),
+        insertText: (t: string) => controllerAccess.get()?.insertText(t),
+        focus: () => controllerAccess.get()?.focus(),
+        blur: () => controllerAccess.get()?.blur(),
+        openSearch: () => controllerAccess.get()?.openSearch() ?? false,
+        select: (a: number, h?: number) => controllerAccess.get()?.select(a, h),
+        getSelection: () => controllerAccess.get()?.getSelection() ?? { from: 0, to: 0, anchor: 0, head: 0 },
+        execCommand: (name: string, ...args: unknown[]) => controllerAccess.get()?.execCommand(name, ...args),
+        registerCommand: (name: string, fn: import('../types').CommandFn) => controllerAccess.get()?.registerCommand(name, fn),
+        undo: () => controllerAccess.get()?.undo(),
+        redo: () => controllerAccess.get()?.redo(),
+        scrollTo: (f: number) => controllerAccess.get()?.scrollTo(f),
+        scrollSelectionIntoView: () => controllerAccess.get()?.scrollSelectionIntoView(),
+        addExtension: controllerAccess.addExtension,
       }),
-      [],
+      [controllerAccess],
     );
-    const [resolvedTheme, setResolvedTheme] = useState(() => theme === 'dark' ? 'dark' : 'light');
+    const subscribeTheme = useCallback(
+      (notify: () => void) => watchColorScheme(theme, notify),
+      [theme],
+    );
+    const resolvedTheme = useSyncExternalStore(
+      subscribeTheme,
+      () => resolveColorScheme(theme),
+      () => theme === 'dark' ? 'dark' : 'light',
+    );
     const [internalMode, setInternalMode] = useState<GalleyMode>('live');
     const requestedMode = mode ?? internalMode;
     const effectiveMode: GalleyMode = editable ? requestedMode : 'preview';
@@ -295,8 +332,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const [displayKeymap, setDisplayKeymap] = useState<readonly GalleyKeyBinding[]>(
       () => Array.isArray(keymap) ? keymap : DEFAULT_KEYMAP,
     );
-    const [shortcutPlatform, setShortcutPlatform] =
-      useState<ShortcutPlatform>('other');
+    const shortcutPlatform = useSyncExternalStore(noSubscription, getShortcutPlatform, serverShortcutPlatform);
 
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const [toolbarOpen, setToolbarOpen] = useState(() => toolbarOptions.defaultOpen !== false);
@@ -339,8 +375,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     };
     const runCommand = (command: string, ...args: unknown[]) => {
       if (!canEditDocument) return;
-      controllerRef.current?.execCommand(command, ...args);
-      controllerRef.current?.focus();
+      controllerAccess.get()?.execCommand(command, ...args);
+      controllerAccess.get()?.focus();
     };
     const toolbarContext: GalleyToolbarContext = {
       value,
@@ -476,7 +512,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     }), [editable, placeholder, ariaLabel, spellcheck, theme, editorClassName, classNames, minRows, maxRows, layout, horizontalScroll, tabIndents, keymap, codeHighlighter, imageRenderer, resolveImageSource, missingImageRenderer, imageControlsRenderer, tableControlIcons, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
     const settingsRef = useRef(settings);
     useSafeLayoutEffect(() => { settingsRef.current = settings; }, [settings]);
-    const appliedSettingsRef = useRef<ControllerSettings | null>(null);
+    const appliedSettingsRef = useRef<{ settings: ControllerSettings; theme: string } | null>(null);
 
     // ── Create EditorView ONCE on mount ─────────────────────────────────
     useSafeLayoutEffect(() => {
@@ -508,52 +544,27 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         callbackProxy,
       );
 
-      controllerRef.current = controller;
-      appliedSettingsRef.current = initialSettings;
-      pendingExtensions.current.forEach((pending) => {
-        pending.remove = controller.addExtension(pending.extension).remove;
-      });
-      pendingExtensions.current.clear();
+      controllerAccess.set(controller);
+      appliedSettingsRef.current = { settings: initialSettings, theme: resolveColorScheme(initialSettings.theme) };
       format.update(controller.view.state);
       setDisplayKeymap(controller.getResolvedKeymap());
 
       return () => {
         controller.destroy();
-        controllerRef.current = null;
+        controllerAccess.set(null);
         appliedSettingsRef.current = null;
       };
     }, []); // Intentionally empty — view created once
 
-    // ── Sync settings changes via Compartment reconfiguration ───────────
+    // ── Sync settings and color scheme via Compartment reconfiguration ──
     useSafeLayoutEffect(() => {
-      if (!controllerRef.current || appliedSettingsRef.current === settings) return;
-      controllerRef.current.updateSettings(settings);
-      appliedSettingsRef.current = settings;
-      setDisplayKeymap(controllerRef.current.getResolvedKeymap());
-    }, [settings]);
-
-    // ── Resolve wrapper theme and watch system preference changes ────────
-    useEffect(() => {
-      let currentTheme = resolveColorScheme(theme);
-      setResolvedTheme(currentTheme);
-      return watchColorScheme(theme, (nextTheme) => {
-        if (nextTheme === currentTheme) return;
-        currentTheme = nextTheme;
-        setResolvedTheme(nextTheme);
-        controllerRef.current?.updateSettings(settingsRef.current);
-      });
-    }, [theme]);
-
-    useEffect(() => {
-      const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform;
-      if (/Mac|iPhone|iPad|iPod/.test(platform)) {
-        setShortcutPlatform('mac');
-      } else if (/Win/.test(platform)) {
-        setShortcutPlatform('win');
-      } else if (/Linux|X11/.test(platform)) {
-        setShortcutPlatform('linux');
-      }
-    }, []);
+      const controller = controllerAccess.get();
+      const previous = appliedSettingsRef.current;
+      if (!controller || (previous?.settings === settings && previous.theme === resolvedTheme)) return;
+      controller.updateSettings(settings);
+      appliedSettingsRef.current = { settings, theme: resolvedTheme };
+      setDisplayKeymap(controller.getResolvedKeymap());
+    }, [controllerAccess, settings, resolvedTheme]);
 
     // ── Sync controlled value ───────────────────────────────────────────
     const lastDocument = useRef({ docKey, controlledValue });
@@ -562,7 +573,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       const docKeyChanged = previous.docKey !== docKey;
       lastDocument.current = { docKey, controlledValue };
       if (docKeyChanged || (controlledValue !== undefined && controlledValue !== previous.controlledValue)) {
-        controllerRef.current?.syncValue(controlledValue ?? defaultValue, docKeyChanged);
+        controllerAccess.get()?.syncValue(controlledValue ?? defaultValue, docKeyChanged);
       }
     }, [controlledValue, defaultValue, docKey]);
 
@@ -576,7 +587,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     const onReadyRef = useRef(onReady);
     useSafeLayoutEffect(() => { onReadyRef.current = onReady; }, [onReady]);
     useSafeLayoutEffect(() => {
-      const view = controllerRef.current?.view;
+      const view = controllerAccess.get()?.view;
       if (view) onReadyRef.current?.(view);
     }, []);
 

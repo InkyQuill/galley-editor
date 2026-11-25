@@ -436,13 +436,12 @@ export class EditorController implements GalleyHandle {
   }
 
   private dropPositionForEvent(event: DragEvent): number {
-    let pos: number | null = null;
+    const fallback = this.view.state.selection.main.from;
     try {
-      pos = this.view.posAtCoords({ x: event.clientX, y: event.clientY });
+      return this.view.posAtCoords({ x: event.clientX, y: event.clientY }) ?? fallback;
     } catch {
-      pos = null;
+      return fallback;
     }
-    return pos ?? this.view.state.selection.main.from;
   }
 
   private setDropIndicatorForEvent(event: DragEvent): void {
