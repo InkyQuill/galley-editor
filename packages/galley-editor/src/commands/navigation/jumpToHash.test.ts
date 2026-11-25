@@ -46,6 +46,12 @@ describe('jumpToHash', () => {
     expect(view.state.selection.main.head).toBe(0);
   });
 
+  it('jumps to a heading between two horizontal rules', () => {
+    const view = viewOf('---\n\n# First heading\n\n---\n\n## Second heading');
+    expect(jumpToHash(view, '#first-heading')).toBe(true);
+    expect(view.state.selection.main.head).toBe(5);
+  });
+
   it('supports duplicate heading suffixes', () => {
     const view = viewOf('# Repeat\n\n## Repeat\n\n### Repeat');
 

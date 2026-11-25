@@ -110,9 +110,13 @@ function toggleHeadingRange(level: number, lineText: string): string {
   return currentLevel === level ? `${indent}${rest}` : `${indent}${target} ${rest}`;
 }
 
-export const toggleHeading: CommandFn = (view, levelArg: unknown = 1) => {
+export function normalizeHeadingLevel(levelArg: unknown = 1): number {
   const level = Number(levelArg);
-  const normalized = Number.isFinite(level) ? Math.max(1, Math.min(6, Math.trunc(level))) : 1;
+  return Number.isFinite(level) ? Math.max(1, Math.min(6, Math.trunc(level))) : 1;
+}
+
+export const toggleHeading: CommandFn = (view, levelArg?: unknown) => {
+  const normalized = normalizeHeadingLevel(levelArg);
 
   const tree = syntaxTree(view.state);
   view.dispatch(

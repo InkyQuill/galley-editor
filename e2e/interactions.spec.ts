@@ -338,3 +338,36 @@ test('read-only search finds content without exposing replacement controls', asy
   await panel.getByRole('button', { name: 'next', exact: true }).click();
   await expectDocument(page, 'alpha beta alpha');
 });
+
+test('toolbar commands have a visible keyboard focus ring', async ({ page }) => {
+  const select = page.locator('.ge-toolbar-select');
+  await select.focus();
+  await page.keyboard.press('Tab');
+  const command = page.locator('.ge-toolbar-button:focus-visible');
+  await expect(command).toBeFocused();
+  expect(await command.evaluate(el => parseFloat(getComputedStyle(el).outlineWidth))).toBeGreaterThanOrEqual(2);
+});
+
+test('footer credits stay readable inside a narrow editor', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.locator('.ge-footer-logo-wrap').focus();
+  const credits = page.getByRole('tooltip');
+  await credits.evaluate(el => { el.textContent = 'Иллюстрации и оформление редактора предоставлены участниками проекта Galley Editor'; });
+  const tooltip = await credits.boundingBox();
+  const editor = await page.locator('.ge-editor-shell').boundingBox();
+  expect(tooltip!.x).toBeGreaterThanOrEqual(editor!.x);
+  expect(tooltip!.x + tooltip!.width).toBeLessThanOrEqual(editor!.x + editor!.width);
+});
+
+test('long toolbar labels wrap inside the editor without covering adjacent rows', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  const button = page.locator('.ge-mode-toggle');
+  await button.locator('.ge-mode-label').evaluate(el => {
+    el.textContent = 'Voransichtseinstellungen für die Vollbilddarstellung des aktuellen Dokuments';
+  });
+  const bounds = await button.boundingBox();
+  const editor = await page.locator('.ge-editor-shell').boundingBox();
+  expect(bounds!.width).toBeLessThanOrEqual(editor!.width);
+  const label = await button.locator('.ge-mode-label').boundingBox();
+  expect(label!.height).toBeLessThanOrEqual(bounds!.height);
+});

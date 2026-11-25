@@ -39,6 +39,16 @@ describe('getHeadings', () => {
     expect(getHeadings(state)[0].text).toBe('https://example.com https://example.org site');
   });
 
+  it('recognizes a Unicode YAML key after a leading comment', () => {
+    const state = EditorState.create({ doc: '---\n# Metadata\nзаголовок: Черновик\n---\n\n# Chapter' });
+    expect(getHeadings(state).map(({ text }) => text)).toEqual(['Chapter']);
+  });
+
+  it('keeps headings between horizontal rules at the start of a document', () => {
+    const state = EditorState.create({ doc: '---\n\n# First heading\n\n---\n\n## Second heading' });
+    expect(getHeadings(state).map(({ text }) => text)).toEqual(['First heading', 'Second heading']);
+  });
+
   it('keeps headings after a leading rule without closing front matter', () => {
     const state = EditorState.create({ doc: '---\n\n# Chapter' });
     expect(getHeadings(state)).toMatchObject([{ text: 'Chapter' }]);

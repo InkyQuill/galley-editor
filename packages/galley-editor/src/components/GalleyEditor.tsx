@@ -3,7 +3,6 @@
 import {
   Fragment,
   forwardRef,
-  useCallback,
   useEffect,
   useImperativeHandle,
   useId,
@@ -19,6 +18,7 @@ import {
 
 import type { Extension } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
+import { SearchQuery, setSearchQuery } from '@codemirror/search';
 import {
   EditorController,
   type ControllerSettings,
@@ -30,7 +30,7 @@ import {
   formatKeybinding,
   type ShortcutPlatform,
 } from '../commands/keymapDisplay';
-import { resolveColorScheme, watchColorScheme } from '../theme';
+import { createColorSchemeStore, resolveColorScheme } from '../theme';
 import {
   type BuiltinCommand,
   type GalleyPlugin,
@@ -41,6 +41,7 @@ import {
   type GalleyLabels,
   type GalleyMode,
   type GalleyToolbarContext,
+  type GalleyToolbarCommand,
   type GalleyToolbarSlot,
   type ToolbarIconName,
   type ToolbarIconRenderer,
@@ -49,6 +50,9 @@ import { GALLEY_VERSION } from '../version';
 import { ToolbarIcon, ToolbarToggleIcon } from './ToolbarIcon';
 
 import { createToolbarFormat, type ToolbarFormat } from './toolbar-format';
+import { createDocumentStatistics, type DocumentStatistics } from './document-statistics';
+import { TOOLBAR_COMMANDS } from './toolbar-commands';
+import { normalizeHeadingLevel } from '../commands/block';
 
 const useSafeLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 const NO_PLUGINS: GalleyPlugin[] = [];
@@ -63,23 +67,6 @@ const MODE_LABELS: Record<GalleyMode, string> = {
   live: 'Live',
   markdown: 'Markdown',
   preview: 'Preview',
-};
-
-const TOOLBAR_COMMANDS: Partial<Record<BuiltinCommand, [ToolbarIconName, string]>> = {
-  toggleBold: ['bold', 'Bold'],
-  toggleItalic: ['italic', 'Italic'],
-  toggleStrikethrough: ['strikethrough', 'Strikethrough'],
-  toggleCode: ['inlineCode', 'Inline code'],
-  toggleBulletList: ['bulletList', 'Bullet list'],
-  toggleOrderedList: ['orderedList', 'Ordered list'],
-  toggleCheckList: ['taskList', 'Task list'],
-  insertLink: ['link', 'Insert link'],
-  insertImage: ['image', 'Insert image'],
-  insertCodeBlock: ['codeBlock', 'Insert code block'],
-  insertTable: ['table', 'Insert table'],
-  insertHr: ['divider', 'Insert divider'],
-  undo: ['undo', 'Undo'],
-  redo: ['redo', 'Redo'],
 };
 
 const DEFAULT_COMMANDS: readonly (BuiltinCommand | 'separator')[] = [
@@ -105,24 +92,52 @@ const DEFAULT_LABELS: GalleyLabels = {
   credits: (version) => `Galley Editor v.${version} by Inky Quill`,
 };
 
-function wordCount(value: string): number {
-  const words = value.trim().match(/\S+/g);
-  return words?.length ?? 0;
+function useDocumentSnapshot(statistics: DocumentStatistics) {
+  return useSyncExternalStore(statistics.subscribe, statistics.getSnapshot, statistics.getSnapshot);
+}
+
+function LiveToolbarSlot({ statistics, render, context }: {
+  statistics: DocumentStatistics;
+  render: (context: GalleyToolbarContext) => ReactNode;
+  context: Omit<GalleyToolbarContext, 'value'>;
+}) {
+  return render({ ...context, value: useDocumentSnapshot(statistics).getValue() });
+}
+
+function LiveFooterSlot({ statistics, render, context }: {
+  statistics: DocumentStatistics;
+  render: (context: GalleyFooterContext) => ReactNode;
+  context: Omit<GalleyFooterContext, 'value' | 'wordCount' | 'characterCount'>;
+}) {
+  const { getValue, wordCount, characterCount } = useDocumentSnapshot(statistics);
+  return render({ ...context, value: getValue(), wordCount, characterCount });
+}
+
+function FooterStatistics({ statistics, words, characters }: {
+  statistics: DocumentStatistics;
+  words?: GalleyLabels['wordCount'];
+  characters?: GalleyLabels['characterCount'];
+}) {
+  const { wordCount, characterCount } = useDocumentSnapshot(statistics);
+  return <>
+    {words && <span>{words(wordCount)}</span>}
+    {characters && <span>{characters(characterCount)}</span>}
+  </>;
 }
 
 const noFormat = () => false;
 const normalStyle = () => 'normal' as const;
-const TOGGLE_COMMANDS = new Set<string>([
-  'toggleBold', 'toggleItalic', 'toggleStrikethrough', 'toggleCode',
-  'toggleBulletList', 'toggleOrderedList', 'toggleCheckList',
-]);
-
-function FormatButton({ format, command, ...props }: ComponentProps<'button'> & {
+function FormatButton({ format, command, headingLevel, ...props }: ComponentProps<'button'> & {
   format: ToolbarFormat;
   command: BuiltinCommand;
+  headingLevel?: number;
 }) {
-  const active = useSyncExternalStore(format.subscribe, () => format.hasCommand(command), noFormat);
-  return <button {...props} aria-pressed={TOGGLE_COMMANDS.has(command) ? active : undefined} />;
+  const active = useSyncExternalStore(
+    format.subscribe,
+    () => headingLevel === undefined ? format.hasCommand(command) : format.getTextStyle() === `h${headingLevel}`,
+    noFormat,
+  );
+  return <button {...props} aria-pressed={TOOLBAR_COMMANDS[command].toggle ? active : undefined} />;
 }
 
 function TextStyleSelect({ format, disabled, runCommand, label, styles }: {
@@ -287,7 +302,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
 
     const labels = { ...DEFAULT_LABELS, ...labelOverrides };
     const rootData = Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
-    const [value, setValue] = useState(controlledValue ?? defaultValue);
+    const initialValueRef = useRef(controlledValue ?? defaultValue);
+    const [statistics] = useState(() => createDocumentStatistics(controlledValue ?? defaultValue));
     const [format] = useState(createToolbarFormat);
     const containerRef = useRef<HTMLDivElement>(null);
     const [controllerAccess] = useState(createControllerAccess);
@@ -316,14 +332,11 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       }),
       [controllerAccess],
     );
-    const subscribeTheme = useCallback(
-      (notify: () => void) => watchColorScheme(theme, notify),
-      [theme],
-    );
+    const colorScheme = useMemo(() => createColorSchemeStore(theme), [theme]);
     const resolvedTheme = useSyncExternalStore(
-      subscribeTheme,
-      () => resolveColorScheme(theme),
-      () => theme === 'dark' ? 'dark' : 'light',
+      colorScheme.subscribe,
+      colorScheme.getSnapshot,
+      colorScheme.getServerSnapshot,
     );
     const [internalMode, setInternalMode] = useState<GalleyMode>('live');
     const requestedMode = mode ?? internalMode;
@@ -348,9 +361,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       ? footer
       : { wordCount: true, characterCount: true, logo: true };
     const showFooter = footer !== false;
-    const countWords = showFooter && (footerOptions.wordCount !== false || !!footerOptions.before || !!footerOptions.after);
-    const currentWordCount = useMemo(() => countWords ? wordCount(value) : 0, [countWords, value]);
-    const currentCharacterCount = value.length;
 
     const shellClassName = [
       'ge-editor-shell',
@@ -373,13 +383,16 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       const nextMode = MODE_ORDER[(currentIndex + 1) % MODE_ORDER.length];
       changeMode(nextMode);
     };
+    const canRunCommand = (command: string) => canEditDocument ||
+      (Object.hasOwn(TOOLBAR_COMMANDS, command) && TOOLBAR_COMMANDS[command as BuiltinCommand].readOnly === true);
     const runCommand = (command: string, ...args: unknown[]) => {
-      if (!canEditDocument) return;
-      controllerAccess.get()?.execCommand(command, ...args);
-      controllerAccess.get()?.focus();
+      if (!canRunCommand(command)) return;
+      const controller = controllerAccess.get();
+      const result = controller?.execCommand(command, ...args);
+      controller?.focus();
+      return result;
     };
-    const toolbarContext: GalleyToolbarContext = {
-      value,
+    const toolbarContext: Omit<GalleyToolbarContext, 'value'> = {
       mode: effectiveMode,
       canEdit: canEditDocument,
       editor: handleProxy,
@@ -387,11 +400,8 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       setMode: changeMode,
       cycleMode,
     };
-    const footerContext: GalleyFooterContext = {
-      value,
+    const footerContext: Omit<GalleyFooterContext, 'value' | 'wordCount' | 'characterCount'> = {
       mode: effectiveMode,
-      wordCount: currentWordCount,
-      characterCount: currentCharacterCount,
       editor: handleProxy,
     };
     const renderToolbarSlot = (
@@ -401,7 +411,9 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!slot) return null;
       return (
         <div className={`ge-toolbar-slot ge-toolbar-slot-${position}`}>
-          {isToolbarSlotRenderer(slot) ? slot(toolbarContext) : slot}
+          {isToolbarSlotRenderer(slot)
+            ? <LiveToolbarSlot statistics={statistics} render={slot} context={toolbarContext} />
+            : slot}
         </div>
       );
     };
@@ -412,7 +424,9 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       if (!slot) return null;
       return (
         <div className={`ge-footer-slot ge-footer-slot-${position}`}>
-          {isFooterSlotRenderer(slot) ? slot(footerContext) : slot}
+          {isFooterSlotRenderer(slot)
+            ? <LiveFooterSlot statistics={statistics} render={slot} context={footerContext} />
+            : slot}
         </div>
       );
     };
@@ -424,9 +438,15 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       }
       return configured;
     };
-    const toolbarButton = (command: BuiltinCommand) => {
-      const [name, fallbackLabel] = TOOLBAR_COMMANDS[command] ?? [];
-      const ariaLabel = name ? labels.command[name] ?? fallbackLabel ?? command : command;
+    const toolbarButton = (entry: GalleyToolbarCommand) => {
+      const command = typeof entry === 'string' ? entry : entry.command;
+      const args = typeof entry === 'string' ? [] : entry.args;
+      const { icon, label } = TOOLBAR_COMMANDS[command];
+      const usesDefaultLayout = DEFAULT_COMMANDS.includes(command);
+      const legacyLabel = icon && usesDefaultLayout ? labels.command[icon] : undefined;
+      const headingLevel = command === 'toggleHeading' ? normalizeHeadingLevel(args[0]) : undefined;
+      const fallbackLabel = headingLevel !== undefined && args.length > 0 ? labels.heading(headingLevel) : label;
+      const ariaLabel = labels.command[command] ?? legacyLabel ?? fallbackLabel;
       const key = findCommandKey(displayKeymap, command, shortcutPlatform);
       const title = key
         ? `${ariaLabel} (${formatKeybinding(key, shortcutPlatform)})`
@@ -437,15 +457,31 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
           key={command}
           format={format}
           command={command}
+          headingLevel={headingLevel}
           type="button"
           className="ge-toolbar-button"
           aria-label={ariaLabel}
           title={title}
-          disabled={!canEditDocument}
+          disabled={!canRunCommand(command)}
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => runCommand(command)}
+          onClick={() => {
+            if (command === 'findInDocument') {
+              const controller = controllerAccess.get();
+              if (controller && typeof args[0] === 'string') {
+                const options = args[1] as import('../types').FindOpts | undefined;
+                controller.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({
+                  search: args[0], caseSensitive: options?.caseSensitive,
+                  wholeWord: options?.wholeWord, regexp: options?.regex,
+                })) });
+              }
+              controller?.openSearch();
+            } else {
+              runCommand(command, ...args);
+            }
+          }}
         >
-          {name ? renderIcon(name, <ToolbarIcon name={name} />, ariaLabel) : ariaLabel}
+          {icon ? renderIcon(icon, <ToolbarIcon name={icon} />, ariaLabel) : <ToolbarIcon name="command" />}
+          {!usesDefaultLayout && <span>{ariaLabel}</span>}
         </FormatButton>
       );
     };
@@ -456,9 +492,9 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       callbacksRef.current = {
         onChange,
         onSelectionChange,
-        onUpdate: (update, content) => {
-          if (content !== undefined) setValue(content);
-          if (update.docChanged || update.selectionSet || syntaxTree(update.startState) !== syntaxTree(update.state)) {
+        onUpdate: (update) => {
+          statistics.update(update);
+          if (showToolbar && (update.docChanged || update.selectionSet || syntaxTree(update.startState) !== syntaxTree(update.state))) {
             format.update(update.state);
           }
         },
@@ -475,9 +511,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         onSubmit,
       };
     });
-
-    // Store initial value to avoid capturing it in the effect closure
-    const initialValueRef = useRef(value);
 
     const settings = useMemo<ControllerSettings>(() => ({
       editable,
@@ -546,7 +579,6 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
 
       controllerAccess.set(controller);
       appliedSettingsRef.current = { settings: initialSettings, theme: resolveColorScheme(initialSettings.theme) };
-      format.update(controller.view.state);
       setDisplayKeymap(controller.getResolvedKeymap());
 
       return () => {
@@ -556,13 +588,23 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       };
     }, []); // Intentionally empty — view created once
 
+    useSafeLayoutEffect(() => {
+      const controller = controllerAccess.get();
+      if (showToolbar && controller) format.update(controller.view.state);
+    }, [controllerAccess, format, showToolbar]);
+
+    const observesViewport = onViewportChange !== undefined;
+    useSafeLayoutEffect(() => {
+      controllerAccess.get()?.updateViewportObservation();
+    }, [controllerAccess, observesViewport]);
+
     // ── Sync settings and color scheme via Compartment reconfiguration ──
     useSafeLayoutEffect(() => {
       const controller = controllerAccess.get();
       const previous = appliedSettingsRef.current;
-      if (!controller || (previous?.settings === settings && previous.theme === resolvedTheme)) return;
+      if (!controller || (previous?.settings === settings && (resolvedTheme === null || previous.theme === resolvedTheme))) return;
       controller.updateSettings(settings);
-      appliedSettingsRef.current = { settings, theme: resolvedTheme };
+      appliedSettingsRef.current = { settings, theme: resolvedTheme ?? resolveColorScheme(settings.theme) };
       setDisplayKeymap(controller.getResolvedKeymap());
     }, [controllerAccess, settings, resolvedTheme]);
 
@@ -592,7 +634,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     }, []);
 
     return (
-      <div {...rootData} id={id} style={style} className={className} data-theme={theme === 'inherit' ? undefined : resolvedTheme} data-mode={effectiveMode}>
+      <div {...rootData} id={id} style={style} className={className} data-theme={theme === 'inherit' ? undefined : resolvedTheme ?? 'light'} data-mode={effectiveMode}>
         <div className={shellClassName} style={shellStyle}>
           {toolbarEnabled && (
             <div id={toolbarId} className="ge-toolbar" role="toolbar" aria-label={labels.toolbar} hidden={!showToolbar}>
@@ -653,11 +695,12 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
               )}
               {renderFooterSlot(footerOptions.before, 'before')}
               <div className="ge-footer-stats">
-                {footerOptions.wordCount !== false && (
-                  <span>{labels.wordCount(currentWordCount)}</span>
-                )}
-                {footerOptions.characterCount !== false && (
-                  <span>{labels.characterCount(currentCharacterCount)}</span>
+                {(footerOptions.wordCount !== false || footerOptions.characterCount !== false) && (
+                  <FooterStatistics
+                    statistics={statistics}
+                    words={footerOptions.wordCount !== false ? labels.wordCount : undefined}
+                    characters={footerOptions.characterCount !== false ? labels.characterCount : undefined}
+                  />
                 )}
               </div>
               <div className="ge-footer-end">

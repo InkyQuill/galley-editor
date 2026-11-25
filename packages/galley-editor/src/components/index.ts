@@ -15,6 +15,7 @@ export type {
   GalleyMode,
   GalleyLabels,
   GalleyToolbarOptions,
+  GalleyToolbarCommand,
   GalleyToolbarContext,
   GalleyToolbarSlot,
   GalleyFooterOptions,

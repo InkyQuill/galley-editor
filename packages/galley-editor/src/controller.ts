@@ -88,7 +88,7 @@ import {
 const externalValue = Annotation.define<boolean>();
 
 export interface EditorCallbacks {
-  onUpdate?: (update: ViewUpdate, value?: string) => void;
+  onUpdate?: (update: ViewUpdate) => void;
   onChange?: (value: string) => void;
   onSelectionChange?: (sel: {
     from: number;
@@ -261,10 +261,13 @@ export class EditorController implements GalleyHandle {
       this.callbacks.onSelectionChange?.(sel);
     });
     this.dispatchViewportChange = rafCoalesce(() => {
+      const notify = this.callbacks.onViewportChange;
+      if (!notify) return;
+
       const viewport = this.getViewport();
       if (viewport.from === this.lastViewport?.from && viewport.to === this.lastViewport.to) return;
       this.lastViewport = viewport;
-      this.callbacks.onViewportChange?.(viewport);
+      notify(viewport);
     });
     this.dispatchScroll = rafCoalesce((fraction) => {
       this.callbacks.onScroll?.(fraction);
@@ -301,6 +304,16 @@ export class EditorController implements GalleyHandle {
     });
 
     this.view = new EditorView({ state, parent });
+    if (this.callbacks.onViewportChange) this.dispatchViewportChange();
+  }
+
+  updateViewportObservation(): void {
+    if (this.callbacks.onViewportChange) {
+      this.dispatchViewportChange();
+    } else {
+      this.dispatchViewportChange.cancel();
+      this.lastViewport = undefined;
+    }
   }
 
   // ── Static extensions (created once) ──────────────────────────────────
@@ -334,16 +347,14 @@ export class EditorController implements GalleyHandle {
 
       // Event listeners (use callback refs so they never go stale)
       EditorView.updateListener.of((update) => {
-        let value: string | undefined;
         if (update.docChanged) {
           this.mapPendingFileRanges(update);
-          value = update.state.doc.toString();
           if (update.transactions.some((tr) => tr.docChanged && !tr.annotation(externalValue))) {
-            this.callbacks.onChange?.(value);
+            this.callbacks.onChange?.(update.state.doc.toString());
           }
         }
-        this.callbacks.onUpdate?.(update, value);
-        if (update.viewportChanged || update.geometryChanged || update.docChanged) {
+        this.callbacks.onUpdate?.(update);
+        if (this.callbacks.onViewportChange && (update.viewportChanged || update.geometryChanged || update.docChanged)) {
           this.dispatchViewportChange();
         }
         if (update.selectionSet) {
@@ -367,7 +378,7 @@ export class EditorController implements GalleyHandle {
       EditorView.domEventHandlers({
         scroll: (_e, view) => {
           this.dispatchScroll(getScrollFraction(view));
-          this.dispatchViewportChange();
+          if (this.callbacks.onViewportChange) this.dispatchViewportChange();
         },
         paste: (e, view) => {
           const files = this.filesFromDataTransfer(e.clipboardData);
@@ -859,14 +870,17 @@ export class EditorController implements GalleyHandle {
         nextTo--;
       }
     }
-    const clamp = (pos: number) => Math.min(pos, next.length);
-    const nextRanges = state.selection.ranges.map((range) =>
-      EditorSelection.range(clamp(range.anchor), clamp(range.head)),
-    );
+    const changes = state.changes({ from, to, insert: next.slice(from, nextTo) });
+    const clamp = (position: number) => Math.min(position, next.length);
+    const selection = external
+      ? state.selection.map(changes)
+      : EditorSelection.create(state.selection.ranges.map((range) =>
+        EditorSelection.range(clamp(range.anchor), clamp(range.head)),
+      ), state.selection.mainIndex);
     this.view.dispatch({
-      changes: { from, to, insert: next.slice(from, nextTo) },
+      changes,
       annotations: external ? [externalValue.of(true), Transaction.addToHistory.of(false)] : undefined,
-      selection: EditorSelection.create(nextRanges, state.selection.mainIndex),
+      selection,
     });
   }
 

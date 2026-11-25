@@ -42,11 +42,15 @@ export function slugifyHeading(value: string): string {
 function frontMatterEnd(doc: Text): number {
   if (!/^\uFEFF?---[ \t]*$/.test(doc.line(1).text)) return 0;
 
+  let hasMapping = false;
   for (let number = 2; number <= doc.lines; number += 1) {
     const line = doc.line(number);
     if (/^(---|\.\.\.)[ \t]*$/.test(line.text)) {
-      return Math.min(line.to + 1, doc.length);
+      return hasMapping ? Math.min(line.to + 1, doc.length) : 0;
     }
+    if (hasMapping || /^[ \t]*(?:#.*)?$/.test(line.text)) continue;
+    if (!/^ *(?:[\p{L}\p{M}\p{N}_.-]+|'[^']+'|"[^"]+"):(?:[ \t]|$)/u.test(line.text)) return 0;
+    hasMapping = true;
   }
 
   return 0;

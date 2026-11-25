@@ -37,7 +37,7 @@ class ErrorBoundary extends Component<Props, State> {
 
     const { labels } = this.props;
     return (
-      <div className="ge-error-boundary" style={{
+      <div role="alert" className="ge-error-boundary" style={{
         padding: '20px',
         border: '1px solid var(--ge-color-border, currentColor)',
         borderRadius: '8px',
