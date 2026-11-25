@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.18.0](https://github.com/InkyQuill/galley-editor/compare/v0.17.0...v0.18.0) (2026-11-25)
+
+
+### Features
+
+* **editor:** add document outline navigation ([bb1765a](https://github.com/InkyQuill/galley-editor/commit/bb1765a3ade4eb0bcb58cf8311c7ff5bd490b493))
+* **editor:** add outline navigation and harden editor integration ([1d554d0](https://github.com/InkyQuill/galley-editor/commit/1d554d0054f3b7b1659dce1059e9f411224180c1))
+* **editor:** improve document sync and customize editor controls ([cad9fbb](https://github.com/InkyQuill/galley-editor/commit/cad9fbb1c86eb68cefa5d1983b5ac7f568f3c21a))
+
+
+### Bug Fixes
+
+* **build:** provide the declaration bundler's AJV peer ([5d6083a](https://github.com/InkyQuill/galley-editor/commit/5d6083a106d5ddfe45ff68988c28831dc7ad0ca3))
+* **editor:** subscribe to client preferences without render-side refs ([3b040fd](https://github.com/InkyQuill/galley-editor/commit/3b040fdd6ae251d2fea45efda63c1be4e12a89ac))
+
 ## [0.17.0](https://github.com/InkyQuill/galley-editor/compare/v0.16.0...v0.17.0) (2026-10-08)
 
 
