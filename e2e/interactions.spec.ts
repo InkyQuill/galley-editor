@@ -6,6 +6,12 @@ async function replaceDocument(page: Page, text: string) {
   await page.keyboard.insertText(text);
 }
 
+async function loadDocument(page: Page, text: string) {
+  await page.getByText('Load or edit exact Markdown', { exact: true }).click();
+  await page.getByLabel('Markdown source', { exact: true }).fill(text);
+  await expectDocument(page, text);
+}
+
 async function expectDocument(page: Page, text: string) {
   await expect.poll(() => page.locator('pre code').last().textContent()).toBe(text);
 }
@@ -123,7 +129,7 @@ test('Delete and Shift-Enter preserve surrounding text', async ({ page }) => {
 
 for (const mode of ['live', 'preview']) {
   test(`read-only keyboard cannot mutate ${mode} content`, async ({ page }) => {
-    await replaceDocument(page, 'keep this');
+    await loadDocument(page, 'keep this');
     await page.getByLabel('Mode', { exact: true }).selectOption(mode);
     if (mode === 'live') await page.getByLabel('Editable', { exact: true }).uncheck();
     await page.locator('.cm-content').focus();
@@ -140,7 +146,8 @@ for (const [button, expected] of [
   ['Bullet list', '- word'], ['Ordered list', '1. word'], ['Task list', '- [ ] word'],
 ]) {
   test(`toolbar ${button} formats selected text`, async ({ page }) => {
-    await replaceDocument(page, 'word');
+    await loadDocument(page, 'word');
+    await page.locator('.cm-content').focus();
     await page.keyboard.press('ControlOrMeta+a');
     await page.locator('.ge-toolbar').getByRole('button', { name: button, exact: true }).click();
     await expectDocument(page, expected);
