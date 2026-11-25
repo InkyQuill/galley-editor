@@ -1,3 +1,4 @@
+import { syntaxTree } from '@codemirror/language';
 import { isolateHistory } from '@codemirror/commands';
 import { EditorSelection, type ChangeSpec, type SelectionRange } from '@codemirror/state';
 import type { CommandFn } from '../types';
@@ -113,6 +114,7 @@ export const toggleHeading: CommandFn = (view, levelArg: unknown = 1) => {
   const level = Number(levelArg);
   const normalized = Number.isFinite(level) ? Math.max(1, Math.min(6, Math.trunc(level))) : 1;
 
+  const tree = syntaxTree(view.state);
   view.dispatch(
     view.state.changeByRange((sel) => {
       const lines = collectLines(view.state, sel);
@@ -121,7 +123,27 @@ export const toggleHeading: CommandFn = (view, levelArg: unknown = 1) => {
       let charsAddedBefore = 0;
 
       for (const line of lines) {
-        const replacement = toggleHeadingRange(normalized, line.text);
+        let headingOffset = 0;
+        let fenced = false;
+        tree.iterate({
+          from: line.from,
+          to: line.to,
+          enter(node) {
+            if (node.to <= line.from || node.from >= line.to) return false;
+            if (node.name === 'FencedCode') {
+              fenced = true;
+              return false;
+            }
+            if (node.name.startsWith('ATXHeading')) {
+              headingOffset = node.from - line.from;
+              // Keep indentation handling for top-level headings as before.
+              if (!line.text.slice(0, headingOffset).trim()) headingOffset = 0;
+              return false;
+            }
+          },
+        });
+        if (fenced) continue;
+        const replacement = line.text.slice(0, headingOffset) + toggleHeadingRange(normalized, line.text.slice(headingOffset));
         if (replacement === line.text) continue;
 
         const delta = replacement.length - line.text.length;

@@ -53,6 +53,7 @@ export type {
   FindResult,
   RevealStrategy,
   ImageRenderer,
+  ImageSourceResolver,
   LinkClickHandler,
   UseGalleyOptions,
   UseGalleyResult,

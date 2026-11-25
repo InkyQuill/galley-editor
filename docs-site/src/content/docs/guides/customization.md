@@ -267,3 +267,34 @@ search theme:
 
 Scope these overrides to `className="manuscript-editor"` or use the theme variables
 from `@inkyquill/galley-themes` on `surface.style`.
+
+## Toolbar commands and text
+
+Pass `toolbar.commands` to set command order. Use `'separator'` to separate
+groups, and `toolbar.textStyle: false` to omit the heading picker. Use
+`showModeToggle: false` if the host provides its own mode control. When
+controlling `mode`, pass `onModeChange` to enable the built-in switch.
+
+```tsx
+<GalleyEditor
+  defaultValue="# Черновик"
+  toolbar={{
+    commands: ['toggleBold', 'toggleItalic', 'separator', 'undo'],
+    showModeToggle: false,
+  }}
+  labels={{
+    toolbar: 'Форматирование',
+    textStyle: 'Стиль текста',
+    normal: 'Обычный',
+    heading: (level) => `Заголовок ${level}`,
+    command: { bold: 'Жирный', italic: 'Курсив', undo: 'Отменить' },
+    wordCount: (count) => `Слов: ${count}`,
+    characterCount: (count) => `Символов: ${count}`,
+  }}
+/>
+```
+
+Unspecified labels use the English defaults. The count callbacks receive
+numbers so applications can apply locale-specific plural rules. Footer counts
+use the Markdown source, including formatting markers. Word counts split the
+source on whitespace, and character counts use JavaScript string length.

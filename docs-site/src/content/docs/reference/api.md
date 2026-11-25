@@ -35,11 +35,13 @@ Core props:
 
 | Prop | Type | Default |
 | --- | --- | --- |
-| `value` | `string` | `''` |
+| `value` | `string` | none |
+| `defaultValue` | `string` | `''` |
 | `onChange` | `(value: string) => void` | none |
 | `editable` | `boolean` | `true` |
 | `placeholder` | `string` | `''` |
 | `ariaLabel` | `string` | none |
+| `spellcheck` | `boolean` | CodeMirror default |
 | `minRows` | `number` | `3` |
 | `maxRows` | `number` | none |
 | `layout` | `'autosize' \| 'fill'` | `'autosize'` |
@@ -47,7 +49,31 @@ Core props:
 | `theme` | `'light' \| 'dark' \| 'auto' \| 'inherit'` | `'auto'` |
 | `mode` | `'live' \| 'markdown' \| 'preview'` | `'live'` |
 | `toolbar` | `boolean \| GalleyToolbarOptions` | `true` |
+| `labels` | `Partial<GalleyLabels>` | English |
 | `footer` | `boolean \| GalleyFooterOptions` | `true` |
+
+Set `value` and update it synchronously in `onChange` when React owns the
+document. Debounce saving or downstream consumers of the document. A delayed
+`value` is applied as an external edit, so sending an older snapshot can
+replace newer local text. Prop updates do not emit `onChange` or create an undo
+step. Changing `docKey` also resets history, selection, and scroll. Omit
+`value` and supply `defaultValue` when the editor owns the document. Toolbar
+and footer slots read the live Markdown in either case.
+
+```tsx
+<GalleyEditor
+  id="draft"
+  data-document="chapter-7"
+  style={{ minWidth: 0 }}
+  defaultValue="# Chapter 7"
+  spellcheck
+  onChange={saveDraft}
+/>
+```
+
+`id`, `style`, `className`, and `data-*` go on the outer wrapper. Use
+`surface.className` and `surface.style` to style the inner editor shell. Use
+`editorClassName` to target CodeMirror itself.
 
 Extension props:
 
@@ -57,6 +83,7 @@ Extension props:
 | `keymap` | Replace or extend the default keymap. |
 | `codeHighlighter` | Render inactive fenced code blocks. |
 | `imageRenderer` | Render Markdown image widgets. |
+| `resolveImageSource` | Resolve a Markdown URL for the built-in image renderer. |
 | `missingImageRenderer` | Render empty or failed images. |
 | `imageControlsRenderer` | Render selected-image controls. |
 | `tableControlIcons` | Replace rendered table editor control icons/text. |
@@ -65,13 +92,33 @@ Extension props:
 | `disabledPlugins` | Disable built-in plugin ids. |
 | `extensions` | Append CodeMirror extensions. |
 
+Keep plugin arrays, class-name overrides, extensions, renderer callbacks, and
+keymap overrides stable between renders unless their contents change. Define
+static configuration outside the wrapper component or memoize it in React.
+
+Use `resolveImageSource` when your application stores relative image paths and
+needs to serve them through a local asset protocol or a document-scoped URL.
+Return `undefined` to use the Markdown URL as written or `null` to show the
+missing image placeholder. The resolver is synchronous and leaves the source
+document and image metadata intact. A custom `imageRenderer` owns its own URL
+resolution.
+
+```tsx
+<GalleyEditor
+  defaultValue="![Cover](assets/cover.png)"
+  resolveImageSource={({ url }) => documentAssets.get(url)}
+/>
+```
+
 Event props:
 
 | Prop | Purpose |
 | --- | --- |
+| `onReady` | Called with the CodeMirror view after it mounts and the public ref is assigned. |
 | `onFocus`, `onBlur` | Focus lifecycle. |
 | `onSelectionChange` | Selection changes. |
 | `onScroll` | Scroll fraction from 0 to 1. |
+| `onViewportChange` | Visible source range after viewport offsets change. Notifications are coalesced per animation frame. |
 | `onEnter`, `onEscape`, `onSubmit` | Keyboard hooks. |
 | `onPaste` | Raw paste event. |
 | `onFiles`, `onFileStatus`, `onFileError` | Paste/drop file workflows. |
@@ -81,10 +128,14 @@ Event props:
 React error boundary for isolating editor failures:
 
 ```tsx
-<ErrorBoundary fallback={<p>Editor unavailable.</p>}>
+<ErrorBoundary resetKey={documentId} fallback={<p>Editor unavailable.</p>} onError={reportEditorError}>
   <GalleyEditor value={value} onChange={setValue} />
 </ErrorBoundary>
 ```
+
+Supply `resetKey` to recover when the document changes. Without a custom
+fallback, the default recovery screen uses the host theme and accepts localized
+`labels.heading`, `labels.details`, and `labels.retry` strings.
 
 ## Hook
 

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -9,11 +10,14 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
+  type ComponentProps,
   type CSSProperties,
   type ReactNode,
 } from 'react';
 
-const useSafeLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+import type { Extension } from '@codemirror/state';
+import { syntaxTree } from '@codemirror/language';
 import {
   EditorController,
   type ControllerSettings,
@@ -28,11 +32,12 @@ import {
 import { resolveColorScheme, watchColorScheme } from '../theme';
 import {
   type BuiltinCommand,
-  resolveClassNames,
+  type GalleyPlugin,
   type GalleyEditorProps,
   type GalleyFooterContext,
   type GalleyFooterSlot,
   type GalleyHandle,
+  type GalleyLabels,
   type GalleyMode,
   type GalleyToolbarContext,
   type GalleyToolbarSlot,
@@ -42,6 +47,13 @@ import {
 import { GALLEY_VERSION } from '../version';
 import { ToolbarIcon, ToolbarToggleIcon } from './ToolbarIcon';
 
+import { createToolbarFormat, type ToolbarFormat } from './toolbar-format';
+
+const useSafeLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+const NO_PLUGINS: GalleyPlugin[] = [];
+const NO_IDS: string[] = [];
+const NO_EXTENSIONS: Extension[] = [];
+
 export type { GalleyEditorProps, GalleyHandle };
 
 const MODE_ORDER: GalleyMode[] = ['live', 'markdown', 'preview'];
@@ -49,34 +61,96 @@ const MODE_ORDER: GalleyMode[] = ['live', 'markdown', 'preview'];
 const MODE_LABELS: Record<GalleyMode, string> = {
   live: 'Live',
   markdown: 'Markdown',
-  preview: 'HTML',
+  preview: 'Preview',
 };
 
-const FOOTER_TOOLTIP = `Galley Editor v.${GALLEY_VERSION} by Inky Quill`;
+const TOOLBAR_COMMANDS: Partial<Record<BuiltinCommand, [ToolbarIconName, string]>> = {
+  toggleBold: ['bold', 'Bold'],
+  toggleItalic: ['italic', 'Italic'],
+  toggleStrikethrough: ['strikethrough', 'Strikethrough'],
+  toggleCode: ['inlineCode', 'Inline code'],
+  toggleBulletList: ['bulletList', 'Bullet list'],
+  toggleOrderedList: ['orderedList', 'Ordered list'],
+  toggleCheckList: ['taskList', 'Task list'],
+  insertLink: ['link', 'Insert link'],
+  insertImage: ['image', 'Insert image'],
+  insertCodeBlock: ['codeBlock', 'Insert code block'],
+  insertTable: ['table', 'Insert table'],
+  insertHr: ['divider', 'Insert divider'],
+  undo: ['undo', 'Undo'],
+  redo: ['redo', 'Redo'],
+};
+
+const DEFAULT_COMMANDS: readonly (BuiltinCommand | 'separator')[] = [
+  'toggleBold', 'toggleItalic', 'toggleStrikethrough', 'toggleCode', 'separator',
+  'toggleBulletList', 'toggleOrderedList', 'toggleCheckList', 'separator',
+  'insertLink', 'insertImage', 'insertCodeBlock', 'insertTable', 'insertHr', 'separator',
+  'undo', 'redo',
+];
+
+const DEFAULT_LABELS: GalleyLabels = {
+  toolbar: 'Editor toolbar',
+  textStyle: 'Text style',
+  normal: 'Normal',
+  heading: (level) => `Heading ${level}`,
+  command: {},
+  mode: MODE_LABELS,
+  switchMode: (current) => `Switch editor mode · ${current}`,
+  showToolbar: 'Show formatting toolbar',
+  hideToolbar: 'Hide formatting toolbar',
+  wordCount: (count) => plural(count, 'word', 'words'),
+  characterCount: (count) => plural(count, 'character', 'characters'),
+  logo: 'Galley Editor',
+  credits: (version) => `Galley Editor v.${version} by Inky Quill`,
+};
 
 function wordCount(value: string): number {
   const words = value.trim().match(/\S+/g);
   return words?.length ?? 0;
 }
 
-type TextStyleOption = 'normal' | `h${1 | 2 | 3 | 4 | 5 | 6}`;
+const noFormat = () => false;
+const normalStyle = () => 'normal' as const;
+const TOGGLE_COMMANDS = new Set<string>([
+  'toggleBold', 'toggleItalic', 'toggleStrikethrough', 'toggleCode',
+  'toggleBulletList', 'toggleOrderedList', 'toggleCheckList',
+]);
 
-// Matches what headingsPlugin renders (ATXHeading1-6) and what toggleHeading
-// recognizes: CommonMark allows up to 3 leading spaces before an ATX marker.
-// Setext headings aren't rendered as headings by headingsPlugin and
-// toggleHeading can't toggle them off, so they're intentionally excluded here
-// to avoid the selector claiming a style the app can't actually remove.
-// Accepts either whitespace or end-of-line after the hash markers to support
-// marker-only headings like "###" with no content.
-const ATX_HEADING_RE = /^ {0,3}(#{1,6})(?:\s|$)/;
+function FormatButton({ format, command, ...props }: ComponentProps<'button'> & {
+  format: ToolbarFormat;
+  command: BuiltinCommand;
+}) {
+  const active = useSyncExternalStore(format.subscribe, () => format.hasCommand(command), noFormat);
+  return <button {...props} aria-pressed={TOGGLE_COMMANDS.has(command) ? active : undefined} />;
+}
 
-function headingStyleAt(value: string, pos: number): TextStyleOption {
-  const clamped = Math.max(0, Math.min(pos, value.length));
-  const lineStart = clamped === 0 ? 0 : value.lastIndexOf('\n', clamped - 1) + 1;
-  const newlineIndex = value.indexOf('\n', lineStart);
-  const lineEnd = newlineIndex === -1 ? value.length : newlineIndex;
-  const headingMarks = ATX_HEADING_RE.exec(value.slice(lineStart, lineEnd));
-  return headingMarks ? (`h${headingMarks[1].length}` as TextStyleOption) : 'normal';
+function TextStyleSelect({ format, disabled, runCommand, label, styles }: {
+  format: ToolbarFormat;
+  disabled: boolean;
+  runCommand: (name: string, ...args: unknown[]) => void;
+  label: string;
+  styles: readonly string[];
+}) {
+  const style = useSyncExternalStore(format.subscribe, format.getTextStyle, normalStyle);
+  const inCode = useSyncExternalStore(format.subscribe, format.isInCode, noFormat);
+  return (
+    <select
+      className="ge-toolbar-select"
+      aria-label={label}
+      name="ge-text-style"
+      value={style}
+      disabled={disabled || inCode}
+      onChange={(event) => {
+        const next = event.currentTarget.value;
+        const heading = next === 'normal' ? style : next;
+        if (heading.startsWith('h')) runCommand('toggleHeading', Number(heading.slice(1)));
+      }}
+    >
+      {styles.map((name, level) => (
+        <option key={level} value={level ? `h${level}` : 'normal'}>{name}</option>
+      ))}
+    </select>
+  );
 }
 
 function plural(value: number, singular: string, pluralValue: string): string {
@@ -119,16 +193,20 @@ function isFooterSlotRenderer(
 const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
   function GalleyEditor(props, ref) {
     const {
-      value = '',
+      value: controlledValue,
+      defaultValue = '',
       onChange,
       docKey,
       editable = true,
       placeholder = '',
       ariaLabel,
+      spellcheck,
       minRows = 3,
       maxRows,
       layout = 'autosize',
       horizontalScroll = false,
+      id,
+      style,
       className = '',
       editorClassName = '',
       classNames,
@@ -137,23 +215,27 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       keymap,
       codeHighlighter,
       imageRenderer,
+      resolveImageSource,
       missingImageRenderer,
       imageControlsRenderer,
       tableControlIcons,
       onLinkClick,
       bidi = false,
+      labels: labelOverrides,
       toolbar = true,
       footer = true,
       mode,
       onModeChange,
       surface,
-      plugins = [],
-      disabledPlugins = [],
-      extensions = [],
+      plugins = NO_PLUGINS,
+      disabledPlugins = NO_IDS,
+      extensions = NO_EXTENSIONS,
+      onReady,
       onFocus,
       onBlur,
       onSelectionChange,
       onScroll,
+      onViewportChange,
       onEnter,
       onEscape,
       onPaste,
@@ -167,12 +249,20 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       onSubmit,
     } = props;
 
+    const labels = { ...DEFAULT_LABELS, ...labelOverrides };
+    const rootData = Object.fromEntries(Object.entries(props).filter(([key]) => key.startsWith('data-')));
+    const [value, setValue] = useState(controlledValue ?? defaultValue);
+    const format = useMemo(createToolbarFormat, []);
     const containerRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<EditorController | null>(null);
+    const pendingExtensions = useRef(new Set<{ extension: Extension; remove?: () => void }>());
     const handleProxy = useMemo<GalleyHandle>(
       () => ({
         get view() { return controllerRef.current?.view ?? null; },
         getContent: () => controllerRef.current?.getContent() ?? '',
+        getHeadings: () => controllerRef.current?.getHeadings() ?? [],
+        getViewport: () => controllerRef.current?.getViewport() ?? { from: 0, to: 0 },
+        revealPosition: (position, options) => controllerRef.current?.revealPosition(position, options),
         setContent: (v: string) => controllerRef.current?.setContent(v),
         setDocument: (v: string) => controllerRef.current?.setDocument(v),
         insertText: (t: string) => controllerRef.current?.insertText(t),
@@ -187,11 +277,17 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
         redo: () => controllerRef.current?.redo(),
         scrollTo: (f: number) => controllerRef.current?.scrollTo(f),
         scrollSelectionIntoView: () => controllerRef.current?.scrollSelectionIntoView(),
-        addExtension: (ext: import('@codemirror/state').Extension) => controllerRef.current?.addExtension(ext) ?? { remove() {} },
+        addExtension: (extension) => {
+          if (controllerRef.current) return controllerRef.current.addExtension(extension);
+          const pending: { extension: Extension; remove?: () => void } = { extension };
+          const queue = pendingExtensions.current;
+          queue.add(pending);
+          return { remove: () => { queue.delete(pending); pending.remove?.(); } };
+        },
       }),
       [],
     );
-    const [resolvedTheme, setResolvedTheme] = useState(() => resolveColorScheme(theme));
+    const [resolvedTheme, setResolvedTheme] = useState(() => theme === 'dark' ? 'dark' : 'light');
     const [internalMode, setInternalMode] = useState<GalleyMode>('live');
     const requestedMode = mode ?? internalMode;
     const effectiveMode: GalleyMode = editable ? requestedMode : 'preview';
@@ -201,20 +297,25 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     );
     const [shortcutPlatform, setShortcutPlatform] =
       useState<ShortcutPlatform>('other');
-    const [selectionHead, setSelectionHead] = useState(0);
+
     const toolbarOptions = typeof toolbar === 'object' ? toolbar : {};
     const [toolbarOpen, setToolbarOpen] = useState(() => toolbarOptions.defaultOpen !== false);
     const toolbarId = useId();
+    const footerTooltipId = useId();
     const toolbarEnabled = toolbar !== false && toolbarOptions.enabled !== false;
     const showToolbar = toolbarEnabled && toolbarOpen;
     const showModeToggle = toolbarOptions.showModeToggle !== false;
+    const modeLabel = labels.mode[effectiveMode] ?? MODE_LABELS[effectiveMode];
+    const switchModeLabel = labels.switchMode(modeLabel);
+    const toolbarToggleLabel = toolbarOpen ? labels.hideToolbar : labels.showToolbar;
     const footerOptions = typeof footer === 'object'
       ? footer
       : { wordCount: true, characterCount: true, logo: true };
     const showFooter = footer !== false;
-    const currentWordCount = wordCount(value);
+    const countWords = showFooter && (footerOptions.wordCount !== false || !!footerOptions.before || !!footerOptions.after);
+    const currentWordCount = useMemo(() => countWords ? wordCount(value) : 0, [countWords, value]);
     const currentCharacterCount = value.length;
-    const currentTextStyle = headingStyleAt(value, selectionHead);
+
     const shellClassName = [
       'ge-editor-shell',
       `ge-layout-${layout}`,
@@ -287,29 +388,29 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       }
       return configured;
     };
-    const toolbarButton = (
-      name: ToolbarIconName,
-      ariaLabel: string,
-      command: BuiltinCommand,
-      ...args: unknown[]
-    ) => {
+    const toolbarButton = (command: BuiltinCommand) => {
+      const [name, fallbackLabel] = TOOLBAR_COMMANDS[command] ?? [];
+      const ariaLabel = name ? labels.command[name] ?? fallbackLabel ?? command : command;
       const key = findCommandKey(displayKeymap, command, shortcutPlatform);
       const title = key
         ? `${ariaLabel} (${formatKeybinding(key, shortcutPlatform)})`
         : ariaLabel;
 
       return (
-        <button
+        <FormatButton
+          key={command}
+          format={format}
+          command={command}
           type="button"
           className="ge-toolbar-button"
           aria-label={ariaLabel}
           title={title}
           disabled={!canEditDocument}
           onMouseDown={(event) => event.preventDefault()}
-          onClick={() => runCommand(command, ...args)}
+          onClick={() => runCommand(command)}
         >
-          {renderIcon(name, <ToolbarIcon name={name} />, ariaLabel)}
-        </button>
+          {name ? renderIcon(name, <ToolbarIcon name={name} />, ariaLabel) : ariaLabel}
+        </FormatButton>
       );
     };
 
@@ -318,13 +419,17 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     useSafeLayoutEffect(() => {
       callbacksRef.current = {
         onChange,
-        onSelectionChange: (sel) => {
-          setSelectionHead(sel.head);
-          onSelectionChange?.(sel);
+        onSelectionChange,
+        onUpdate: (update, content) => {
+          if (content !== undefined) setValue(content);
+          if (update.docChanged || update.selectionSet || syntaxTree(update.startState) !== syntaxTree(update.state)) {
+            format.update(update.state);
+          }
         },
         onFocus,
         onBlur,
         onScroll,
+        onViewportChange,
         onPaste,
         onFiles,
         onFileError,
@@ -338,13 +443,14 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     // Store initial value to avoid capturing it in the effect closure
     const initialValueRef = useRef(value);
 
-    const buildSettings = (): ControllerSettings => ({
+    const settings = useMemo<ControllerSettings>(() => ({
       editable,
       placeholder,
       ariaLabel,
+      spellcheck,
       theme,
       editorClassName,
-      classNames: resolveClassNames(classNames),
+      classNames,
       minRows,
       maxRows,
       layout,
@@ -353,6 +459,7 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       keymap,
       codeHighlighter,
       imageRenderer,
+      resolveImageSource,
       missingImageRenderer,
       imageControlsRenderer,
       tableControlIcons,
@@ -366,23 +473,25 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       uploadPlaceholderRenderer,
       dropIndicatorRenderer,
       uploadOverlayRenderer,
-    });
-    const settingsRef = useRef<ControllerSettings | null>(null);
-    settingsRef.current = buildSettings();
+    }), [editable, placeholder, ariaLabel, spellcheck, theme, editorClassName, classNames, minRows, maxRows, layout, horizontalScroll, tabIndents, keymap, codeHighlighter, imageRenderer, resolveImageSource, missingImageRenderer, imageControlsRenderer, tableControlIcons, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
+    const settingsRef = useRef(settings);
+    useSafeLayoutEffect(() => { settingsRef.current = settings; }, [settings]);
+    const appliedSettingsRef = useRef<ControllerSettings | null>(null);
 
     // ── Create EditorView ONCE on mount ─────────────────────────────────
-    useEffect(() => {
+    useSafeLayoutEffect(() => {
       if (!containerRef.current) return;
       const initialSettings = settingsRef.current;
-      if (!initialSettings) return;
 
       // Proxy callbacks through the ref so they're always fresh
       const callbackProxy: EditorCallbacks = {
+        get onUpdate() { return callbacksRef.current.onUpdate; },
         get onChange() { return callbacksRef.current.onChange; },
         get onSelectionChange() { return callbacksRef.current.onSelectionChange; },
         get onFocus() { return callbacksRef.current.onFocus; },
         get onBlur() { return callbacksRef.current.onBlur; },
         get onScroll() { return callbacksRef.current.onScroll; },
+        get onViewportChange() { return callbacksRef.current.onViewportChange; },
         get onPaste() { return callbacksRef.current.onPaste; },
         get onFiles() { return callbacksRef.current.onFiles; },
         get onFileError() { return callbacksRef.current.onFileError; },
@@ -400,34 +509,43 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
       );
 
       controllerRef.current = controller;
+      appliedSettingsRef.current = initialSettings;
+      pendingExtensions.current.forEach((pending) => {
+        pending.remove = controller.addExtension(pending.extension).remove;
+      });
+      pendingExtensions.current.clear();
+      format.update(controller.view.state);
       setDisplayKeymap(controller.getResolvedKeymap());
 
       return () => {
         controller.destroy();
         controllerRef.current = null;
+        appliedSettingsRef.current = null;
       };
     }, []); // Intentionally empty — view created once
 
     // ── Sync settings changes via Compartment reconfiguration ───────────
-    useEffect(() => {
-      if (!controllerRef.current || !settingsRef.current) return;
-
-      controllerRef.current.updateSettings(settingsRef.current);
+    useSafeLayoutEffect(() => {
+      if (!controllerRef.current || appliedSettingsRef.current === settings) return;
+      controllerRef.current.updateSettings(settings);
+      appliedSettingsRef.current = settings;
       setDisplayKeymap(controllerRef.current.getResolvedKeymap());
-    }, [editable, placeholder, ariaLabel, theme, editorClassName, classNames, minRows, maxRows, layout, horizontalScroll, tabIndents, keymap, codeHighlighter, imageRenderer, missingImageRenderer, imageControlsRenderer, tableControlIcons, onLinkClick, bidi, effectiveMode, plugins, disabledPlugins, extensions, uploadInteraction, uploadPlaceholderRenderer, dropIndicatorRenderer, uploadOverlayRenderer]);
+    }, [settings]);
 
     // ── Resolve wrapper theme and watch system preference changes ────────
     useEffect(() => {
-      setResolvedTheme(resolveColorScheme(theme));
+      let currentTheme = resolveColorScheme(theme);
+      setResolvedTheme(currentTheme);
       return watchColorScheme(theme, (nextTheme) => {
+        if (nextTheme === currentTheme) return;
+        currentTheme = nextTheme;
         setResolvedTheme(nextTheme);
-        if (!controllerRef.current || !settingsRef.current) return;
-        controllerRef.current.updateSettings(settingsRef.current);
+        controllerRef.current?.updateSettings(settingsRef.current);
       });
     }, [theme]);
 
     useEffect(() => {
-      const platform = navigator.platform;
+      const platform = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform;
       if (/Mac|iPhone|iPad|iPod/.test(platform)) {
         setShortcutPlatform('mac');
       } else if (/Win/.test(platform)) {
@@ -438,95 +556,72 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
     }, []);
 
     // ── Sync controlled value ───────────────────────────────────────────
-    const lastDocKeyRef = useRef(docKey);
-    useEffect(() => {
-      if (!controllerRef.current) return;
-      const docKeyChanged = lastDocKeyRef.current !== docKey;
-      lastDocKeyRef.current = docKey;
-      if (docKeyChanged) {
-        controllerRef.current.setDocument(value);
-        return;
+    const lastDocument = useRef({ docKey, controlledValue });
+    useSafeLayoutEffect(() => {
+      const previous = lastDocument.current;
+      const docKeyChanged = previous.docKey !== docKey;
+      lastDocument.current = { docKey, controlledValue };
+      if (docKeyChanged || (controlledValue !== undefined && controlledValue !== previous.controlledValue)) {
+        controllerRef.current?.syncValue(controlledValue ?? defaultValue, docKeyChanged);
       }
-      const current = controllerRef.current.getContent();
-      if (value !== current) {
-        controllerRef.current.setContent(value);
-      }
-    }, [value, docKey]);
+    }, [controlledValue, defaultValue, docKey]);
 
-    // ── Expose imperative handle via proxy ─────────────────────────────
-    // Proxy through controllerRef so the handle works even before the
-    // useEffect that creates the controller has run.
+    // Expose the handle after the view creation layout effect.
     useImperativeHandle(
       ref,
       () => handleProxy,
       [handleProxy],
     );
 
+    const onReadyRef = useRef(onReady);
+    useSafeLayoutEffect(() => { onReadyRef.current = onReady; }, [onReady]);
+    useSafeLayoutEffect(() => {
+      const view = controllerRef.current?.view;
+      if (view) onReadyRef.current?.(view);
+    }, []);
+
     return (
-      <div className={className} data-theme={theme === 'inherit' ? undefined : resolvedTheme} data-mode={effectiveMode}>
+      <div {...rootData} id={id} style={style} className={className} data-theme={theme === 'inherit' ? undefined : resolvedTheme} data-mode={effectiveMode}>
         <div className={shellClassName} style={shellStyle}>
-          {showToolbar && (
-            <div id={toolbarId} className="ge-toolbar" aria-label="Editor toolbar">
+          {toolbarEnabled && (
+            <div id={toolbarId} className="ge-toolbar" role="toolbar" aria-label={labels.toolbar} hidden={!showToolbar}>
+              {showToolbar && <>
               {renderToolbarSlot(toolbarOptions.before, 'before')}
-              <select
-                className="ge-toolbar-select"
-                aria-label="Text style"
-                name="ge-text-style"
-                value={currentTextStyle}
-                disabled={!canEditDocument}
-                onChange={(event) => {
-                  const next = event.currentTarget.value;
-                  if (next.startsWith('h')) {
-                    runCommand('toggleHeading', Number(next.slice(1)));
-                  } else if (currentTextStyle.startsWith('h')) {
-                    // Selecting Normal on a heading line toggles the heading off
-                    runCommand('toggleHeading', Number(currentTextStyle.slice(1)));
-                  }
-                }}
-              >
-                <option value="normal">Normal</option>
-                <option value="h1">Heading 1</option>
-                <option value="h2">Heading 2</option>
-                <option value="h3">Heading 3</option>
-                <option value="h4">Heading 4</option>
-                <option value="h5">Heading 5</option>
-                <option value="h6">Heading 6</option>
-              </select>
-              <span className="ge-toolbar-separator" />
-              {toolbarButton('bold', 'Bold', 'toggleBold')}
-              {toolbarButton('italic', 'Italic', 'toggleItalic')}
-              {toolbarButton('strikethrough', 'Strikethrough', 'toggleStrikethrough')}
-              {toolbarButton('inlineCode', 'Inline code', 'toggleCode')}
-              <span className="ge-toolbar-separator" />
-              {toolbarButton('bulletList', 'Bullet list', 'toggleBulletList')}
-              {toolbarButton('orderedList', 'Ordered list', 'toggleOrderedList')}
-              {toolbarButton('taskList', 'Task list', 'toggleCheckList')}
-              <span className="ge-toolbar-separator" />
-              {toolbarButton('link', 'Insert link', 'insertLink')}
-              {toolbarButton('image', 'Insert image', 'insertImage')}
-              {toolbarButton('codeBlock', 'Insert code block', 'insertCodeBlock')}
-              {toolbarButton('table', 'Insert table', 'insertTable')}
-              {toolbarButton('divider', 'Insert divider', 'insertHr')}
-              <span className="ge-toolbar-separator" />
-              {toolbarButton('undo', 'Undo', 'undo')}
-              {toolbarButton('redo', 'Redo', 'redo')}
+              {toolbarOptions.textStyle !== false && (
+                <TextStyleSelect
+                  format={format}
+                  disabled={!canEditDocument}
+                  runCommand={runCommand}
+                  label={labels.textStyle}
+                  styles={[labels.normal, ...[1, 2, 3, 4, 5, 6].map(labels.heading)]}
+                />
+              )}
+              {toolbarOptions.textStyle !== false && toolbarOptions.commands === undefined && (
+                <span className="ge-toolbar-separator" />
+              )}
+              {(toolbarOptions.commands ?? DEFAULT_COMMANDS).map((command, index) =>
+                command === 'separator'
+                  ? <span key={index} className="ge-toolbar-separator" />
+                  : <Fragment key={index}>{toolbarButton(command)}</Fragment>,
+              )}
               {showModeToggle && (
                 <>
                   <span className="ge-toolbar-separator" />
                   <button
                     type="button"
                     className="ge-toolbar-button ge-mode-toggle"
-                    aria-label="Switch editor mode"
-                    title={`Switch editor mode · ${MODE_LABELS[effectiveMode]}`}
-                    disabled={!editable}
+                    aria-label={switchModeLabel}
+                    title={switchModeLabel}
+                    disabled={!editable || (mode !== undefined && !onModeChange)}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={cycleMode}
                   >
-                    {renderIcon('mode', <><ToolbarIcon name="mode" /><span className="ge-mode-label">{MODE_LABELS[effectiveMode]}</span></>, 'Switch editor mode')}
+                    {renderIcon('mode', <><ToolbarIcon name="mode" /><span className="ge-mode-label">{modeLabel}</span></>, labels.command.mode ?? switchModeLabel)}
                   </button>
                 </>
               )}
               {renderToolbarSlot(toolbarOptions.after, 'after')}
+              </>}
             </div>
           )}
           <div ref={containerRef} className="ge-editor-body" />
@@ -536,10 +631,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                 <button
                   type="button"
                   className="ge-toolbar-toggle"
-                  aria-label={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
+                  aria-label={toolbarToggleLabel}
                   aria-expanded={showToolbar}
-                  aria-controls={showToolbar ? toolbarId : undefined}
-                  title={toolbarOpen ? 'Hide formatting toolbar' : 'Show formatting toolbar'}
+                  aria-controls={toolbarId}
+                  title={toolbarToggleLabel}
                   onClick={() => setToolbarOpen((open) => !open)}
                 >
                   <ToolbarToggleIcon />
@@ -548,10 +643,10 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
               {renderFooterSlot(footerOptions.before, 'before')}
               <div className="ge-footer-stats">
                 {footerOptions.wordCount !== false && (
-                  <span>{plural(currentWordCount, 'word', 'words')}</span>
+                  <span>{labels.wordCount(currentWordCount)}</span>
                 )}
                 {footerOptions.characterCount !== false && (
-                  <span>{plural(currentCharacterCount, 'character', 'characters')}</span>
+                  <span>{labels.characterCount(currentCharacterCount)}</span>
                 )}
               </div>
               <div className="ge-footer-end">
@@ -559,12 +654,14 @@ const GalleyEditor = forwardRef<GalleyHandle, GalleyEditorProps>(
                 {footerOptions.logo !== false && (
                   <span
                     className="ge-footer-logo-wrap"
-                    aria-label={FOOTER_TOOLTIP}
+                    role="img"
+                    aria-label={labels.logo}
+                    aria-describedby={footerTooltipId}
                     tabIndex={0}
                   >
                     <GalleyLogo />
-                    <span className="ge-footer-tooltip" role="tooltip">
-                      {FOOTER_TOOLTIP}
+                    <span id={footerTooltipId} className="ge-footer-tooltip" role="tooltip">
+                      {labels.credits(GALLEY_VERSION)}
                     </span>
                   </span>
                 )}

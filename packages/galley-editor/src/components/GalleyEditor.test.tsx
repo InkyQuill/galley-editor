@@ -201,7 +201,7 @@ describe('GalleyEditor React wrapper', () => {
     expect(focusCalls).toEqual(['called']);
   });
 
-  it('returns false when openSearch is called before the controller mounts', () => {
+  it('opens search from a parent layout effect', () => {
     let observed: boolean | undefined;
 
     function Parent() {
@@ -214,10 +214,10 @@ describe('GalleyEditor React wrapper', () => {
 
     mount(<Parent />);
 
-    expect(observed).toBe(false);
+    expect(observed).toBe(true);
   });
 
-  it('returns null from the view getter before the controller mounts', () => {
+  it('exposes the editor view to the parent layout effect', () => {
     let observedView: EditorView | null | undefined;
 
     function Parent() {
@@ -230,7 +230,7 @@ describe('GalleyEditor React wrapper', () => {
 
     mount(<Parent />);
 
-    expect(observedView).toBeNull();
+    expect(observedView?.contentDOM).toBeInstanceOf(HTMLElement);
   });
 
   it('renders the resolved dark theme on the wrapper', () => {
@@ -316,7 +316,9 @@ describe('GalleyEditor React wrapper', () => {
     expect(footer).toBeInstanceOf(HTMLElement);
     expect(footer?.textContent).toContain('2 words');
     expect(footer?.textContent).toContain('11 characters');
-    expect(footer?.querySelector('.ge-footer-logo-wrap')?.getAttribute('aria-label')).toBe(`Galley Editor v.${GALLEY_VERSION} by Inky Quill`);
+    const logo = footer?.querySelector('[role="img"][aria-label="Galley Editor"]');
+    const tooltip = footer?.querySelector('[role="tooltip"]');
+    expect(logo?.getAttribute('aria-describedby')).toBe(tooltip?.id);
     expect(footer?.querySelector('.ge-footer-tooltip')?.textContent).toBe(`Galley Editor v.${GALLEY_VERSION} by Inky Quill`);
     expect(footer?.querySelector('.ge-footer-logo path')?.getAttribute('fill')).toBe('currentColor');
   });
@@ -367,7 +369,7 @@ describe('GalleyEditor React wrapper', () => {
 
   it('reveals a deliberately collapsed toolbar from the footer', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" toolbar={{ defaultOpen: false }} />);
-    expect(container.querySelector('.ge-toolbar')).toBeNull();
+    expect(container.querySelector('.ge-toolbar')?.hasAttribute('hidden')).toBe(true);
     const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Show formatting toolbar"]');
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
     act(() => toggle?.click());
@@ -382,7 +384,7 @@ describe('GalleyEditor React wrapper', () => {
     }
     expect(container.querySelector('[aria-label="Bullet list"]')?.textContent).toBe('');
     act(() => toggle?.click());
-    expect(container.querySelector('.ge-toolbar')).toBeNull();
+    expect(container.querySelector('.ge-toolbar')?.hasAttribute('hidden')).toBe(true);
   });
 
   it('shows bound shortcuts in titles without changing accessible labels', () => {
@@ -839,5 +841,129 @@ describe('GalleyEditor text style selector', () => {
     });
 
     expect(ref.current?.getContent()).toBe('Title');
+  });
+});
+
+describe('Galley shell regression coverage', () => {
+  it('builds plugins once through toolbar toggles and cursor-only or unrelated renders', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const makeExtensions = vi.fn(() => []);
+    const toolbarSlot = vi.fn(() => null);
+    const plugins = [{ id: 'probe', extensions: makeExtensions }];
+    const toolbar = { before: toolbarSlot };
+    const { container, root } = mount(
+      <GalleyEditor ref={ref} defaultValue="a **b** c" plugins={plugins} toolbar={toolbar} />,
+    );
+    const originalSlotRenders = toolbarSlot.mock.calls.length;
+    act(() => ref.current?.select(5));
+    expect(toolbarSlot).toHaveBeenCalledTimes(originalSlotRenders);
+    expect(container.querySelector('[aria-label="Bold"]')?.getAttribute('aria-pressed')).toBe('true');
+    rerender(root, <GalleyEditor ref={ref} defaultValue="a **b** c" plugins={plugins} toolbar={toolbar} id="updated" />);
+    act(() => container.querySelector<HTMLButtonElement>('.ge-toolbar-toggle')?.click());
+    expect(makeExtensions).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps live footer statistics, parses headings in quotes, and protects fenced code', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor ref={ref} defaultValue={'> ## Quoted\n\n```\n## code\n```'} />);
+    const select = container.querySelector<HTMLSelectElement>('.ge-toolbar-select')!;
+    act(() => ref.current?.select(8));
+    expect(select.value).toBe('h2');
+    act(() => {
+      select.value = 'normal';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(ref.current?.getContent()).toContain('> Quoted');
+    act(() => ref.current?.select(ref.current.getContent().indexOf('code')));
+    expect(select.value).toBe('normal');
+    expect(select.disabled).toBe(true);
+    act(() => {
+      ref.current?.select(ref.current.getContent().length);
+      ref.current?.insertText('\n\nnew words');
+    });
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toContain('8 words');
+  });
+
+  it('applies external value changes without callbacks or a new undo step', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const onChange = vi.fn();
+    const { root } = mount(<GalleyEditor ref={ref} value="initial" onChange={onChange} />);
+    rerender(root, <GalleyEditor ref={ref} value="external" onChange={onChange} />);
+    act(() => ref.current?.undo());
+    expect(ref.current?.getContent()).toBe('external');
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => ref.current?.insertText('edit '));
+    expect(onChange).toHaveBeenCalledWith('edit external');
+  });
+
+  it('keeps undo for edits outside the changed external range', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { root } = mount(<GalleyEditor ref={ref} value="first last" />);
+    act(() => ref.current?.insertText('editable '));
+    rerender(root, <GalleyEditor ref={ref} value="editable first updated" />);
+    act(() => ref.current?.undo());
+    expect(ref.current?.getContent()).toBe('first updated');
+  });
+
+  it('uses a stable server theme and gives plugins the client preference after mount', () => {
+    mockPrefersDark(true);
+    const extensions = vi.fn(() => []);
+    const plugins: GalleyPlugin[] = [{ id: 'probe', extensions }];
+    expect(renderToString(<GalleyEditor theme="auto" plugins={plugins} />)).toContain('data-theme="light"');
+    const { container } = mount(<GalleyEditor theme="auto" plugins={plugins} />);
+    expect(container.firstElementChild?.getAttribute('data-theme')).toBe('dark');
+    expect(extensions).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ theme: 'dark' }));
+  });
+
+  it('gives plugins the resolved theme and ignores host mutations with no color change', async () => {
+    const extensions = vi.fn(() => []);
+    const plugins: GalleyPlugin[] = [{ id: 'probe', extensions }];
+    document.documentElement.classList.add('dark');
+    try {
+      mount(<GalleyEditor theme="inherit" plugins={plugins} />);
+      expect(extensions).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ theme: 'dark' }));
+      await act(async () => { document.documentElement.style.setProperty('--probe', '1'); });
+      expect(extensions).toHaveBeenCalledTimes(1);
+      await act(async () => { document.documentElement.classList.replace('dark', 'light'); });
+      expect(extensions).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ theme: 'light' }));
+    } finally {
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.style.removeProperty('--probe');
+    }
+  });
+
+  it('supports a localized, ordered toolbar, wrapper attributes, onReady, and native spellchecking', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const onReady = vi.fn(() => expect(ref.current?.view).toBeDefined());
+    const { container } = mount(
+      <GalleyEditor
+        ref={ref}
+        id="draft"
+        data-document="scene"
+        style={{ width: 300 }}
+        onReady={onReady}
+        spellcheck
+        labels={{ toolbar: 'Форматирование', command: { undo: 'Отменить', bold: 'Жирный' } }}
+        toolbar={{ commands: ['undo', 'separator', 'toggleBold'], textStyle: false, showModeToggle: false }}
+      />,
+    );
+    const wrapper = container.querySelector<HTMLElement>('#draft')!;
+    expect(wrapper.dataset.document).toBe('scene');
+    expect(wrapper.style.width).toBe('300px');
+    expect(onReady).toHaveBeenCalledWith(ref.current?.view);
+    const toolbar = wrapper.querySelector('[role="toolbar"][aria-label="Форматирование"]')!;
+    expect([...toolbar.querySelectorAll('button')].map((button) => button.ariaLabel)).toEqual(['Отменить', 'Жирный']);
+    expect(toolbar.querySelector('select')).toBeNull();
+    expect(ref.current?.view?.contentDOM.getAttribute('spellcheck')).toBe('true');
+  });
+
+  it('resolves a local image source without changing the Markdown URL', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const markdown = 'Text\n\n![Flower](assets/flower.png)';
+    const { container } = mount(
+      <GalleyEditor ref={ref} defaultValue={markdown} resolveImageSource={() => '/safe/flower.png'} />,
+    );
+    expect(container.querySelector('img.ge-image')?.getAttribute('src')).toBe('/safe/flower.png');
+    expect(ref.current?.getContent()).toBe(markdown);
   });
 });

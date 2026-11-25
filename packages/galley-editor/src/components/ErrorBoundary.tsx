@@ -5,105 +5,56 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  resetKey?: string | number;
+  onError?: (error: Error, info: ErrorInfo) => void;
+  labels?: Partial<{ heading: string; details: string; retry: string }>;
 }
 
 interface State {
-  hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
-  }
+  state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
+    return { error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo,
-    });
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    this.props.onError?.(error, info);
+  }
+
+  componentDidUpdate(previousProps: Props) {
+    if (this.state.error && previousProps.resetKey !== this.props.resetKey) {
+      this.setState({ error: null });
+    }
   }
 
   render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
+    if (!this.state.error) return this.props.children;
+    if (this.props.fallback !== undefined) return this.props.fallback;
 
-      return (
-        <div style={{
-          padding: '20px',
-          border: '2px solid #ef4444',
-          borderRadius: '8px',
-          backgroundColor: '#fef2f2',
-          color: '#991b1b',
-        }}>
-          <h2 style={{ marginTop: 0, color: '#dc2626' }}>Something went wrong</h2>
-          <details style={{ marginTop: '10px' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
-              Error Details
-            </summary>
-            <pre style={{
-              backgroundColor: '#fee2e2',
-              padding: '10px',
-              borderRadius: '4px',
-              overflow: 'auto',
-              fontSize: '12px',
-              whiteSpace: 'pre-wrap',
-            }}>
-              <strong>Error:</strong> {this.state.error?.toString()}
-              {this.state.errorInfo && (
-                <>
-                  {'\n\n'}
-                  <strong>Component Stack:</strong>
-                  {'\n'}
-                  {this.state.errorInfo.componentStack}
-                </>
-              )}
-            </pre>
-          </details>
-          <button
-            onClick={() => {
-              this.setState({
-                hasError: false,
-                error: null,
-                errorInfo: null,
-              });
-            }}
-            style={{
-              marginTop: '10px',
-              padding: '8px 16px',
-              backgroundColor: '#dc2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
-
-    return this.props.children;
+    const { labels } = this.props;
+    return (
+      <div className="ge-error-boundary" style={{
+        padding: '20px',
+        border: '1px solid var(--ge-color-border, currentColor)',
+        borderRadius: '8px',
+        backgroundColor: 'var(--ge-color-bg, Canvas)',
+        color: 'var(--ge-color-text, CanvasText)',
+      }}>
+        <h2>{labels?.heading ?? 'Something went wrong'}</h2>
+        <details>
+          <summary>{labels?.details ?? 'Error details'}</summary>
+          <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error.toString()}</pre>
+        </details>
+        <button type="button" onClick={() => this.setState({ error: null })}>
+          {labels?.retry ?? 'Try again'}
+        </button>
+      </div>
+    );
   }
 }
 
 export default ErrorBoundary;
-
