@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/InkyQuill/galley-editor/compare/v0.18.0...v0.18.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **editor:** preserve selections and improve toolbar and outline behavior ([#16](https://github.com/InkyQuill/galley-editor/issues/16)) ([36ee975](https://github.com/InkyQuill/galley-editor/commit/36ee975b1873bdcf3fc6aeb7c5da64b641c8590b))
+
 ## [0.18.0](https://github.com/InkyQuill/galley-editor/compare/v0.17.0...v0.18.0) (2026-11-25)
 
 
