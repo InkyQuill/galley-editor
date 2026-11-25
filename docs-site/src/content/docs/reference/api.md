@@ -55,10 +55,13 @@ Core props:
 Set `value` and update it synchronously in `onChange` when React owns the
 document. Debounce saving or downstream consumers of the document. A delayed
 `value` is applied as an external edit, so sending an older snapshot can
-replace newer local text. Prop updates do not emit `onChange` or create an undo
-step. Changing `docKey` also resets history, selection, and scroll. Omit
-`value` and supply `defaultValue` when the editor owns the document. Toolbar
-and footer slots read the live Markdown in either case.
+replace newer local text. External edits map the current selection through the
+change and preserve undo history for edits outside the changed range. They do not emit `onChange`
+or create a new undo step. Passing the same `value` again leaves local edits
+in place. To replace the draft explicitly, call `setContent()` for an undoable
+change or change `docKey` for a fresh document with reset history, selection, and
+scroll. Omit `value` and supply `defaultValue` when the editor owns the document.
+Toolbar and footer slots read the live Markdown in either case.
 
 ```tsx
 <GalleyEditor
@@ -100,8 +103,10 @@ Use `resolveImageSource` when your application stores relative image paths and
 needs to serve them through a local asset protocol or a document-scoped URL.
 Return `undefined` to use the Markdown URL as written or `null` to show the
 missing image placeholder. The resolver is synchronous and leaves the source
-document and image metadata intact. A custom `imageRenderer` owns its own URL
-resolution.
+document and image metadata intact. Galley can call the resolver again when it
+rebuilds image widgets after an edit. Keep lookups cheap and reuse resolved URLs.
+If you use object URLs, create and revoke them in the host code that manages the
+assets. A custom `imageRenderer` owns its own URL resolution.
 
 ```tsx
 <GalleyEditor
@@ -114,14 +119,20 @@ Event props:
 
 | Prop | Purpose |
 | --- | --- |
-| `onReady` | Called with the CodeMirror view after it mounts and the public ref is assigned. |
+| `onReady` | Called after each CodeMirror view mounts and the public ref is assigned. React Strict Mode may create a second view during development. |
 | `onFocus`, `onBlur` | Focus lifecycle. |
 | `onSelectionChange` | Selection changes. |
 | `onScroll` | Scroll fraction from 0 to 1. |
-| `onViewportChange` | Visible source range after viewport offsets change. Notifications are coalesced per animation frame. |
+| `onViewportChange` | Reports the initial visible source range on the first animation frame after observation is enabled, then reports changed ranges at most once per frame. |
 | `onEnter`, `onEscape`, `onSubmit` | Keyboard hooks. |
 | `onPaste` | Raw paste event. |
 | `onFiles`, `onFileStatus`, `onFileError` | Paste/drop file workflows. |
+
+Read `ref.current?.view` for the current view if you need to retain an editor
+reference beyond `onReady`. An earlier view can be destroyed during a remount.
+Switching an active viewport callback to another function preserves the current
+range. The replacement receives the next changed range. Turning observation off
+and back on sends a fresh initial range.
 
 ### `ErrorBoundary`
 
@@ -134,7 +145,7 @@ React error boundary for isolating editor failures:
 ```
 
 Supply `resetKey` to recover when the document changes. Without a custom
-fallback, the default recovery screen uses the host theme and accepts localized
+fallback, the default recovery screen announces the error as an alert, uses the host theme, and accepts localized
 `labels.heading`, `labels.details`, and `labels.retry` strings.
 
 ## Hook
@@ -156,7 +167,7 @@ const editor = useGalley({ initialValue: '# Draft' });
 | Method | Description |
 | --- | --- |
 | `getContent()` | Read current Markdown. |
-| `setContent(value)` | Replace the document. |
+| `setContent(value)` | Replace the text as an undoable edit and emit `onChange` if the text changed. |
 | `insertText(text)` | Insert text at the selection. |
 | `focus()` / `blur()` | Control focus. |
 | `openSearch()` | Open and focus the built-in CodeMirror search panel. Returns `false` before mount. |
@@ -168,18 +179,21 @@ const editor = useGalley({ initialValue: '# Draft' });
 | `scrollTo(fraction)` | Scroll by document fraction. |
 | `scrollSelectionIntoView()` | Reveal current selection. |
 | `getHeadings()` | Return the document outline in order. Each entry contains `from`, `to`, `level`, `text`, and `slug`. |
-| `getViewport()` | Return the source range of the currently visible lines. |
-| `revealPosition(position, options?)` | Scroll to a source offset. Pass `align: 'start'` to put the target at the top, `select: true` to move the caret, or `focus: true` to focus the editor. |
+| `getViewport()` | Measure the source range of the currently visible lines. Call outside CodeMirror update listeners. |
+| `revealPosition(position, options?)` | Scroll to a source offset using nearest-edge alignment by default. Pass `align: 'start'` to put the target at the top, `select: true` to move the caret, or `focus: true` to focus the editor. Invalid offsets are ignored. |
 | `addExtension(ext)` | Add a CodeMirror extension at runtime. |
 | `view` | The underlying CodeMirror `EditorView`, or `null` before mount. |
 
 ### Document outlines
 
-Read the outline after the editor mounts and when its Markdown changes. Entries
-include ATX headings (with one to six `#` markers), including headings in lists
-and blockquotes. Fenced and indented code, leading YAML front matter, and Setext
-headings are omitted. The entry text omits formatting markers and link
-destinations. Use an offset to navigate even if an entry has no slug.
+Read the outline after the editor mounts and when its Markdown changes. Galley
+parses the current Markdown and caches the result for the same document. Entries
+cover ATX headings (with one to six `#` markers), including headings in lists
+and blockquotes. Fenced and indented code, leading YAML front matter that starts
+with a key-value field, and Setext headings are omitted. The entry text omits
+formatting markers and link destinations. Use a source offset to navigate even
+if an entry has no slug. Offsets count UTF-16 code units, as they do in
+JavaScript strings and CodeMirror documents.
 
 ```tsx
 const headings = editor.current?.getHeadings() ?? [];
@@ -198,7 +212,8 @@ headings.map((heading) => (
 suffix starting with `-1` and skips already assigned slugs. The hash can include
 a leading `#` and percent-encoded characters. Cmd/Ctrl-click uses the same
 navigation for local Markdown links such as `[Read more](#details)`. Hosts can
-intercept the link through `onLinkClick`.
+intercept the link through `onLinkClick`. An unmatched fragment leaves the
+editor in place and `jumpToHash()` returns `false`.
 
 ## Constants
 

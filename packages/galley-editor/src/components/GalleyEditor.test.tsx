@@ -1,4 +1,4 @@
-import { act, useLayoutEffect, useRef } from 'react';
+import { act, StrictMode, useLayoutEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -8,6 +8,7 @@ import type { Extension } from '@codemirror/state';
 import { GALLEY_VERSION } from '../version';
 import { EditorController } from '../controller';
 import { DEFAULT_KEYMAP } from '../commands';
+import * as toolbarFormatModule from './toolbar-format';
 import type { GalleyClassNames, GalleyPlugin } from '../types';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -335,6 +336,103 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('.ge-footer')?.textContent).toContain('13 characters');
   });
 
+  it('reuses the inherited color scheme across unrelated parent renders', () => {
+    const getComputedStyle = vi.spyOn(window, 'getComputedStyle');
+    try {
+      const { root } = mount(<GalleyEditor defaultValue="One" theme="inherit" />);
+      getComputedStyle.mockClear();
+
+      rerender(root, <GalleyEditor defaultValue="One" theme="inherit" id="renamed-editor" />);
+
+      expect(getComputedStyle.mock.calls.filter(([node]) => node === document.documentElement)).toHaveLength(0);
+    } finally {
+      getComputedStyle.mockRestore();
+    }
+  });
+
+  it('updates uncontrolled document statistics without re-rendering the shell', () => {
+    const switchMode = vi.fn(() => 'Switch mode');
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      defaultValue="alpha beta"
+      theme="light"
+      labels={{ switchMode }}
+    />);
+    switchMode.mockClear();
+
+    act(() => ref.current?.view?.dispatch({
+      changes: [{ from: 5, to: 6 }, { from: 10, insert: ' 😀' }],
+    }));
+
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('2 words12 characters');
+    expect(switchMode).not.toHaveBeenCalled();
+  });
+
+  it('updates counts for a small edit without converting a large document to a string', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      defaultValue={'word\n'.repeat(2_000)}
+      theme="light"
+      mode="markdown"
+    />);
+    const view = ref.current?.view;
+    if (!view) throw new Error('Editor did not mount');
+    const toString = vi.spyOn(Object.getPrototypeOf(view.state.doc) as { toString(): string }, 'toString');
+
+    try {
+      act(() => view.dispatch({ changes: { from: 4, insert: ' word' } }));
+
+      expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('2001 words10005 characters');
+      expect(toString).not.toHaveBeenCalled();
+    } finally {
+      toString.mockRestore();
+    }
+  });
+
+  it('counts normalized Markdown on the first render of a mounted footer', () => {
+    const { container } = mount(<GalleyEditor defaultValue={'Hi\r\n😀\r\nthere'} theme="light" />);
+
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('3 words11 characters');
+  });
+
+  it('keeps live counts after a document switch and undo', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container, root } = mount(
+      <GalleyEditor ref={ref} docKey="first" defaultValue="one two" theme="light" />,
+    );
+    act(() => ref.current?.insertText('old '));
+    rerender(root, <GalleyEditor ref={ref} docKey="second" defaultValue="new" theme="light" />);
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('1 word3 characters');
+
+    act(() => ref.current?.undo());
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('1 word3 characters');
+
+    act(() => ref.current?.insertText('another '));
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('2 words11 characters');
+    act(() => ref.current?.undo());
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('1 word3 characters');
+  });
+
+  it('counts edits across Unicode whitespace and newlines when the footer is enabled later', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container, root } = mount(
+      <GalleyEditor ref={ref} defaultValue={'aa\u00a0bb\ncc'} footer={false} theme="light" />,
+    );
+    act(() => ref.current?.view?.dispatch({
+      changes: [
+        { from: 2, to: 3 },
+        { from: 5, to: 6, insert: '\u2003😀\n' },
+      ],
+    }));
+
+    rerender(root, <GalleyEditor ref={ref} defaultValue="ignored after mounting" theme="light" />);
+
+    expect(ref.current?.getContent()).toBe('aabb\u2003😀\ncc');
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toBe('3 words10 characters');
+  });
+
   it('does not render the footer when footer=false', () => {
     const { container } = mount(<GalleyEditor value="Hello world" theme="light" footer={false} />);
 
@@ -385,6 +483,31 @@ describe('GalleyEditor React wrapper', () => {
     expect(container.querySelector('[aria-label="Bullet list"]')?.textContent).toBe('');
     act(() => toggle?.click());
     expect(container.querySelector('.ge-toolbar')?.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('displays only shortcuts bound to the configured heading level', () => {
+    const { container } = mount(<GalleyEditor
+      keymap={() => [
+        { key: 'Mod-1', command: 'toggleHeading', args: [1] },
+        { key: 'Mod-3', command: 'toggleHeading', args: [3] },
+      ]}
+      toolbar={{ commands: [
+        { command: 'toggleHeading', args: [3] },
+        { command: 'toggleHeading', args: [2] },
+      ] }}
+    />);
+    expect(container.querySelector('[aria-label="Heading 3"]')?.getAttribute('title')).toMatch(/3\)$/);
+    expect(container.querySelector('[aria-label="Heading 2"]')?.getAttribute('title')).toBe('Heading 2');
+  });
+
+  it('counts the recreated view after an onReady edit in StrictMode', () => {
+    const { container } = mount(<StrictMode>
+      <GalleyEditor defaultValue="one" onReady={(view) => {
+        view.dispatch({ changes: { from: view.state.doc.length, insert: ' two' } });
+      }} />
+    </StrictMode>);
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toContain('2 words');
+    expect(container.querySelector('.ge-footer-stats')?.textContent).toContain('7 characters');
   });
 
   it('shows bound shortcuts in titles without changing accessible labels', () => {
@@ -905,6 +1028,153 @@ describe('Galley shell regression coverage', () => {
     expect(ref.current?.getContent()).toBe('first updated');
   });
 
+  it('maps a backward selection and caret through external edits', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { root } = mount(<GalleyEditor ref={ref} value="abcdef" />);
+    act(() => ref.current?.select(6, 4));
+    rerender(root, <GalleyEditor ref={ref} value="XXabcdef" />);
+    expect(ref.current?.getSelection()).toMatchObject({ anchor: 8, head: 6 });
+
+    act(() => ref.current?.select(8));
+    rerender(root, <GalleyEditor ref={ref} value="XXcdef" />);
+    expect(ref.current?.getSelection()).toMatchObject({ anchor: 6, head: 6 });
+  });
+
+  it('retains a local edit when a parent sends the last value again', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const onChange = vi.fn();
+    const { root } = mount(<GalleyEditor ref={ref} value="abc" onChange={onChange} />);
+    act(() => {
+      ref.current?.select(3);
+      ref.current?.insertText('X');
+    });
+    rerender(root, <GalleyEditor ref={ref} value="abc" onChange={onChange} ariaLabel="Draft" />);
+    expect(ref.current?.getContent()).toBe('abcX');
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('abcX');
+  });
+
+  it('does not measure the viewport for document edits without a listener', () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    const getViewport = vi.spyOn(EditorController.prototype, 'getViewport');
+    try {
+      const ref = { current: null as GalleyHandle | null };
+      const { root } = mount(<GalleyEditor ref={ref} defaultValue="abc" />);
+      act(() => vi.advanceTimersToNextFrame());
+      getViewport.mockClear();
+      act(() => {
+        ref.current?.select(3);
+        ref.current?.insertText('X');
+        vi.advanceTimersToNextFrame();
+      });
+      expect(getViewport).not.toHaveBeenCalled();
+      unmount(root);
+    } finally {
+      getViewport.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('reports an initial viewport and coalesces changed offsets per frame', () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    try {
+      const ref = { current: null as GalleyHandle | null };
+      const onViewportChange = vi.fn();
+      const { root } = mount(<GalleyEditor ref={ref} defaultValue="abc" onViewportChange={onViewportChange} />);
+      act(() => vi.advanceTimersToNextFrame());
+      expect(onViewportChange).toHaveBeenCalledExactlyOnceWith({ from: 0, to: 3 });
+
+      act(() => {
+        ref.current?.select(3);
+        ref.current?.insertText('X');
+        ref.current?.insertText('Y');
+      });
+      expect(onViewportChange).toHaveBeenCalledTimes(1);
+      act(() => vi.advanceTimersToNextFrame());
+      expect(onViewportChange.mock.calls).toEqual([[{ from: 0, to: 3 }], [{ from: 0, to: 5 }]]);
+
+      act(() => {
+        ref.current?.view?.dispatch({ changes: { from: 0, to: 1, insert: 'A' } });
+        vi.advanceTimersToNextFrame();
+      });
+      expect(onViewportChange).toHaveBeenCalledTimes(2);
+      unmount(root);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('initializes observation when a viewport listener is enabled after mount', () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    try {
+      const { root } = mount(<GalleyEditor defaultValue="abc" />);
+      act(() => vi.advanceTimersToNextFrame());
+      const observe = vi.fn();
+      rerender(root, <GalleyEditor defaultValue="abc" onViewportChange={observe} />);
+      act(() => vi.advanceTimersToNextFrame());
+      expect(observe).toHaveBeenCalledExactlyOnceWith({ from: 0, to: 3 });
+
+      rerender(root, <GalleyEditor defaultValue="abc" />);
+      rerender(root, <GalleyEditor defaultValue="abc" onViewportChange={observe} />);
+      act(() => vi.advanceTimersToNextFrame());
+      expect(observe.mock.calls).toEqual([[{ from: 0, to: 3 }], [{ from: 0, to: 3 }]]);
+      unmount(root);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sends only new ranges to a replacement viewport listener', () => {
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] });
+    try {
+      const ref = { current: null as GalleyHandle | null };
+      const initial = vi.fn();
+      const replacement = vi.fn();
+      const { root } = mount(<GalleyEditor ref={ref} defaultValue="abc" onViewportChange={initial} />);
+      act(() => vi.advanceTimersToNextFrame());
+      rerender(root, <GalleyEditor ref={ref} defaultValue="abc" onViewportChange={replacement} />);
+      act(() => vi.advanceTimersToNextFrame());
+      expect(replacement).not.toHaveBeenCalled();
+
+      act(() => {
+        ref.current?.insertText('X');
+        vi.advanceTimersToNextFrame();
+      });
+      expect(initial).toHaveBeenCalledExactlyOnceWith({ from: 0, to: 3 });
+      expect(replacement).toHaveBeenCalledExactlyOnceWith({ from: 0, to: 4 });
+      unmount(root);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reveals a position through the handle with optional selection and focus', () => {
+    const ref = { current: null as GalleyHandle | null };
+    mount(<GalleyEditor ref={ref} defaultValue={'# First\n# Second'} />);
+    act(() => ref.current?.revealPosition(8, { align: 'start' }));
+    expect(ref.current?.getSelection()).toMatchObject({ anchor: 0, head: 0 });
+    act(() => ref.current?.revealPosition(8, { select: true, focus: true }));
+    expect(ref.current?.getSelection()).toMatchObject({ anchor: 8, head: 8 });
+    expect(document.activeElement).toBe(ref.current?.view?.contentDOM);
+  });
+
+  it('reports each live view on Strict Mode remounts', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const observedViews: EditorView[] = [];
+    mount(
+      <StrictMode>
+        <GalleyEditor ref={ref} defaultValue="Draft" onReady={(view) => {
+          expect(ref.current?.view).toBe(view);
+          observedViews.push(view);
+        }} />
+      </StrictMode>,
+    );
+
+    expect(observedViews).toHaveLength(2);
+    expect(observedViews[0]).not.toBe(observedViews[1]);
+    expect(observedViews[0].dom.isConnected).toBe(false);
+    expect(observedViews[1].dom.isConnected).toBe(true);
+  });
+
   it('uses a stable server theme and gives plugins the client preference after mount', () => {
     mockPrefersDark(true);
     const extensions = vi.fn(() => []);
@@ -965,5 +1235,104 @@ describe('Galley shell regression coverage', () => {
     );
     expect(container.querySelector('img.ge-image')?.getAttribute('src')).toBe('/safe/flower.png');
     expect(ref.current?.getContent()).toBe(markdown);
+  });
+});
+
+describe('configured toolbar commands', () => {
+  it('renders and runs a command outside the default layout', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      defaultValue="One line"
+      toolbar={{ commands: ['duplicateLine'] }}
+    />);
+    const button = container.querySelector<HTMLButtonElement>('button[aria-label="Duplicate line"]');
+    expect(button?.querySelector('svg[aria-hidden="true"]')).toBeInstanceOf(SVGElement);
+    act(() => button?.click());
+    expect(ref.current?.getContent()).toBe('One line\nOne line');
+  });
+
+  it('prefers command label overrides while retaining old icon keys', () => {
+    const { container } = mount(<GalleyEditor
+      toolbar={{ commands: ['insertLink', 'toggleCode', 'duplicateLine'] }}
+      labels={{ command: {
+        insertLink: 'Вставить ссылку',
+        link: 'Ссылка',
+        inlineCode: 'Код',
+        duplicateLine: 'Повторить строку',
+      } }}
+    />);
+    expect(container.querySelector('[aria-label="Вставить ссылку"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Код"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Повторить строку"]')).not.toBeNull();
+  });
+
+  it('exposes heading toggle state at the caret', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      defaultValue={'# Heading\n\nBody'}
+      toolbar={{ commands: ['toggleHeading'] }}
+    />);
+    const button = container.querySelector<HTMLButtonElement>('[aria-label="Toggle heading"]');
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
+    act(() => ref.current?.select(12));
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('forwards arguments from configured command entries', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      defaultValue="Title"
+      toolbar={{ commands: [{ command: 'toggleHeading', args: [3] }] }}
+    />);
+    const button = container.querySelector<HTMLButtonElement>('[aria-label="Heading 3"]');
+    act(() => button?.click());
+    expect(ref.current?.getContent()).toBe('### Title');
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps navigation and search available in a read-only toolbar', () => {
+    const ref = { current: null as GalleyHandle | null };
+    const { container } = mount(<GalleyEditor
+      ref={ref}
+      editable={false}
+      defaultValue={'# First\n\n## Next'}
+      toolbar={{ commands: ['toggleBold', 'selectAll', 'findInDocument', { command: 'jumpToHash', args: ['#next'] }] }}
+    />);
+    const button = (name: string) => container.querySelector<HTMLButtonElement>(`[aria-label="${name}"]`)!;
+    expect(button('Bold').disabled).toBe(true);
+    act(() => button('Select all').click());
+    expect(ref.current?.getSelection()).toMatchObject({ from: 0, to: 16 });
+    act(() => button('Jump to heading').click());
+    expect(ref.current?.getSelection()).toMatchObject({ from: 9, to: 9 });
+    act(() => button('Find in document').click());
+    expect(container.querySelector('.cm-search')).not.toBeNull();
+  });
+
+  it('defers formatting work until the toolbar becomes visible', () => {
+    const actualFactory = toolbarFormatModule.createToolbarFormat;
+    const updates = vi.fn();
+    const factory = vi.spyOn(toolbarFormatModule, 'createToolbarFormat').mockImplementation(() => {
+      const store = actualFactory();
+      const update = store.update;
+      return { ...store, update(state) { updates(); update(state); } };
+    });
+    try {
+      const ref = { current: null as GalleyHandle | null };
+      const { container } = mount(<GalleyEditor
+        ref={ref}
+        defaultValue={'Normal\n\n# Heading'}
+        toolbar={{ defaultOpen: false }}
+      />);
+      act(() => ref.current?.select(14));
+      expect(updates).not.toHaveBeenCalled();
+      act(() => container.querySelector<HTMLButtonElement>('.ge-toolbar-toggle')?.click());
+      expect(container.querySelector<HTMLSelectElement>('.ge-toolbar-select')?.value).toBe('h1');
+      expect(updates).toHaveBeenCalledTimes(1);
+    } finally {
+      factory.mockRestore();
+    }
   });
 });

@@ -170,6 +170,7 @@ export type ToolbarIconName =
   | 'italic'
   | 'strikethrough'
   | 'inlineCode'
+  | 'heading'
   | 'bulletList'
   | 'orderedList'
   | 'taskList'
@@ -207,7 +208,8 @@ export interface GalleyLabels {
   textStyle: string;
   normal: string;
   heading: (level: number) => string;
-  command: Partial<Record<ToolbarIconName, string>>;
+  /** Command IDs take precedence over the legacy icon-name keys. */
+  command: Partial<Record<BuiltinCommand | ToolbarIconName, string>>;
   mode: Partial<Record<GalleyMode, string>>;
   switchMode: (current: string) => string;
   showToolbar: string;
@@ -218,9 +220,14 @@ export interface GalleyLabels {
   credits: (version: string) => string;
 }
 
+export type GalleyToolbarCommand = BuiltinCommand | {
+  command: BuiltinCommand;
+  args: readonly unknown[];
+};
+
 export interface GalleyToolbarOptions {
   /** Ordered command list, with optional separators. Omit for the default layout. */
-  commands?: readonly (BuiltinCommand | 'separator')[];
+  commands?: readonly (GalleyToolbarCommand | 'separator')[];
   /** Show the heading style selector. Defaults to true. */
   textStyle?: boolean;
   enabled?: boolean;
@@ -430,7 +437,7 @@ export interface FindResult {
 export interface GalleyHandle {
   /** Get the current document content. */
   getContent(): string;
-  /** Read headings from the live Markdown syntax tree. */
+  /** Read the ATX headings parsed from the current document text. */
   getHeadings(): readonly GalleyHeading[];
   /** Read the currently visible document range. */
   getViewport(): GalleyViewport;
@@ -587,12 +594,13 @@ export interface GalleyEditorProps {
   extensions?: Extension[];
 
   // ── Events ────────────────────────────────────────────────────────────────
-  /** Called after the CodeMirror view is mounted and the editor ref is assigned. */
+  /** Called after each view mounts and the editor ref is assigned, including Strict Mode remounts. */
   onReady?: (view: EditorView) => void;
   onFocus?: () => void;
   onBlur?: () => void;
   onSelectionChange?: (selection: { from: number; to: number; anchor: number; head: number }) => void;
   onScroll?: (fraction: number) => void;
+  /** Reports the initial range and distinct later ranges, coalesced per animation frame. */
   onViewportChange?: (viewport: GalleyViewport) => void;
   /** Handle Enter key. Return true to suppress default behavior. */
   onEnter?: (mod: boolean, shift: boolean) => boolean;

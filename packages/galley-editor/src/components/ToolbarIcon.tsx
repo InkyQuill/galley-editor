@@ -1,7 +1,9 @@
 import type { ToolbarIconName } from '../types';
 
-const paths: Record<ToolbarIconName | 'toolbar', string> = {
+const paths: Record<ToolbarIconName | 'toolbar' | 'command', string> = {
   bold: 'M6 4h7a4 4 0 0 1 0 8H6m0-8v16h8a4 4 0 0 0 0-8h-1',
+  heading: 'M5 5v14M19 5v14M5 12h14',
+  command: 'M5 6h14v12H5zM8 10l2 2-2 2m4 0h4',
   italic: 'M11 4h8M5 20h8M15 4 9 20',
   strikethrough: 'M5 12h14m-3-5c-1-2-2.5-3-5-3-3 0-5 1.5-5 4 0 2 2 3 5 4s6 2 6 4c0 2.5-2 4-5 4-2.5 0-4.5-1-6-3',
   inlineCode: 'm7 7-5 5 5 5m10-10 5 5-5 5M14 5l-4 14',
@@ -38,7 +40,7 @@ function Icon({ name, size }: { name: keyof typeof paths; size: number }) {
   );
 }
 
-export function ToolbarIcon({ name }: { name: ToolbarIconName }) {
+export function ToolbarIcon({ name }: { name: ToolbarIconName | 'command' }) {
   return <Icon name={name} size={18} />;
 }
 

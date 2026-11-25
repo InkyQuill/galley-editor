@@ -279,7 +279,7 @@ controlling `mode`, pass `onModeChange` to enable the built-in switch.
 <GalleyEditor
   defaultValue="# Черновик"
   toolbar={{
-    commands: ['toggleBold', 'toggleItalic', 'separator', 'undo'],
+    commands: ['toggleBold', 'toggleItalic', 'separator', { command: 'toggleHeading', args: [2] }, 'undo'],
     showModeToggle: false,
   }}
   labels={{
@@ -287,12 +287,41 @@ controlling `mode`, pass `onModeChange` to enable the built-in switch.
     textStyle: 'Стиль текста',
     normal: 'Обычный',
     heading: (level) => `Заголовок ${level}`,
-    command: { bold: 'Жирный', italic: 'Курсив', undo: 'Отменить' },
+    command: { toggleBold: 'Жирный', toggleItalic: 'Курсив', toggleHeading: 'Заголовок второго уровня', undo: 'Отменить' },
     wordCount: (count) => `Слов: ${count}`,
     characterCount: (count) => `Символов: ${count}`,
   }}
 />
 ```
+
+All built-in commands have an English label and an icon. Commands that take
+arguments accept an entry such as `{ command: 'toggleHeading', args: [2] }`.
+A heading button is pressed when the caret is in a heading of its configured level
+(level 1 when omitted). An explicit level uses the corresponding `labels.heading`
+text unless you provide `labels.command.toggleHeading`.
+
+`selectAll`, `jumpToHash`, and `findInDocument` remain available in read-only
+and preview toolbars. A Find button opens the editor search panel. Pass a search
+string as its first argument to prefill the panel.
+
+Prefer command IDs in `labels.command`. Earlier icon-name keys still work for the
+default toolbar commands. When both are present, the command ID takes precedence.
+The table lists each legacy alias that differs from its command ID.
+
+| Command ID | Legacy label key |
+| --- | --- |
+| `toggleBold` | `bold` |
+| `toggleItalic` | `italic` |
+| `toggleStrikethrough` | `strikethrough` |
+| `toggleCode` | `inlineCode` |
+| `toggleBulletList` | `bulletList` |
+| `toggleOrderedList` | `orderedList` |
+| `toggleCheckList` | `taskList` |
+| `insertLink` | `link` |
+| `insertImage` | `image` |
+| `insertCodeBlock` | `codeBlock` |
+| `insertTable` | `table` |
+| `insertHr` | `divider` |
 
 Unspecified labels use the English defaults. The count callbacks receive
 numbers so applications can apply locale-specific plural rules. Footer counts

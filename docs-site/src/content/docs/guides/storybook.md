@@ -25,6 +25,9 @@ Storybook stories should mirror documented use cases. When adding a story that d
 | --- | --- |
 | Default editor, controlled value, read-only, placeholder, autosize, fill container | [Quick Start](/galley-editor/guides/quick-start/) and [API Reference](/galley-editor/reference/api/) |
 | Built-in toolbar, custom toolbar icons, toolbar/footer slots, custom app toolbar | [Customization](/galley-editor/guides/customization/) and [Commands](/galley-editor/guides/commands/) |
+| Localized uncontrolled toolbar, with an initial document and custom commands | [Customization](/galley-editor/guides/customization/#toolbar-commands-and-text) |
+| Editable document with clickable outline | [Document outlines](/galley-editor/reference/api/#document-outlines) |
+| Relative Markdown image paths mapped to bundled assets | [API Reference](/galley-editor/reference/api/#galleyeditor) |
 | Visual table editing and rendered table block icons | [Plugins and Renderers](/galley-editor/guides/plugins-renderers/#table-editor-block-controls) |
 | Image rendering, missing images, image controls, metadata, resize actions, source reveal | [Plugins and Renderers](/galley-editor/guides/plugins-renderers/#image-rendering) |
 | Paste/drop uploads, inline placeholders, locked overlays, slow upload progress | [File Uploads](/galley-editor/guides/uploads/) |

@@ -70,6 +70,26 @@ export function watchColorScheme(
   };
 }
 
+export function createColorSchemeStore(scheme: ColorScheme) {
+  const initial = scheme === 'light' || scheme === 'dark' ? scheme : null;
+  let current: 'light' | 'dark' | null = initial;
+  return {
+    getSnapshot: () => current,
+    getServerSnapshot: () => initial,
+    subscribe(notify: () => void) {
+      if (scheme === 'light' || scheme === 'dark') return () => {};
+      const update = (next: 'light' | 'dark') => {
+        if (current === next) return;
+        current = next;
+        notify();
+      };
+      const unsubscribe = watchColorScheme(scheme, update);
+      update(resolveColorScheme(scheme));
+      return unsubscribe;
+    },
+  };
+}
+
 /**
  * Build CM6 theme extensions.
  * Structural layout stays fixed while visual values flow through --ge-* CSS

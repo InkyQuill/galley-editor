@@ -18,12 +18,14 @@ export function findCommandKey(
   bindings: readonly KeyBinding[],
   command: BuiltinCommand,
   platform: ShortcutPlatform = "other",
+  args: readonly unknown[] = [],
 ): string | undefined {
-  const binding = bindings.find(
-    (binding) =>
-      "command" in binding &&
-      (binding as GalleyKeyBinding).command === command,
-  );
+  const binding = bindings.find((binding: GalleyKeyBinding) => {
+    if (binding.command !== command) return false;
+    const bindingArgs = binding.args ?? [];
+    return bindingArgs.length === args.length &&
+      bindingArgs.every((arg, index) => Object.is(arg, args[index]));
+  });
 
   if (!binding) return undefined;
   if (platform === "mac") return binding.mac ?? binding.key;

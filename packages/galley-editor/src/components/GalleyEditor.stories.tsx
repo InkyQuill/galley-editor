@@ -2546,3 +2546,98 @@ function SlowDropUploadProgressStory() {
 export const SlowDropUploadProgress: Story = {
   render: SlowDropUploadProgressStory,
 };
+
+const russianNumber = new Intl.NumberFormat('ru');
+const russianPlural = new Intl.PluralRules('ru');
+
+function formatRussianCount(count: number, forms: [string, string, string]) {
+  const category = russianPlural.select(count);
+  return `${russianNumber.format(count)} ${forms[category === 'one' ? 0 : category === 'few' ? 1 : 2]}`;
+}
+
+export const LocalizedUncontrolledToolbar: Story = {
+  args: {
+    defaultValue: '# Черновик\n\nВыделите текст или добавьте новую строку.',
+    mode: 'live',
+    toolbar: {
+      commands: ['toggleBold', { command: 'toggleHeading', args: [2] }, 'separator', 'duplicateLine', 'undo'],
+      showModeToggle: false,
+    },
+    labels: {
+      toolbar: 'Форматирование',
+      textStyle: 'Стиль текста',
+      normal: 'Обычный',
+      heading: (level) => `Заголовок ${level}`,
+      command: {
+        toggleBold: 'Полужирный',
+        toggleHeading: 'Заголовок второго уровня',
+        duplicateLine: 'Дублировать строку',
+        undo: 'Отменить',
+      },
+      showToolbar: 'Показать форматирование',
+      hideToolbar: 'Скрыть форматирование',
+      wordCount: (count) => formatRussianCount(count, ['слово', 'слова', 'слов']),
+      characterCount: (count) => formatRussianCount(count, ['символ', 'символа', 'символов']),
+    },
+  },
+};
+
+const outlineMarkdown = [
+  '# Expedition notes',
+  'The outline updates when you add or rename headings.',
+  '## Departure',
+  'We left the harbor at dawn and watched the shoreline disappear.',
+  '### Supplies',
+  'Each person carried food, fresh water, and a copy of the chart.',
+  '## Arrival',
+  'The wind dropped before dusk. We had time to set camp before dark.',
+].join('\n\n');
+
+function OutlineExample() {
+  const editor = useRef<GalleyHandle>(null);
+  const [headings, setHeadings] = useState<ReturnType<GalleyHandle['getHeadings']>>([]);
+  const refresh = () => setHeadings(editor.current?.getHeadings() ?? []);
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(10rem, 1fr) minmax(0, 3fr)', gap: '1rem' }}>
+      <nav aria-label="Document outline">
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          {headings.map((heading) => (
+            <li key={heading.from} style={{ marginInlineStart: `${heading.level - 1}rem` }}>
+              <button
+                type="button"
+                onClick={() => editor.current?.revealPosition(heading.from, { align: 'start', select: true, focus: true })}
+              >
+                {heading.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <GalleyEditor
+        ref={editor}
+        ariaLabel="Expedition notes"
+        defaultValue={outlineMarkdown}
+        maxRows={7}
+        onReady={refresh}
+        onChange={refresh}
+      />
+    </div>
+  );
+}
+
+export const DocumentOutline: Story = {
+  render: () => <OutlineExample />,
+};
+
+const imageSources = new Map([
+  ['assets/galley-color.png', galleyLogo],
+  ['assets/galley.png', galleyMark],
+]);
+
+export const MappedImageSources: Story = {
+  args: {
+    defaultValue: '# Image assets\n\n![Galley logo](assets/galley-color.png)\n\n![Galley mark](assets/galley.png)',
+    resolveImageSource: ({ url }) => imageSources.get(url),
+  },
+};

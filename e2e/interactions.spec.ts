@@ -6,6 +6,12 @@ async function replaceDocument(page: Page, text: string) {
   await page.keyboard.insertText(text);
 }
 
+async function loadDocument(page: Page, text: string) {
+  await page.getByText('Load or edit exact Markdown', { exact: true }).click();
+  await page.getByLabel('Markdown source', { exact: true }).fill(text);
+  await expectDocument(page, text);
+}
+
 async function expectDocument(page: Page, text: string) {
   await expect.poll(() => page.locator('pre code').last().textContent()).toBe(text);
 }
@@ -123,7 +129,7 @@ test('Delete and Shift-Enter preserve surrounding text', async ({ page }) => {
 
 for (const mode of ['live', 'preview']) {
   test(`read-only keyboard cannot mutate ${mode} content`, async ({ page }) => {
-    await replaceDocument(page, 'keep this');
+    await loadDocument(page, 'keep this');
     await page.getByLabel('Mode', { exact: true }).selectOption(mode);
     if (mode === 'live') await page.getByLabel('Editable', { exact: true }).uncheck();
     await page.locator('.cm-content').focus();
@@ -140,7 +146,8 @@ for (const [button, expected] of [
   ['Bullet list', '- word'], ['Ordered list', '1. word'], ['Task list', '- [ ] word'],
 ]) {
   test(`toolbar ${button} formats selected text`, async ({ page }) => {
-    await replaceDocument(page, 'word');
+    await loadDocument(page, 'word');
+    await page.locator('.cm-content').focus();
     await page.keyboard.press('ControlOrMeta+a');
     await page.locator('.ge-toolbar').getByRole('button', { name: button, exact: true }).click();
     await expectDocument(page, expected);
@@ -337,4 +344,38 @@ test('read-only search finds content without exposing replacement controls', asy
   await expect(panel.getByRole('textbox', { name: 'Replace', exact: true })).toHaveCount(0);
   await panel.getByRole('button', { name: 'next', exact: true }).click();
   await expectDocument(page, 'alpha beta alpha');
+});
+
+test('toolbar commands have a visible keyboard focus ring', async ({ page }) => {
+  const select = page.locator('.ge-toolbar-select');
+  await select.focus();
+  await page.keyboard.press('Tab');
+  const command = page.locator('.ge-toolbar-button:focus-visible');
+  await expect(command).toBeFocused();
+  await expect(command).toHaveCSS('outline-style', 'solid');
+  await expect(command).toHaveCSS('outline-width', '2px');
+});
+
+test('footer credits stay readable inside a narrow editor', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  await page.locator('.ge-footer-logo-wrap').focus();
+  const credits = page.getByRole('tooltip');
+  await credits.evaluate(el => { el.textContent = 'Иллюстрации и оформление редактора предоставлены участниками проекта Galley Editor'; });
+  const tooltip = await credits.boundingBox();
+  const editor = await page.locator('.ge-editor-shell').boundingBox();
+  expect(tooltip!.x).toBeGreaterThanOrEqual(editor!.x);
+  expect(tooltip!.x + tooltip!.width).toBeLessThanOrEqual(editor!.x + editor!.width);
+});
+
+test('long toolbar labels wrap inside the editor without covering adjacent rows', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
+  const button = page.locator('.ge-mode-toggle');
+  await button.locator('.ge-mode-label').evaluate(el => {
+    el.textContent = 'Voransichtseinstellungen für die Vollbilddarstellung des aktuellen Dokuments';
+  });
+  const bounds = await button.boundingBox();
+  const editor = await page.locator('.ge-editor-shell').boundingBox();
+  expect(bounds!.width).toBeLessThanOrEqual(editor!.width);
+  const label = await button.locator('.ge-mode-label').boundingBox();
+  expect(label!.height).toBeLessThanOrEqual(bounds!.height);
 });
