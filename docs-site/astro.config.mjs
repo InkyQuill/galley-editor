@@ -59,6 +59,7 @@ export default defineConfig({
           items: [
             { label: 'Releases and CI', slug: 'guides/releases' },
             { label: 'Roadmap', slug: 'releases/roadmap' },
+            { label: 'v0.18.2', slug: 'releases/v0-18-2' },
             { label: 'v0.18.1', slug: 'releases/v0-18-1' },
             { label: 'v0.18.0', slug: 'releases/v0-18-0' },
             { label: 'v0.17.0', slug: 'releases/v0-17-0' },
