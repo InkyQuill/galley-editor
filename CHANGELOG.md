@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/InkyQuill/galley-editor/compare/v0.18.1...v0.18.2) (2026-11-26)
+
+
+### Bug Fixes
+
+* **editor:** align pointer selection after rendered blocks ([#18](https://github.com/InkyQuill/galley-editor/issues/18)) ([c1516ef](https://github.com/InkyQuill/galley-editor/commit/c1516ef1ee210626b392e0717d032491cf6e277f))
+
 ## [0.18.1](https://github.com/InkyQuill/galley-editor/compare/v0.18.0...v0.18.1) (2026-11-25)
 
 
