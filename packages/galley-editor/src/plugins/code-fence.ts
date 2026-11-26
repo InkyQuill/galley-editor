@@ -1,7 +1,7 @@
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
-import { BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
+import { BLOCK_CURSOR_LINE_PROXIMITY, containBlockWidget } from '../rendering';
 import type {
   CodeHighlighter,
   GalleyPlugin,
@@ -138,7 +138,7 @@ class CodeFenceWidget extends WidgetType {
     pre.append(code);
 
     wrapper.append(header, pre);
-    return wrapper;
+    return containBlockWidget(wrapper);
   }
 
   ignoreEvent(event: Event): boolean {

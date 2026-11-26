@@ -31,6 +31,14 @@ const LINE_DECORATION_CONSTRUCTOR = Decoration.line({}).constructor;
 
 // ── Shared utility ──────────────────────────────────────────────────────────
 
+/** Keep widget margins within the border box that CodeMirror measures. */
+export function containBlockWidget(widget: HTMLElement): HTMLElement {
+  const block = document.createElement('div');
+  block.className = 'ge-block-widget';
+  block.append(widget);
+  return block;
+}
+
 export function nodeIntersectsSelection(
   selection: EditorSelection,
   node: SyntaxNodeRef,

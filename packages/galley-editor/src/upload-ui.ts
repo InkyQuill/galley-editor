@@ -14,6 +14,7 @@ import {
   type ViewUpdate,
   WidgetType,
 } from '@codemirror/view';
+import { containBlockWidget } from './rendering';
 import type {
   DropIndicatorRenderer,
   GalleyUploadInfo,
@@ -170,7 +171,8 @@ class DropIndicatorWidget extends WidgetType {
   }
 
   toDOM(): HTMLElement {
-    return this.renderer?.({ source: 'drag', ...this.dropIndicator }) ?? defaultDropIndicator();
+    const indicator = this.renderer?.({ source: 'drag', ...this.dropIndicator }) ?? defaultDropIndicator();
+    return containBlockWidget(indicator);
   }
 }
 
