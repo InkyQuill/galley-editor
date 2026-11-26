@@ -1,7 +1,7 @@
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { type EditorState, type Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
-import { BLOCK_CURSOR_LINE_PROXIMITY } from '../rendering';
+import { BLOCK_CURSOR_LINE_PROXIMITY, containBlockWidget } from '../rendering';
 import type {
   CodeHighlighter,
   GalleyPlugin,
@@ -84,6 +84,7 @@ class CodeFenceWidget extends WidgetType {
       other.parsed.code === this.parsed.code &&
       other.parsed.language === this.parsed.language &&
       other.context.theme === this.context.theme &&
+      other.context.mode === this.context.mode &&
       other.context.codeHighlighter === this.context.codeHighlighter
     );
   }
@@ -124,6 +125,8 @@ class CodeFenceWidget extends WidgetType {
 
     const pre = document.createElement('pre');
     pre.className = 'ge-code-body';
+    // Let pointer focus stay on the code rather than resetting selection in the editor.
+    if (this.context.mode === 'preview') pre.tabIndex = -1;
     const code = document.createElement('code');
     const highlighted = highlightedContent(
       this.context.codeHighlighter,
@@ -138,13 +141,17 @@ class CodeFenceWidget extends WidgetType {
     pre.append(code);
 
     wrapper.append(header, pre);
-    return wrapper;
+    return containBlockWidget(wrapper);
   }
 
   ignoreEvent(event: Event): boolean {
+    // CodeMirror dispatches document-level selection changes to the selected widget.
+    if (this.context.mode === 'preview' && event.type === 'selectionchange') return true;
     const target = event.target;
     if (!(target instanceof Element)) return false;
-    return target.closest('.ge-code-block-header') !== null;
+    return target.closest('.ge-code-block-header') !== null ||
+      (this.context.mode === 'preview' &&
+        !(event instanceof KeyboardEvent) && target.closest('.ge-code-body') !== null);
   }
 }
 

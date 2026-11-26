@@ -577,6 +577,10 @@
   justify-content: flex-end;
 }
 
+.ge-block-widget {
+  display: flow-root;
+}
+
 /* Code fences */
 
 .ge-code-fence {

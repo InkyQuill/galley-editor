@@ -25,6 +25,7 @@ import {
   revealTableSource,
   setTableColumnAlignment,
 } from '../commands/tableEditing';
+import { containBlockWidget } from '../rendering';
 import {
   cellKey,
   parseMarkdownTable,
@@ -226,7 +227,7 @@ class TableWidget extends WidgetType {
     table.append(thead, tbody);
     scroll.append(table);
     wrapper.append(scroll);
-    return wrapper;
+    return containBlockWidget(wrapper);
   }
 
   ignoreEvent(): boolean {
