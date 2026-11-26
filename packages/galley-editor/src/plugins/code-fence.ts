@@ -150,7 +150,8 @@ class CodeFenceWidget extends WidgetType {
     const target = event.target;
     if (!(target instanceof Element)) return false;
     return target.closest('.ge-code-block-header') !== null ||
-      (this.context.mode === 'preview' && target.closest('.ge-code-body') !== null);
+      (this.context.mode === 'preview' &&
+        !(event instanceof KeyboardEvent) && target.closest('.ge-code-body') !== null);
   }
 }
 

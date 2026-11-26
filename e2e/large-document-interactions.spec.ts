@@ -116,5 +116,9 @@ for (const mode of ['live', 'preview'] as const) {
       await page.keyboard.press('ControlOrMeta+c');
       await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('bravo charlie');
     }
+    if (mode === 'preview') {
+      await page.keyboard.press('Escape');
+      await expect(page.getByText(/: Escape$/)).toBeVisible();
+    }
   });
 }
